@@ -251,20 +251,58 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
 
   <!-- 清單 -->
   <div class="content" id="pane-checklist" style="display:none">
-    <div style="display:flex;gap:0;margin-bottom:18px;border:var(--border);border-radius:6px;overflow:hidden;box-shadow:var(--shadow)">
+
+    <!-- 人員選擇器 -->
+    <div style="margin-bottom:16px">
+      <div style="font-family:'Noto Serif JP',serif;font-size:11px;color:var(--stone);letter-spacing:2px;margin-bottom:8px">選擇旅伴 · 查看個人清單</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap" id="cl-person-chips"></div>
+    </div>
+
+    <!-- 目前選擇的人 -->
+    <div style="background:var(--green-pale);border-radius:8px;padding:10px 14px;margin-bottom:16px;border:var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div id="cl-person-avatar" style="width:28px;height:28px;border-radius:50%;background:var(--green);color:var(--cream);font-size:14px;display:flex;align-items:center;justify-content:center;font-weight:600"></div>
+        <div>
+          <div id="cl-person-name" style="font-family:'Zen Kurenaido',serif;font-size:15px;color:var(--ink)"></div>
+          <div style="font-size:10px;color:var(--stone);font-family:'Noto Serif JP',serif">個人清單</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--green-dark);font-family:'Noto Serif JP',serif" id="cl-person-summary"></div>
+    </div>
+
+    <!-- 清單類型切換 -->
+    <div style="display:flex;gap:0;margin-bottom:16px;border:var(--border);border-radius:6px;overflow:hidden;box-shadow:var(--shadow)">
       <button id="cl-tab-luggage" onclick="switchChecklist('luggage')" style="flex:1;padding:10px;font-family:'Noto Serif JP',serif;font-size:13px;background:var(--green-dark);color:var(--cream);border:none;cursor:pointer">🧳 行李清單</button>
       <button id="cl-tab-shopping" onclick="switchChecklist('shopping')" style="flex:1;padding:10px;font-family:'Noto Serif JP',serif;font-size:13px;background:var(--cream);color:var(--stone);border:none;cursor:pointer;border-left:var(--border)">🛍 購買清單</button>
     </div>
+
+    <!-- 行李清單 -->
     <div id="cl-luggage">
-      <div class="progress-row"><div style="font-size:13px;color:var(--green-dark);font-family:'Noto Serif JP',serif">已打包</div><div class="progress-bar"><div class="progress-fill" id="luggage-progress" style="width:0%"></div></div><div class="progress-text" id="luggage-count">0/0</div></div>
+      <div class="progress-row">
+        <div style="font-size:13px;color:var(--green-dark);font-family:'Noto Serif JP',serif">已打包</div>
+        <div class="progress-bar"><div class="progress-fill" id="luggage-progress" style="width:0%"></div></div>
+        <div class="progress-text" id="luggage-count">0/0</div>
+      </div>
       <div class="cat-filter" id="luggage-cats"></div>
-      <div class="section-header"><div><span class="section-jp">にもつ</span><div class="section-title">行李清單</div></div><button class="btn-add" onclick="openCheckModal('luggage')">＋ 新增</button></div>
+      <div class="section-header">
+        <div><span class="section-jp">にもつ</span><div class="section-title">行李清單</div></div>
+        <button class="btn-add" onclick="openCheckModal('luggage')">＋ 新增</button>
+      </div>
       <div id="luggageList"></div>
     </div>
+
+    <!-- 購買清單 -->
     <div id="cl-shopping" style="display:none">
-      <div class="progress-row"><div style="font-size:13px;color:var(--green-dark);font-family:'Noto Serif JP',serif">已購買</div><div class="progress-bar"><div class="progress-fill" id="shopping-progress" style="width:0%"></div></div><div class="progress-text" id="shopping-count">0/0</div></div>
+      <div class="progress-row">
+        <div style="font-size:13px;color:var(--green-dark);font-family:'Noto Serif JP',serif">已購買</div>
+        <div class="progress-bar"><div class="progress-fill" id="shopping-progress" style="width:0%"></div></div>
+        <div class="progress-text" id="shopping-count">0/0</div>
+      </div>
       <div class="cat-filter" id="shopping-cats"></div>
-      <div class="section-header"><div><span class="section-jp">かいもの</span><div class="section-title">購買清單</div></div><button class="btn-add" onclick="openCheckModal('shopping')">＋ 新增</button></div>
+      <div class="section-header">
+        <div><span class="section-jp">かいもの</span><div class="section-title">購買清單</div></div>
+        <button class="btn-add" onclick="openCheckModal('shopping')">＋ 新增</button>
+      </div>
       <div id="shoppingList"></div>
     </div>
   </div>
@@ -450,7 +488,7 @@ window.connectFirebase=async function(){
   try{
     if(!fbApp)fbApp=initializeApp({apiKey,authDomain:projectId+'.firebaseapp.com',projectId,storageBucket:projectId+'.appspot.com',appId:appId||'1:000:web:000'});
     db=getFirestore(fbApp);
-    await setDoc(doc(db,'trips',tripCode),{schedules,members,expenses,photos,luggage,shopping,updatedAt:Date.now()},{merge:true});
+    await setDoc(doc(db,'trips',tripCode),{schedules,members,expenses,photos,personLists,updatedAt:Date.now()},{merge:true});
     startListen();
     document.getElementById('syncDot').classList.add('on');
     document.getElementById('syncText').textContent='即時同步中';
@@ -496,8 +534,7 @@ function startListen(){
       if(d.members){members=d.members;localStorage.setItem('members',JSON.stringify(members));}
       if(d.expenses){expenses=d.expenses;localStorage.setItem('expenses',JSON.stringify(expenses));}
       if(d.photos){photos=d.photos;localStorage.setItem('photos',JSON.stringify(photos));}
-      if(d.luggage){luggage=d.luggage;localStorage.setItem('luggage',JSON.stringify(luggage));}
-      if(d.shopping){shopping=d.shopping;localStorage.setItem('shopping',JSON.stringify(shopping));}
+      if(d.personLists){personLists=d.personLists;localStorage.setItem('personLists',JSON.stringify(personLists));}
       renderAll();renderChecklist();
     }
   });
@@ -505,7 +542,7 @@ function startListen(){
 }
 window.syncToFirebase=async function(){
   if(!db)return;
-  try{await setDoc(doc(db,'trips',tripCode),{schedules,members,expenses,photos,luggage,shopping,updatedAt:Date.now()},{merge:true});}catch(e){}
+  try{await setDoc(doc(db,'trips',tripCode),{schedules,members,expenses,photos,personLists,updatedAt:Date.now()},{merge:true});}catch(e){}
 };
 window.copyShareCode=function(){navigator.clipboard?.writeText(tripCode);showToast('代碼已複製！傳給朋友');};
 window.addEventListener('load',()=>{
@@ -641,48 +678,20 @@ const TIPS=[
 let curDay=0,rate=4.65,editSchedId=null,curCheckType='luggage';
 
 let schedules=JSON.parse(localStorage.getItem('schedules')||'null')||DEFAULT_SCHEDULES;
+let personLists=JSON.parse(localStorage.getItem('personLists')||'null')||{};
 let members=JSON.parse(localStorage.getItem('members')||'null')||[{id:'m1',name:'我'},{id:'m2',name:'旅伴'}];
 let expenses=JSON.parse(localStorage.getItem('expenses')||'null')||[];
 let photos=JSON.parse(localStorage.getItem('photos')||'null')||[];
 
-let luggage=JSON.parse(localStorage.getItem('luggage')||'null')||[
-  {id:'l1',name:'護照',cat:'證件',note:'有效期6個月以上',done:false},
-  {id:'l2',name:'機票電子票',cat:'證件',note:'',done:false},
-  {id:'l3',name:'飯店訂單',cat:'證件',note:'',done:false},
-  {id:'l4',name:'JR Pass',cat:'證件',note:'九州3日/5日 Pass',done:false},
-  {id:'l5',name:'旅遊保險',cat:'證件',note:'',done:false},
-  {id:'l6',name:'換洗衣物',cat:'衣物',note:'8天份',done:false},
-  {id:'l7',name:'外套',cat:'衣物',note:'九州早晚偏涼',done:false},
-  {id:'l8',name:'舒適步行鞋',cat:'衣物',note:'每天走很多路',done:false},
-  {id:'l9',name:'充電線',cat:'電子',note:'',done:false},
-  {id:'l10',name:'行動電源',cat:'電子',note:'',done:false},
-  {id:'l11',name:'轉接頭',cat:'電子',note:'日本A型插頭',done:false},
-  {id:'l12',name:'相機/手機',cat:'電子',note:'',done:false},
-  {id:'l13',name:'日幣現金',cat:'金融',note:'建議帶6-8萬',done:false},
-  {id:'l14',name:'信用卡',cat:'金融',note:'VISA/Mastercard',done:false},
-  {id:'l15',name:'常備藥',cat:'醫藥',note:'腸胃藥、感冒藥',done:false},
-];
-
-let shopping=JSON.parse(localStorage.getItem('shopping')||'null')||[
-  {id:'sh1',name:'熊本熊商品',cat:'禮品',note:'限定版',done:false},
-  {id:'sh2',name:'辛子蓮根',cat:'食品',note:'熊本名物',done:false},
-  {id:'sh3',name:'太平燕（インスタント）',cat:'食品',note:'',done:false},
-  {id:'sh4',name:'一蘭拉麵調理包',cat:'食品',note:'博多限定',done:false},
-  {id:'sh5',name:'明太子',cat:'食品',note:'真空包裝可帶回',done:false},
-  {id:'sh6',name:'梅ヶ枝餅',cat:'食品',note:'太宰府現場吃',done:false},
-  {id:'sh7',name:'藥妝護膚品',cat:'藥妝',note:'KOSE、資生堂',done:false},
-  {id:'sh8',name:'眼藥水',cat:'藥妝',note:'Rohto系列',done:false},
-  {id:'sh9',name:'糸島手作雜貨',cat:'禮品',note:'',done:false},
-  {id:'sh10',name:'博多織布品',cat:'禮品',note:'傳統工藝',done:false},
-];
+let curClPerson = null;
+let luggage = [], shopping = [];
 
 function save(){
   localStorage.setItem('schedules',JSON.stringify(schedules));
   localStorage.setItem('members',JSON.stringify(members));
   localStorage.setItem('expenses',JSON.stringify(expenses));
   localStorage.setItem('photos',JSON.stringify(photos));
-  localStorage.setItem('luggage',JSON.stringify(luggage));
-  localStorage.setItem('shopping',JSON.stringify(shopping));
+  localStorage.setItem('personLists',JSON.stringify(personLists));
   if(window.syncToFirebase)window.syncToFirebase();
 }
 
@@ -737,10 +746,57 @@ function editSched(id){const s=schedules.find(x=>x.id===id);if(!s)return;editSch
 function saveSched(){const name=document.getElementById('sf-name').value.trim();if(!name){showToast('請輸入名稱');return;}const obj={id:editSchedId||('s'+Date.now()),day:curDay,time:document.getElementById('sf-time').value,name,place:document.getElementById('sf-place').value.trim(),type:document.getElementById('sf-type').value,note:document.getElementById('sf-note').value.trim()};if(editSchedId){const i=schedules.findIndex(s=>s.id===editSchedId);schedules[i]=obj;}else schedules.push(obj);save();closeModal('schedModal');renderSchedule();renderMap();showToast(editSchedId?'行程已更新！':'行程已新增 🌿');}
 function delSched(id){if(!confirm('確定刪除？'))return;schedules=schedules.filter(s=>s.id!==id);save();renderSchedule();renderMap();}
 
-/* ── Checklist ── */
+/* ── Checklist（每人獨立） ── */
 const LUGGAGE_CATS=['全部','證件','衣物','電子','金融','醫藥'];
 const SHOPPING_CATS=['全部','食品','藥妝','禮品','服飾','其他'];
 let luggageCatFilter='全部',shoppingCatFilter='全部';
+
+function defaultLuggage(p){return[
+  {id:p+'l1',name:'護照',cat:'證件',note:'有效期6個月以上',done:false},
+  {id:p+'l2',name:'機票電子票',cat:'證件',note:'',done:false},
+  {id:p+'l3',name:'JR Pass',cat:'證件',note:'九州Pass',done:false},
+  {id:p+'l4',name:'旅遊保險',cat:'證件',note:'',done:false},
+  {id:p+'l5',name:'換洗衣物',cat:'衣物',note:'8天份',done:false},
+  {id:p+'l6',name:'外套',cat:'衣物',note:'九州早晚偏涼',done:false},
+  {id:p+'l7',name:'舒適步行鞋',cat:'衣物',note:'',done:false},
+  {id:p+'l8',name:'充電線',cat:'電子',note:'',done:false},
+  {id:p+'l9',name:'行動電源',cat:'電子',note:'',done:false},
+  {id:p+'l10',name:'轉接頭',cat:'電子',note:'日本A型插頭',done:false},
+  {id:p+'l11',name:'日幣現金',cat:'金融',note:'建議6-8萬',done:false},
+  {id:p+'l12',name:'信用卡',cat:'金融',note:'',done:false},
+  {id:p+'l13',name:'常備藥',cat:'醫藥',note:'腸胃藥、感冒藥',done:false},
+];}
+function defaultShopping(p){return[
+  {id:p+'sh1',name:'熊本熊商品',cat:'禮品',note:'限定版',done:false},
+  {id:p+'sh2',name:'辛子蓮根',cat:'食品',note:'熊本名物',done:false},
+  {id:p+'sh3',name:'一蘭拉麵調理包',cat:'食品',note:'博多限定',done:false},
+  {id:p+'sh4',name:'明太子',cat:'食品',note:'真空包裝',done:false},
+  {id:p+'sh5',name:'藥妝護膚品',cat:'藥妝',note:'',done:false},
+];}
+function getPersonList(mid,type){
+  if(!personLists[mid])personLists[mid]={luggage:defaultLuggage(mid),shopping:defaultShopping(mid)};
+  return personLists[mid][type];
+}
+function setPersonList(mid,type,arr){
+  if(!personLists[mid])personLists[mid]={luggage:defaultLuggage(mid),shopping:defaultShopping(mid)};
+  personLists[mid][type]=arr;
+}
+
+function renderPersonChips(){
+  const chips=document.getElementById('cl-person-chips');if(!chips)return;
+  if(!members.length){chips.innerHTML='<div style="font-size:12px;color:var(--stone);font-family:\'Noto Serif JP\',serif">請先在「💴 分帳」頁新增旅伴</div>';return;}
+  chips.innerHTML=members.map(m=>`<div onclick="selectClPerson('${m.id}')" style="display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;cursor:pointer;font-family:'Noto Serif JP',serif;font-size:13px;font-weight:500;background:${curClPerson===m.id?'var(--green-dark)':'var(--green-pale)'};color:${curClPerson===m.id?'var(--cream)':'var(--ink)'};border:var(--border);box-shadow:1px 2px 0 rgba(92,74,48,.08)"><div style="width:22px;height:22px;border-radius:50%;background:${curClPerson===m.id?'rgba(255,255,255,.25)':'var(--green)'};color:var(--cream);font-size:12px;display:flex;align-items:center;justify-content:center">${m.name[0]}</div>${m.name}</div>`).join('');
+}
+function selectClPerson(mid){
+  curClPerson=mid;const m=members.find(x=>x.id===mid);if(!m)return;
+  document.getElementById('cl-person-avatar').textContent=m.name[0];
+  document.getElementById('cl-person-name').textContent=m.name+' 的清單';
+  const lug=getPersonList(mid,'luggage'),sho=getPersonList(mid,'shopping');
+  const total=lug.length+sho.length,done=lug.filter(i=>i.done).length+sho.filter(i=>i.done).length;
+  const sumEl=document.getElementById('cl-person-summary');if(sumEl)sumEl.textContent='完成 '+done+'/'+total+' 項';
+  renderPersonChips();renderChecklistItems();
+}
+
 function switchChecklist(type){
   curCheckType=type;
   document.getElementById('cl-luggage').style.display=type==='luggage'?'block':'none';
@@ -748,14 +804,25 @@ function switchChecklist(type){
   const lBtn=document.getElementById('cl-tab-luggage');const sBtn=document.getElementById('cl-tab-shopping');
   lBtn.style.background=type==='luggage'?'var(--green-dark)':'var(--cream)';lBtn.style.color=type==='luggage'?'var(--cream)':'var(--stone)';
   sBtn.style.background=type==='shopping'?'var(--green-dark)':'var(--cream)';sBtn.style.color=type==='shopping'?'var(--cream)':'var(--stone)';
-  renderChecklist();
+  renderChecklistItems();
 }
 function renderChecklist(){
-  renderCheckItems('luggage',luggage,LUGGAGE_CATS,luggageCatFilter,'luggage-cats','luggageList','luggage-progress','luggage-count');
-  renderCheckItems('shopping',shopping,SHOPPING_CATS,shoppingCatFilter,'shopping-cats','shoppingList','shopping-progress','shopping-count');
+  renderPersonChips();
+  if(!curClPerson&&members.length){curClPerson=members[0].id;selectClPerson(curClPerson);return;}
+  if(!curClPerson)return;
+  renderChecklistItems();
+}
+function renderChecklistItems(){
+  if(!curClPerson)return;
+  const lug=getPersonList(curClPerson,'luggage');
+  const sho=getPersonList(curClPerson,'shopping');
+  renderCheckItems('luggage',lug,LUGGAGE_CATS,luggageCatFilter,'luggage-cats','luggageList','luggage-progress','luggage-count');
+  renderCheckItems('shopping',sho,SHOPPING_CATS,shoppingCatFilter,'shopping-cats','shoppingList','shopping-progress','shopping-count');
+  const total=lug.length+sho.length,done=lug.filter(i=>i.done).length+sho.filter(i=>i.done).length;
+  const sumEl=document.getElementById('cl-person-summary');if(sumEl)sumEl.textContent='完成 '+done+'/'+total+' 項';
 }
 function renderCheckItems(type,items,cats,filter,catsId,listId,progId,countId){
-  document.getElementById(catsId).innerHTML=cats.map(c=>`<div class="cat-chip${c===filter?' active':''}" onclick="${type==='luggage'?'luggageCatFilter':'shoppingCatFilter'}='${c}';renderChecklist()">${c}</div>`).join('');
+  document.getElementById(catsId).innerHTML=cats.map(c=>`<div class="cat-chip${c===filter?' active':''}" onclick="${type==='luggage'?'luggageCatFilter':'shoppingCatFilter'}='${c}';renderChecklistItems()">${c}</div>`).join('');
   const filtered=filter==='全部'?items:items.filter(i=>i.cat===filter);
   const allDone=items.filter(i=>i.done).length;
   document.getElementById(progId).style.width=items.length?(allDone/items.length*100)+'%':'0%';
@@ -770,10 +837,35 @@ function renderCheckItems(type,items,cats,filter,catsId,listId,progId,countId){
       <button class="check-del" onclick="delCheck('${type}','${item.id}')">🗑</button>
     </div>`).join('');
 }
-function toggleCheck(type,id){const arr=type==='luggage'?luggage:shopping;const item=arr.find(i=>i.id===id);if(item)item.done=!item.done;save();renderChecklist();}
-function delCheck(type,id){if(type==='luggage')luggage=luggage.filter(i=>i.id!==id);else shopping=shopping.filter(i=>i.id!==id);save();renderChecklist();}
-function openCheckModal(type){curCheckType=type;document.getElementById('checkModalTitle').textContent=type==='luggage'?'新增行李項目 🧳':'新增購買項目 🛍';document.getElementById('ck-name').value='';document.getElementById('ck-note').value='';const cats=type==='luggage'?LUGGAGE_CATS.slice(1):SHOPPING_CATS.slice(1);document.getElementById('ck-cat').innerHTML=cats.map(c=>`<option value="${c}">${c}</option>`).join('');document.getElementById('checkModal').style.display='flex';}
-function saveCheckItem(){const name=document.getElementById('ck-name').value.trim();if(!name){showToast('請輸入名稱');return;}const item={id:(curCheckType==='luggage'?'l':'sh')+Date.now(),name,cat:document.getElementById('ck-cat').value,note:document.getElementById('ck-note').value.trim(),done:false};if(curCheckType==='luggage')luggage.push(item);else shopping.push(item);save();closeModal('checkModal');renderChecklist();showToast('已新增 🌿');}
+function toggleCheck(type,id){
+  if(!curClPerson)return;
+  const arr=getPersonList(curClPerson,type);
+  const item=arr.find(i=>i.id===id);if(item)item.done=!item.done;
+  setPersonList(curClPerson,type,arr);save();renderChecklistItems();
+}
+function delCheck(type,id){
+  if(!curClPerson)return;
+  const arr=getPersonList(curClPerson,type).filter(i=>i.id!==id);
+  setPersonList(curClPerson,type,arr);save();renderChecklistItems();
+}
+function openCheckModal(type){
+  if(!curClPerson){showToast('請先選擇旅伴');return;}
+  curCheckType=type;
+  const m=members.find(x=>x.id===curClPerson);
+  document.getElementById('checkModalTitle').textContent=(type==='luggage'?'🧳 ':'🛍 ')+(m?m.name+'的':'')+(type==='luggage'?' 行李清單':' 購買清單');
+  document.getElementById('ck-name').value='';document.getElementById('ck-note').value='';
+  const cats=type==='luggage'?LUGGAGE_CATS.slice(1):SHOPPING_CATS.slice(1);
+  document.getElementById('ck-cat').innerHTML=cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+  document.getElementById('checkModal').style.display='flex';
+}
+function saveCheckItem(){
+  const name=document.getElementById('ck-name').value.trim();if(!name){showToast('請輸入名稱');return;}
+  if(!curClPerson){showToast('請先選擇旅伴');return;}
+  const item={id:(curCheckType==='luggage'?'l':'sh')+Date.now(),name,cat:document.getElementById('ck-cat').value,note:document.getElementById('ck-note').value.trim(),done:false};
+  const arr=getPersonList(curClPerson,curCheckType);arr.push(item);
+  setPersonList(curClPerson,curCheckType,arr);
+  save();closeModal('checkModal');renderChecklistItems();showToast('已新增 🌿');
+}
 
 /* ── Spots ── */
 function renderSpots(){
@@ -872,7 +964,9 @@ function renderAll(){updateDates();renderSchedule();renderSplit();renderMap();}
 window.addEventListener('load',async()=>{
   document.getElementById('loadingMsg').textContent='載入行程資料...';
   try{const r=await fetch('https://api.exchangerate-api.com/v4/latest/JPY');if(r.ok){const d=await r.json();if(d.rates?.TWD)rate=parseFloat((1/d.rates.TWD).toFixed(4));}}catch(e){}
-  renderAll();renderChecklist();
+  renderAll();
+  if(members.length){curClPerson=members[0].id;}
+  renderChecklist();
   setTimeout(()=>{document.getElementById('loadingScreen').style.display='none';document.getElementById('app').style.display='block';},900);
 });
 </script>

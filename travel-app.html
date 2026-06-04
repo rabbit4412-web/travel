@@ -82,8 +82,12 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
 /* city badge */
 .city-badge{display:inline-flex;align-items:center;gap:5px;background:var(--green-dark);color:var(--cream);font-size:11px;padding:3px 10px;border-radius:20px;font-family:'Noto Serif JP',serif;margin-bottom:14px}
 /* checklist */
-.check-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--cream);border-radius:6px;border:var(--border);box-shadow:var(--shadow);margin-bottom:8px;transition:all .15s}
+.check-item{background:var(--cream);border-radius:6px;border:var(--border);box-shadow:var(--shadow);margin-bottom:8px;transition:all .15s;overflow:hidden}
 .check-item.done{opacity:.55}
+.check-item-row{display:flex;align-items:flex-start;gap:10px;padding:10px 12px}
+.check-item-img{width:100%;aspect-ratio:3/2;object-fit:cover;border-top:var(--border);cursor:pointer;display:block}
+.check-img-add{width:100%;padding:8px;text-align:center;font-size:11px;color:var(--stone);font-family:'Noto Serif JP',serif;background:var(--green-mist);border-top:1px dashed var(--green-light);cursor:pointer;transition:all .15s}
+.check-img-add:hover{background:var(--green-pale);color:var(--green-dark)}
 .check-box{width:20px;height:20px;border-radius:4px;border:2px solid var(--green);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;margin-top:1px}
 .check-box.checked{background:var(--green);border-color:var(--green)}
 .check-box.checked::after{content:'✓';color:var(--cream);font-size:12px;font-weight:700}
@@ -436,9 +440,25 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
     <div class="modal">
       <div class="modal-handle"></div>
       <div class="modal-title" id="checkModalTitle">新增項目</div>
-      <div class="form-group"><label class="form-label">名稱</label><input class="form-input" id="ck-name" placeholder="護照"></div>
+      <div class="form-group"><label class="form-label">名稱</label><input class="form-input" id="ck-name" placeholder="熊本熊商品"></div>
       <div class="form-group"><label class="form-label">分類</label><select class="form-select" id="ck-cat"></select></div>
-      <div class="form-group"><label class="form-label">備註（選填）</label><input class="form-input" id="ck-note" placeholder="備註..."></div>
+      <div class="form-group"><label class="form-label">備註（選填）</label><input class="form-input" id="ck-note" placeholder="在哪裡買、多少錢..."></div>
+      <div class="form-group" id="ck-img-group" style="display:none">
+        <label class="form-label">商品圖片（選填）</label>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input class="form-input" id="ck-img-url" placeholder="貼上 imgBB 圖片網址..." style="flex:1">
+          <button onclick="previewCkImg()" style="background:var(--green);color:var(--cream);border:none;border-radius:5px;padding:0 12px;font-size:12px;cursor:pointer;white-space:nowrap;font-family:'Noto Serif JP',serif">預覽</button>
+        </div>
+        <div style="text-align:center;font-size:11px;color:var(--stone);font-family:'Noto Serif JP',serif;margin-bottom:8px">── 或直接上傳 ──</div>
+        <div onclick="document.getElementById('ck-img-file').click()" style="border:2px dashed var(--green-light);border-radius:6px;padding:14px;text-align:center;cursor:pointer;background:var(--green-mist)">
+          <input type="file" id="ck-img-file" accept="image/*" style="display:none" onchange="handleCkImgFile(event)">
+          <div style="font-size:11px;color:var(--stone);font-family:'Noto Serif JP',serif">📷 點此選擇商品圖片</div>
+        </div>
+        <div id="ck-img-preview" style="margin-top:8px;display:none">
+          <img id="ck-img-preview-img" style="width:100%;border-radius:6px;border:var(--border);object-fit:cover;max-height:150px">
+          <button onclick="clearCkImg()" style="width:100%;margin-top:6px;background:var(--cream-dark);color:var(--stone);border:var(--border);border-radius:5px;padding:7px;font-size:12px;cursor:pointer;font-family:'Noto Serif JP',serif">✕ 移除圖片</button>
+        </div>
+      </div>
       <button class="btn-primary" onclick="saveCheckItem()">新增</button>
       <button class="btn-primary btn-cancel" onclick="closeModal('checkModal')" style="margin-top:9px">取消</button>
     </div>
@@ -831,10 +851,16 @@ function renderCheckItems(type,items,cats,filter,catsId,listId,progId,countId){
   if(!filtered.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">此分類沒有項目</div></div>`;return;}
   el.innerHTML=filtered.map(item=>`
     <div class="check-item${item.done?' done':''}">
-      <div class="check-box${item.done?' checked':''}" onclick="toggleCheck('${type}','${item.id}')"></div>
-      <div class="check-label">${item.name}${item.note?`<div style="font-size:10px;color:var(--stone);margin-top:1px">${item.note}</div>`:''}</div>
-      <span class="check-category">${item.cat}</span>
-      <button class="check-del" onclick="delCheck('${type}','${item.id}')">🗑</button>
+      <div class="check-item-row">
+        <div class="check-box${item.done?' checked':''}" onclick="toggleCheck('${type}','${item.id}')"></div>
+        <div class="check-label">${item.name}${item.note?`<div style="font-size:10px;color:var(--stone);margin-top:1px">${item.note}</div>`:''}</div>
+        <span class="check-category">${item.cat}</span>
+        <button class="check-del" onclick="delCheck('${type}','${item.id}')">🗑</button>
+      </div>
+      ${type==='shopping'?(item.img
+        ?`<img class="check-item-img" src="${item.img}" onclick="openLightbox('${item.img}')" onerror="this.style.display='none'">`
+        :`<div class="check-img-add" onclick="openImgModal('${item.id}')">📷 點此新增商品圖片</div>`
+      ):''}
     </div>`).join('');
 }
 function toggleCheck(type,id){
@@ -854,14 +880,73 @@ function openCheckModal(type){
   const m=members.find(x=>x.id===curClPerson);
   document.getElementById('checkModalTitle').textContent=(type==='luggage'?'🧳 ':'🛍 ')+(m?m.name+'的':'')+(type==='luggage'?' 行李清單':' 購買清單');
   document.getElementById('ck-name').value='';document.getElementById('ck-note').value='';
+  document.getElementById('ck-img-url').value='';
+  document.getElementById('ck-img-preview').style.display='none';
+  document.getElementById('ck-img-group').style.display=type==='shopping'?'block':'none';
   const cats=type==='luggage'?LUGGAGE_CATS.slice(1):SHOPPING_CATS.slice(1);
   document.getElementById('ck-cat').innerHTML=cats.map(c=>`<option value="${c}">${c}</option>`).join('');
   document.getElementById('checkModal').style.display='flex';
 }
+function previewCkImg(){
+  const url=document.getElementById('ck-img-url').value.trim();
+  if(!url){showToast('請輸入圖片網址');return;}
+  document.getElementById('ck-img-preview-img').src=url;
+  document.getElementById('ck-img-preview').style.display='block';
+}
+function handleCkImgFile(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    document.getElementById('ck-img-preview-img').src=ev.target.result;
+    document.getElementById('ck-img-url').value=ev.target.result;
+    document.getElementById('ck-img-preview').style.display='block';
+  };
+  reader.readAsDataURL(file);
+}
+function clearCkImg(){
+  document.getElementById('ck-img-url').value='';
+  document.getElementById('ck-img-preview').style.display='none';
+  document.getElementById('ck-img-preview-img').src='';
+}
+// 從清單卡片直接新增圖片
+let editImgItemId=null;
+function openImgModal(itemId){
+  if(!curClPerson)return;
+  editImgItemId=itemId;
+  document.getElementById('ck-img-url').value='';
+  document.getElementById('ck-img-preview').style.display='none';
+  document.getElementById('ck-img-group').style.display='block';
+  document.getElementById('checkModalTitle').textContent='🛍 新增商品圖片';
+  document.getElementById('ck-name').value='';
+  document.getElementById('ck-note').value='';
+  // hide name/cat/note, show only img
+  document.getElementById('ck-name').closest('.form-group').style.display='none';
+  document.getElementById('ck-cat').closest('.form-group').style.display='none';
+  document.getElementById('ck-note').closest('.form-group').style.display='none';
+  document.getElementById('checkModal').style.display='flex';
+  document.querySelector('#checkModal .btn-primary').onclick=saveImgOnly;
+}
+function saveImgOnly(){
+  const url=document.getElementById('ck-img-url').value.trim();
+  if(!url){showToast('請選擇或輸入圖片');return;}
+  if(!curClPerson||!editImgItemId)return;
+  const arr=getPersonList(curClPerson,'shopping');
+  const item=arr.find(i=>i.id===editImgItemId);
+  if(item)item.img=url;
+  setPersonList(curClPerson,'shopping',arr);
+  save();closeModal('checkModal');
+  // restore modal
+  document.getElementById('ck-name').closest('.form-group').style.display='';
+  document.getElementById('ck-cat').closest('.form-group').style.display='';
+  document.getElementById('ck-note').closest('.form-group').style.display='';
+  document.querySelector('#checkModal .btn-primary').onclick=saveCheckItem;
+  renderChecklistItems();showToast('圖片已加入 🌸');
+}
 function saveCheckItem(){
   const name=document.getElementById('ck-name').value.trim();if(!name){showToast('請輸入名稱');return;}
   if(!curClPerson){showToast('請先選擇旅伴');return;}
-  const item={id:(curCheckType==='luggage'?'l':'sh')+Date.now(),name,cat:document.getElementById('ck-cat').value,note:document.getElementById('ck-note').value.trim(),done:false};
+  const img=curCheckType==='shopping'?document.getElementById('ck-img-url').value.trim():'';
+  const item={id:(curCheckType==='luggage'?'l':'sh')+Date.now(),name,cat:document.getElementById('ck-cat').value,note:document.getElementById('ck-note').value.trim(),done:false,img:img||''};
   const arr=getPersonList(curClPerson,curCheckType);arr.push(item);
   setPersonList(curClPerson,curCheckType,arr);
   save();closeModal('checkModal');renderChecklistItems();showToast('已新增 🌿');

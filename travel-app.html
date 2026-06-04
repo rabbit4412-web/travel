@@ -3,670 +3,209 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>旅遊GOGO · Tokyo Techo</title>
+<title>熊本・博多手帳</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600&family=Noto+Sans+TC:wght@300;400;500&family=Zen+Kurenaido&display=swap" rel="stylesheet">
 <style>
-:root {
-  --green: #5C8A5A;
-  --green-light: #8FBC8F;
-  --green-pale: #E8F3E8;
-  --green-dark: #3A6B38;
-  --green-mist: #F2F7F2;
-  --cream: #FDFBF5;
-  --cream-dark: #F5F0E8;
-  --brown: #7B6B4E;
-  --brown-light: #A89880;
-  --ink: #3D3325;
-  --ink-soft: #6B5D4A;
-  --stone: #9B8E7A;
-  --sketch: #5C4A30;
-  --white: #FDFCF8;
-  --shadow-sketch: 2px 3px 0px rgba(92,74,48,0.12);
-  --border-sketch: 1.5px solid rgba(92,74,48,0.25);
-}
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-body {
-  font-family: 'Noto Sans TC', sans-serif;
-  background: var(--cream-dark);
-  background-image:
-    repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(92,138,90,0.06) 27px, rgba(92,138,90,0.06) 28px),
-    repeating-linear-gradient(90deg, transparent, transparent 27px, rgba(92,138,90,0.04) 27px, rgba(92,138,90,0.04) 28px);
-  color: var(--ink);
-  min-height: 100vh;
-}
-#app { max-width: 430px; margin: 0 auto; min-height: 100vh; background: var(--white); position: relative;
-  box-shadow: 0 0 40px rgba(92,74,48,0.15);
-  border-left: 1px solid rgba(92,74,48,0.1);
-  border-right: 1px solid rgba(92,74,48,0.1);
-}
-
-/* ── 手帳紋理背景 ── */
-#app::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  max-width: 430px;
-  margin: 0 auto;
-  background-image:
-    repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(92,138,90,0.05) 27px, rgba(92,138,90,0.05) 28px);
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* ── Header ── */
-.app-header {
-  background: var(--green-dark);
-  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-  padding: 18px 20px 0;
-  position: sticky; top: 0; z-index: 100;
-}
-.app-header-top { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 6px; }
-.app-title {
-  font-family: 'Zen Kurenaido', 'Noto Serif JP', serif;
-  color: var(--cream);
-  font-size: 20px;
-  letter-spacing: 2px;
-  line-height: 1.3;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.title-stamp {
-  background: var(--green-light);
-  color: var(--green-dark);
-  font-size: 9px;
-  padding: 2px 8px;
-  border-radius: 2px;
-  letter-spacing: 1px;
-  font-weight: 500;
-  border: 1px solid rgba(255,255,255,.2);
-}
-.app-subtitle {
-  font-family: 'Noto Serif JP', serif;
-  color: rgba(253,251,245,.6);
-  font-size: 10px;
-  font-weight: 300;
-  letter-spacing: 4px;
-  margin-top: 2px;
-}
-.sync-row { display: flex; align-items: center; gap: 5px; }
-.sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--stone); flex-shrink: 0; }
-.sync-dot.on { background: #7BC67A; animation: pulse 2s infinite; }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-.sync-text { font-size: 10px; color: rgba(253,251,245,.5); }
-
-/* ── 日期橫向滑動 ── */
-.date-scroller {
-  display: flex; gap: 8px;
-  padding: 10px 0 0;
-  overflow-x: auto; scrollbar-width: none;
-}
-.date-scroller::-webkit-scrollbar { display: none; }
-.date-chip {
-  flex-shrink: 0;
-  padding: 6px 14px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all .2s;
-  background: rgba(255,255,255,.1);
-  border: 1px solid rgba(255,255,255,.15);
-  position: relative;
-}
-.date-chip::after {
-  content: '';
-  position: absolute;
-  bottom: -1px; left: 4px; right: 4px;
-  height: 2px;
-  background: transparent;
-  border-radius: 1px;
-  transition: background .2s;
-}
-.date-chip.active { background: rgba(255,255,255,.18); border-color: rgba(255,255,255,.35); }
-.date-chip.active::after { background: var(--green-light); }
-.date-chip .day-num {
-  font-family: 'Zen Kurenaido', serif;
-  font-size: 18px; color: rgba(253,251,245,.9);
-  display: block; line-height: 1;
-}
-.date-chip .day-label { font-size: 9px; color: rgba(253,251,245,.5); letter-spacing: 1px; }
-
-/* ── Nav Tabs ── */
-.nav-tabs {
-  display: flex;
-  background: var(--green-dark);
-  padding: 6px 20px 0;
-  border-bottom: 2px solid rgba(255,255,255,.08);
-}
-.nav-tab {
-  flex: 1; text-align: center;
-  padding: 6px 2px 10px;
-  font-size: 11px; font-weight: 500;
-  color: rgba(253,251,245,.45);
-  cursor: pointer; transition: all .2s;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
-  letter-spacing: .5px;
-  font-family: 'Noto Serif JP', serif;
-}
-.nav-tab.active { color: var(--cream); border-bottom-color: var(--green-light); }
-.nav-tab .tab-icon { font-size: 15px; display: block; margin-bottom: 2px; }
-
-/* ── Content ── */
-.content { padding: 20px; padding-bottom: 100px; position: relative; z-index: 1; }
-
-/* ── 手繪天氣卡 ── */
-.weather-card {
-  background: var(--green-pale);
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 20px;
-  border: var(--border-sketch);
-  box-shadow: var(--shadow-sketch);
-  position: relative;
-  overflow: hidden;
-}
-.weather-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cpath d='M10 80 Q30 60 50 70 Q70 80 90 60' stroke='rgba(92,138,90,0.1)' fill='none' stroke-width='1.5'/%3E%3Cpath d='M0 50 Q20 30 40 40 Q60 50 80 30 Q90 20 100 25' stroke='rgba(92,138,90,0.08)' fill='none' stroke-width='1'/%3E%3C/svg%3E");
-  pointer-events: none;
-}
-.weather-main { display: flex; align-items: center; gap: 12px; }
-.weather-icon { font-size: 38px; line-height: 1; filter: drop-shadow(1px 2px 0 rgba(92,74,48,.1)); }
-.weather-temp {
-  font-family: 'Zen Kurenaido', serif;
-  font-size: 36px; color: var(--green-dark);
-  line-height: 1;
-}
-.weather-desc { font-size: 12px; color: var(--ink-soft); margin-top: 2px; font-family: 'Noto Serif JP', serif; }
-.weather-city { font-size: 9px; color: var(--stone); letter-spacing: 3px; margin-top: 3px; }
-.weather-extra { font-size: 11px; color: var(--ink-soft); text-align: right; line-height: 2; }
-
-/* ── 手繪裝飾葉子 ── */
-.deco-leaf {
-  position: absolute;
-  right: 12px; top: 12px;
-  font-size: 20px;
-  opacity: 0.3;
-  transform: rotate(15deg);
-}
-
-/* ── Section Header ── */
-.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-.section-title {
-  font-family: 'Zen Kurenaido', 'Noto Serif JP', serif;
-  font-size: 17px; color: var(--ink);
-  display: flex; align-items: center; gap: 6px;
-}
-.section-title::before {
-  content: '';
-  display: inline-block;
-  width: 3px; height: 16px;
-  background: var(--green);
-  border-radius: 2px;
-  transform: skewX(-8deg);
-}
-.section-jp { font-family: 'Noto Serif JP', serif; font-size: 10px; color: var(--stone); letter-spacing: 2px; display: block; margin-bottom: 2px; }
-.btn-add {
-  background: var(--green-pale);
-  color: var(--green-dark);
-  border: var(--border-sketch);
-  border-radius: 4px;
-  padding: 6px 14px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  font-family: 'Noto Serif JP', serif;
-  box-shadow: 1px 2px 0 rgba(92,74,48,.1);
-  transition: all .15s;
-}
-.btn-add:hover { transform: translateY(-1px); box-shadow: 1px 3px 0 rgba(92,74,48,.15); }
-.btn-add:active { transform: translateY(0); }
-
-/* ── Timeline ── */
-.timeline { position: relative; }
-.timeline::before {
-  content: '';
-  position: absolute;
-  left: 42px; top: 0; bottom: 0;
-  width: 1px;
-  background: repeating-linear-gradient(to bottom, var(--green-light) 0, var(--green-light) 4px, transparent 4px, transparent 8px);
-}
-.schedule-item { display: flex; margin-bottom: 16px; position: relative; }
-.time-col { width: 78px; flex-shrink: 0; padding-top: 8px; }
-.time-text {
-  font-family: 'Zen Kurenaido', serif;
-  font-size: 15px; color: var(--green-dark);
-  text-align: right; padding-right: 18px;
-}
-.time-dot {
-  position: absolute; left: 37px; top: 10px;
-  width: 11px; height: 11px; border-radius: 50%;
-  background: var(--cream);
-  border: 2px solid var(--green);
-  box-shadow: 0 0 0 3px var(--green-pale);
-}
-.schedule-card {
-  flex: 1;
-  background: var(--cream);
-  border-radius: 6px;
-  padding: 12px 14px;
-  border: var(--border-sketch);
-  box-shadow: 2px 3px 0 rgba(92,74,48,.08);
-  position: relative;
-  transition: all .15s;
-}
-.schedule-card:hover { transform: translateY(-1px); box-shadow: 2px 4px 0 rgba(92,74,48,.12); }
-.schedule-name { font-weight: 500; font-size: 14px; color: var(--ink); font-family: 'Noto Serif JP', serif; }
-.schedule-place { font-size: 11px; color: var(--stone); margin-top: 3px; display: flex; align-items: center; gap: 3px; }
-.schedule-note {
-  font-size: 11px; color: var(--ink-soft);
-  margin-top: 6px; padding-top: 6px;
-  border-top: 1px dashed rgba(92,74,48,.2);
-  font-style: italic;
-  font-family: 'Noto Serif JP', serif;
-}
-.card-actions { position: absolute; top: 8px; right: 10px; display: flex; gap: 4px; }
-.card-btn { background: none; border: none; font-size: 13px; cursor: pointer; opacity: .4; transition: opacity .15s; padding: 2px; }
-.card-btn:hover { opacity: .8; }
-.tag {
-  display: inline-block; font-size: 10px;
-  padding: 1px 8px; border-radius: 2px;
-  margin-top: 6px; font-weight: 500;
-  font-family: 'Noto Serif JP', serif;
-  border: 1px solid currentColor;
-}
-.tag-food { color: #7B6B2A; background: rgba(123,107,42,.08); }
-.tag-sight { color: var(--green-dark); background: rgba(58,107,56,.08); }
-.tag-shop { color: #8B4A2A; background: rgba(139,74,42,.08); }
-.tag-hotel { color: var(--brown); background: rgba(123,107,78,.08); }
-.tag-transport { color: var(--stone); background: rgba(155,142,122,.08); }
-
-/* ── 圖片區 ── */
-.photo-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-  margin-top: 8px;
-}
-.photo-item {
-  aspect-ratio: 1;
-  border-radius: 4px;
-  overflow: hidden;
-  border: var(--border-sketch);
-  box-shadow: 1px 2px 0 rgba(92,74,48,.1);
-  cursor: pointer;
-  transition: all .15s;
-  position: relative;
-  background: var(--green-pale);
-}
-.photo-item:hover { transform: scale(1.02) rotate(0.5deg); }
-.photo-item img { width: 100%; height: 100%; object-fit: cover; }
-.photo-add {
-  aspect-ratio: 1;
-  border-radius: 4px;
-  border: 1.5px dashed var(--green-light);
-  background: var(--green-mist);
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  cursor: pointer; gap: 4px;
-  transition: all .15s;
-}
-.photo-add:hover { background: var(--green-pale); border-color: var(--green); }
-.photo-add-icon { font-size: 20px; opacity: .5; }
-.photo-add-text { font-size: 10px; color: var(--stone); font-family: 'Noto Serif JP', serif; }
-
-/* ── Modal ── */
-.modal-overlay {
-  position: fixed; inset: 0;
-  background: rgba(61,51,37,.55);
-  z-index: 200;
-  display: flex; align-items: flex-end; justify-content: center;
-  backdrop-filter: blur(3px);
-}
-.modal {
-  background: var(--cream);
-  border-radius: 16px 16px 0 0;
-  padding: 24px 22px 40px;
-  width: 100%; max-width: 430px;
-  animation: slideUp .28s cubic-bezier(.34,1.4,.64,1);
-  background-image: repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(92,138,90,0.05) 27px, rgba(92,138,90,0.05) 28px);
-}
-@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
-.modal-handle { width: 36px; height: 3px; background: var(--green-light); border-radius: 2px; margin: 0 auto 20px; }
-.modal-title {
-  font-family: 'Zen Kurenaido', 'Noto Serif JP', serif;
-  font-size: 19px; color: var(--ink);
-  margin-bottom: 18px;
-  padding-bottom: 10px;
-  border-bottom: 1px dashed rgba(92,74,48,.2);
-}
-.form-group { margin-bottom: 14px; }
-.form-label {
-  font-size: 11px; font-weight: 500;
-  color: var(--stone); letter-spacing: 1px;
-  margin-bottom: 5px; display: block;
-  text-transform: uppercase;
-  font-family: 'Noto Serif JP', serif;
-}
-.form-input, .form-select {
-  width: 100%; padding: 10px 14px;
-  border-radius: 5px;
-  border: var(--border-sketch);
-  background: var(--white);
-  font-family: 'Noto Sans TC', sans-serif;
-  font-size: 14px; color: var(--ink);
-  outline: none; transition: border-color .2s;
-  -webkit-appearance: none;
-  box-shadow: inset 1px 1px 3px rgba(92,74,48,.06);
-}
-.form-input:focus, .form-select:focus { border-color: var(--green); }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.btn-primary {
-  width: 100%;
-  background: var(--green-dark);
-  color: var(--cream);
-  border: none; border-radius: 5px;
-  padding: 14px; font-size: 14px; font-weight: 500;
-  cursor: pointer; margin-top: 8px;
-  font-family: 'Noto Serif JP', serif;
-  letter-spacing: 1px;
-  box-shadow: 2px 3px 0 rgba(58,107,56,.3);
-  transition: all .15s;
-}
-.btn-primary:hover { transform: translateY(-1px); box-shadow: 2px 4px 0 rgba(58,107,56,.35); }
-.btn-cancel { background: var(--cream-dark); color: var(--stone); box-shadow: 1px 2px 0 rgba(92,74,48,.1); margin-top: 10px; }
-.btn-cancel:hover { box-shadow: 1px 3px 0 rgba(92,74,48,.15); }
-
-/* ── 分帳 ── */
-.rate-card {
-  background: var(--green-dark);
-  background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 20 Q10 10 20 15 Q30 20 40 10' stroke='rgba(255,255,255,0.05)' fill='none' stroke-width='1'/%3E%3C/svg%3E");
-  border-radius: 8px; padding: 16px 18px;
-  margin-bottom: 18px;
-  border: var(--border-sketch);
-  box-shadow: var(--shadow-sketch);
-  display: flex; justify-content: space-between; align-items: center;
-}
-.rate-label {
-  font-family: 'Noto Serif JP', serif;
-  font-size: 10px; color: rgba(253,251,245,.6);
-  letter-spacing: 2px; margin-bottom: 3px;
-}
-.rate-value {
-  font-family: 'Zen Kurenaido', serif;
-  font-size: 28px; color: var(--cream);
-}
-.rate-sub { font-size: 11px; color: rgba(253,251,245,.4); margin-top: 1px; }
-.rate-input {
-  width: 95px; padding: 7px 10px;
-  border-radius: 4px; text-align: right;
-  border: 1px solid rgba(255,255,255,.2);
-  background: rgba(255,255,255,.08);
-  color: var(--cream); font-size: 15px; font-weight: 500;
-  outline: none;
-  font-family: 'Zen Kurenaido', serif;
-}
-.rate-result { font-size: 11px; color: var(--green-light); margin-top: 5px; text-align: right; font-family: 'Noto Serif JP', serif; }
-
-.member-chips { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 18px; }
-.member-chip {
-  display: flex; align-items: center; gap: 5px;
-  background: var(--green-pale);
-  border: var(--border-sketch);
-  border-radius: 4px; padding: 5px 12px;
-  font-size: 13px; font-weight: 500;
-  cursor: pointer; transition: all .15s;
-  font-family: 'Noto Serif JP', serif;
-  box-shadow: 1px 2px 0 rgba(92,74,48,.08);
-}
-.member-avatar {
-  width: 20px; height: 20px; border-radius: 50%;
-  background: var(--green); color: var(--cream);
-  font-size: 11px; display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-}
-
-.expense-item {
-  background: var(--cream);
-  border-radius: 6px; padding: 12px 14px;
-  margin-bottom: 8px;
-  border: var(--border-sketch);
-  box-shadow: 2px 2px 0 rgba(92,74,48,.07);
-  display: flex; justify-content: space-between; align-items: center;
-}
-.expense-name { font-weight: 500; font-size: 13px; color: var(--ink); font-family: 'Noto Serif JP', serif; }
-.expense-payer { font-size: 11px; color: var(--stone); margin-top: 1px; }
-.expense-jpy {
-  font-family: 'Zen Kurenaido', serif;
-  font-size: 16px; color: var(--ink); text-align: right;
-}
-.expense-twd { font-size: 11px; color: var(--green-dark); text-align: right; }
-
-.settlement-card {
-  background: var(--green-pale);
-  border: var(--border-sketch);
-  border-radius: 6px; padding: 14px;
-  margin-bottom: 8px;
-  box-shadow: 1px 2px 0 rgba(92,74,48,.08);
-}
-.settlement-amount {
-  font-family: 'Zen Kurenaido', serif;
-  font-size: 18px; color: var(--green-dark);
-}
-
-.split-summary {
-  background: var(--green-dark);
-  border-radius: 8px; padding: 18px;
-  margin-top: 18px;
-  border: var(--border-sketch);
-  box-shadow: var(--shadow-sketch);
-}
-
-/* ── 地圖 ── */
-.map-placeholder {
-  border-radius: 8px; height: 180px;
-  background: var(--green-pale);
-  margin-bottom: 18px;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 8px;
-  border: var(--border-sketch);
-  box-shadow: var(--shadow-sketch);
-  position: relative; overflow: hidden;
-}
-.map-placeholder::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='150'%3E%3Cpath d='M20 80 Q60 40 100 60 Q140 80 180 40' stroke='rgba(92,138,90,0.15)' fill='none' stroke-width='2' stroke-dasharray='4 3'/%3E%3Ccircle cx='60' cy='60' r='4' fill='rgba(92,138,90,0.2)'/%3E%3Ccircle cx='120' cy='70' r='4' fill='rgba(92,138,90,0.2)'/%3E%3Ccircle cx='160' cy='45' r='4' fill='rgba(92,138,90,0.2)'/%3E%3C/svg%3E");
-  background-repeat: no-repeat; background-position: center;
-}
-.location-item {
-  background: var(--cream);
-  border-radius: 6px; padding: 11px 14px;
-  display: flex; align-items: center; gap: 10px;
-  border: var(--border-sketch);
-  box-shadow: 1px 2px 0 rgba(92,74,48,.07);
-  cursor: pointer; transition: all .15s;
-  margin-bottom: 8px;
-}
-.location-item:hover { transform: translateX(3px); }
-.location-num {
-  width: 26px; height: 26px; border-radius: 50%;
-  background: var(--green);
-  color: var(--cream); font-weight: 700; font-size: 12px;
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-  border: 1px solid var(--green-dark);
-}
-.nav-btn {
-  background: var(--green-pale);
-  color: var(--green-dark);
-  border: var(--border-sketch);
-  border-radius: 4px; padding: 5px 10px;
-  font-size: 11px; font-weight: 600; cursor: pointer;
-  margin-left: auto; flex-shrink: 0;
-  font-family: 'Noto Serif JP', serif;
-  box-shadow: 1px 1px 0 rgba(92,74,48,.1);
-}
-
-/* ── IBB 圖片上傳 ── */
-.ibb-section {
-  background: var(--cream);
-  border-radius: 8px;
-  border: var(--border-sketch);
-  box-shadow: var(--shadow-sketch);
-  padding: 16px;
-  margin-bottom: 16px;
-}
-.ibb-title {
-  font-family: 'Zen Kurenaido', serif;
-  font-size: 16px; color: var(--ink);
-  margin-bottom: 4px;
-}
-.ibb-desc { font-size: 12px; color: var(--stone); margin-bottom: 14px; line-height: 1.6; font-family: 'Noto Serif JP', serif; }
-.ibb-drop {
-  border: 2px dashed var(--green-light);
-  border-radius: 6px;
-  padding: 24px 16px;
-  text-align: center;
-  cursor: pointer;
-  transition: all .2s;
-  background: var(--green-mist);
-  position: relative;
-}
-.ibb-drop:hover { border-color: var(--green); background: var(--green-pale); }
-.ibb-drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-.ibb-drop-icon { font-size: 32px; margin-bottom: 8px; }
-.ibb-drop-text { font-size: 13px; color: var(--stone); font-family: 'Noto Serif JP', serif; }
-.ibb-drop-sub { font-size: 11px; color: var(--green-light); margin-top: 4px; }
-.ibb-preview { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 12px; }
-.ibb-img {
-  aspect-ratio: 1; border-radius: 5px; overflow: hidden;
-  border: var(--border-sketch);
-  box-shadow: 1px 2px 0 rgba(92,74,48,.1);
-  position: relative; cursor: pointer;
-  background: var(--green-pale);
-}
-.ibb-img img { width: 100%; height: 100%; object-fit: cover; }
-.ibb-img-del {
-  position: absolute; top: 3px; right: 3px;
-  background: rgba(61,51,37,.6); color: white;
-  border: none; border-radius: 50%;
-  width: 18px; height: 18px; font-size: 10px;
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-  opacity: 0; transition: opacity .15s;
-}
-.ibb-img:hover .ibb-img-del { opacity: 1; }
-.ibb-url-input {
-  display: flex; gap: 8px; margin-top: 10px;
-}
-.ibb-url-field {
-  flex: 1; padding: 9px 12px;
-  border-radius: 5px; border: var(--border-sketch);
-  background: var(--white);
-  font-size: 13px; color: var(--ink); outline: none;
-  font-family: 'Noto Sans TC', sans-serif;
-}
-.ibb-url-field:focus { border-color: var(--green); }
-.btn-ibb {
-  background: var(--green); color: var(--cream);
-  border: none; border-radius: 5px;
-  padding: 9px 14px; font-size: 12px; font-weight: 500;
-  cursor: pointer; white-space: nowrap;
-  font-family: 'Noto Serif JP', serif;
-  box-shadow: 1px 2px 0 rgba(58,107,56,.3);
-}
-
-/* ── Firebase ── */
-.setup-card {
-  background: var(--cream);
-  border-radius: 8px; padding: 20px;
-  border: var(--border-sketch);
-  box-shadow: var(--shadow-sketch);
-  margin-bottom: 18px;
-}
-.connected-banner {
-  background: var(--green-pale);
-  border: 1.5px solid var(--green-light);
-  border-radius: 8px; padding: 16px;
-  margin-bottom: 18px;
-  box-shadow: 1px 2px 0 rgba(92,74,48,.08);
-}
-
-/* ── Empty State ── */
-.empty-state { text-align: center; padding: 40px 16px; }
-.empty-icon { font-size: 44px; margin-bottom: 12px; opacity: .7; }
-.empty-text { color: var(--stone); font-size: 13px; line-height: 1.7; font-family: 'Noto Serif JP', serif; }
-
-/* ── Toast ── */
-.toast {
-  position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
-  background: var(--ink); color: var(--cream);
-  padding: 11px 22px; border-radius: 6px;
-  font-size: 13px; z-index: 300;
-  box-shadow: 2px 3px 0 rgba(92,74,48,.2);
-  white-space: nowrap;
-  font-family: 'Noto Serif JP', serif;
-  animation: fadeInOut 2.5s forwards;
-  border: 1px solid rgba(255,255,255,.1);
-}
-@keyframes fadeInOut { 0%{opacity:0;transform:translateX(-50%) translateY(8px)} 15%{opacity:1;transform:translateX(-50%) translateY(0)} 80%{opacity:1} 100%{opacity:0} }
-
-/* ── Loading ── */
-.loading-overlay {
-  position: fixed; inset: 0;
-  background: var(--green-dark);
-  background-image: repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(255,255,255,0.03) 27px, rgba(255,255,255,0.03) 28px);
-  z-index: 500;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 14px;
-}
-.loading-logo {
-  font-family: 'Zen Kurenaido', serif;
-  font-size: 28px; color: var(--cream);
-  letter-spacing: 4px;
-}
-.loading-sub {
-  font-family: 'Noto Serif JP', serif;
-  font-size: 11px; color: rgba(253,251,245,.5);
-  letter-spacing: 5px;
-}
-.loading-leaves { font-size: 36px; animation: sway 2s ease-in-out infinite; }
-@keyframes sway { 0%,100%{transform:rotate(-5deg)} 50%{transform:rotate(5deg)} }
-
-/* ── 手繪風分隔線 ── */
-.sketch-divider {
-  text-align: center;
-  color: var(--stone);
-  font-size: 16px;
-  margin: 4px 0 16px;
-  opacity: .4;
-  letter-spacing: 4px;
-}
+:root{
+  --green:#5C8A5A;--green-light:#8FBC8F;--green-pale:#E8F3E8;
+  --green-dark:#3A6B38;--green-mist:#F2F7F2;
+  --cream:#FDFBF5;--cream-dark:#F5F0E8;
+  --brown:#7B6B4E;--ink:#3D3325;--ink-soft:#6B5D4A;--stone:#9B8E7A;
+  --white:#FDFCF8;--red:#C0522A;--gold:#B8860B;
+  --border:1.5px solid rgba(92,74,48,0.22);
+  --shadow:2px 3px 0px rgba(92,74,48,0.1);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(92,138,90,0.06) 27px,rgba(92,138,90,0.06) 28px);
+  color:var(--ink);min-height:100vh}
+#app{max-width:430px;margin:0 auto;min-height:100vh;background:var(--white);position:relative;box-shadow:0 0 40px rgba(92,74,48,0.15)}
+#app::before{content:'';position:fixed;inset:0;max-width:430px;margin:0 auto;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(92,138,90,0.04) 27px,rgba(92,138,90,0.04) 28px);
+  pointer-events:none;z-index:0}
+.app-header{background:var(--green-dark);padding:18px 20px 0;position:sticky;top:0;z-index:100}
+.hdr-top{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:6px}
+.app-title{font-family:'Zen Kurenaido','Noto Serif JP',serif;color:var(--cream);font-size:20px;letter-spacing:2px;display:flex;align-items:center;gap:8px}
+.title-stamp{background:var(--green-light);color:var(--green-dark);font-size:9px;padding:2px 8px;border-radius:2px;letter-spacing:1px;font-weight:500}
+.app-subtitle{font-family:'Noto Serif JP',serif;color:rgba(253,251,245,.55);font-size:10px;letter-spacing:4px;margin-top:2px}
+.sync-row{display:flex;align-items:center;gap:5px}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--stone);flex-shrink:0}
+.sync-dot.on{background:#7BC67A;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.sync-text{font-size:10px;color:rgba(253,251,245,.45)}
+.date-scroller{display:flex;gap:8px;padding:10px 0 0;overflow-x:auto;scrollbar-width:none}
+.date-scroller::-webkit-scrollbar{display:none}
+.date-chip{flex-shrink:0;padding:6px 12px;border-radius:4px;cursor:pointer;transition:all .2s;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.12);position:relative;text-align:center}
+.date-chip::after{content:'';position:absolute;bottom:-1px;left:4px;right:4px;height:2px;background:transparent;border-radius:1px;transition:background .2s}
+.date-chip.active{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.32)}
+.date-chip.active::after{background:var(--green-light)}
+.date-chip .day-num{font-family:'Zen Kurenaido',serif;font-size:16px;color:rgba(253,251,245,.9);display:block;line-height:1}
+.date-chip .day-label{font-size:9px;color:rgba(253,251,245,.5);letter-spacing:.5px}
+.date-chip .day-city{font-size:8px;color:var(--green-light);margin-top:1px;font-family:'Noto Serif JP',serif}
+.nav-tabs{display:flex;background:var(--green-dark);padding:6px 0 0;border-bottom:2px solid rgba(255,255,255,.08);overflow-x:auto;scrollbar-width:none}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-tab{flex-shrink:0;text-align:center;padding:6px 14px 10px;font-size:11px;font-weight:500;color:rgba(253,251,245,.4);cursor:pointer;transition:all .2s;border-bottom:2px solid transparent;margin-bottom:-2px;letter-spacing:.3px;font-family:'Noto Serif JP',serif;white-space:nowrap}
+.nav-tab.active{color:var(--cream);border-bottom-color:var(--green-light)}
+.nav-tab .tab-icon{font-size:14px;display:block;margin-bottom:2px}
+.content{padding:18px 18px 100px;position:relative;z-index:1}
+.weather-card{background:var(--green-pale);border-radius:8px;padding:14px 16px;margin-bottom:18px;border:var(--border);box-shadow:var(--shadow);position:relative;overflow:hidden}
+.weather-temp{font-family:'Zen Kurenaido',serif;font-size:34px;color:var(--green-dark);line-height:1}
+.weather-desc{font-size:12px;color:var(--ink-soft);font-family:'Noto Serif JP',serif}
+.weather-extra{font-size:11px;color:var(--ink-soft);text-align:right;line-height:2}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.section-title{font-family:'Zen Kurenaido','Noto Serif JP',serif;font-size:17px;color:var(--ink);display:flex;align-items:center;gap:6px}
+.section-title::before{content:'';display:inline-block;width:3px;height:15px;background:var(--green);border-radius:2px;transform:skewX(-8deg)}
+.section-jp{font-family:'Noto Serif JP',serif;font-size:10px;color:var(--stone);letter-spacing:2px;display:block;margin-bottom:2px}
+.btn-add{background:var(--green-pale);color:var(--green-dark);border:var(--border);border-radius:4px;padding:5px 12px;font-size:12px;font-weight:500;cursor:pointer;font-family:'Noto Serif JP',serif;box-shadow:1px 2px 0 rgba(92,74,48,.1);transition:all .15s}
+.btn-add:hover{transform:translateY(-1px)}
+.timeline{position:relative}
+.timeline::before{content:'';position:absolute;left:42px;top:0;bottom:0;width:1px;background:repeating-linear-gradient(to bottom,var(--green-light) 0,var(--green-light) 4px,transparent 4px,transparent 8px)}
+.schedule-item{display:flex;margin-bottom:14px;position:relative}
+.time-col{width:78px;flex-shrink:0;padding-top:7px}
+.time-text{font-family:'Zen Kurenaido',serif;font-size:14px;color:var(--green-dark);text-align:right;padding-right:16px}
+.time-dot{position:absolute;left:37px;top:9px;width:11px;height:11px;border-radius:50%;background:var(--cream);border:2px solid var(--green);box-shadow:0 0 0 3px var(--green-pale)}
+.schedule-card{flex:1;background:var(--cream);border-radius:6px;padding:11px 13px;border:var(--border);box-shadow:var(--shadow);position:relative;transition:all .15s}
+.schedule-card:hover{transform:translateY(-1px);box-shadow:2px 4px 0 rgba(92,74,48,.12)}
+.schedule-name{font-weight:500;font-size:14px;color:var(--ink);font-family:'Noto Serif JP',serif}
+.schedule-place{font-size:11px;color:var(--stone);margin-top:2px}
+.schedule-note{font-size:11px;color:var(--ink-soft);margin-top:5px;padding-top:5px;border-top:1px dashed rgba(92,74,48,.2);font-style:italic;font-family:'Noto Serif JP',serif}
+.card-actions{position:absolute;top:8px;right:8px;display:flex;gap:3px}
+.card-btn{background:none;border:none;font-size:13px;cursor:pointer;opacity:.4;transition:opacity .15s;padding:2px}
+.card-btn:hover{opacity:.8}
+.tag{display:inline-block;font-size:10px;padding:1px 7px;border-radius:2px;margin-top:5px;font-weight:500;font-family:'Noto Serif JP',serif;border:1px solid currentColor}
+.tag-food{color:var(--gold);background:rgba(184,134,11,.08)}
+.tag-sight{color:var(--green-dark);background:rgba(58,107,56,.08)}
+.tag-shop{color:var(--red);background:rgba(192,82,42,.08)}
+.tag-hotel{color:var(--brown);background:rgba(123,107,78,.08)}
+.tag-transport{color:var(--stone);background:rgba(155,142,122,.08)}
+/* city badge */
+.city-badge{display:inline-flex;align-items:center;gap:5px;background:var(--green-dark);color:var(--cream);font-size:11px;padding:3px 10px;border-radius:20px;font-family:'Noto Serif JP',serif;margin-bottom:14px}
+/* checklist */
+.check-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--cream);border-radius:6px;border:var(--border);box-shadow:var(--shadow);margin-bottom:8px;transition:all .15s}
+.check-item.done{opacity:.55}
+.check-box{width:20px;height:20px;border-radius:4px;border:2px solid var(--green);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;margin-top:1px}
+.check-box.checked{background:var(--green);border-color:var(--green)}
+.check-box.checked::after{content:'✓';color:var(--cream);font-size:12px;font-weight:700}
+.check-label{flex:1;font-size:13px;color:var(--ink);font-family:'Noto Serif JP',serif}
+.check-item.done .check-label{text-decoration:line-through;color:var(--stone)}
+.check-category{font-size:10px;color:var(--stone);background:var(--green-pale);border:1px solid var(--green-light);border-radius:3px;padding:1px 6px;flex-shrink:0;font-family:'Noto Serif JP',serif}
+.check-del{background:none;border:none;font-size:12px;cursor:pointer;opacity:.3;padding:2px;flex-shrink:0}
+.check-del:hover{opacity:.7}
+.cat-filter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.cat-chip{padding:4px 12px;border-radius:20px;font-size:11px;cursor:pointer;border:var(--border);background:var(--cream);color:var(--stone);font-family:'Noto Serif JP',serif;transition:all .15s}
+.cat-chip.active{background:var(--green);color:var(--cream);border-color:var(--green)}
+.progress-row{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:12px 14px;background:var(--green-pale);border-radius:6px;border:var(--border)}
+.progress-bar{flex:1;height:6px;background:rgba(92,74,48,.12);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;background:var(--green);border-radius:3px;transition:width .4s ease}
+.progress-text{font-size:12px;color:var(--green-dark);font-family:'Noto Serif JP',serif;white-space:nowrap}
+/* spots */
+.spot-card{background:var(--cream);border-radius:8px;border:var(--border);box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden}
+.spot-header{padding:12px 14px;display:flex;justify-content:space-between;align-items:flex-start;cursor:pointer}
+.spot-name{font-family:'Zen Kurenaido',serif;font-size:16px;color:var(--ink)}
+.spot-area{font-size:11px;color:var(--stone);margin-top:2px;font-family:'Noto Serif JP',serif}
+.spot-tag{font-size:10px;padding:2px 8px;border-radius:3px;border:1px solid currentColor;font-family:'Noto Serif JP',serif}
+.spot-body{padding:0 14px 12px;display:none}
+.spot-body.open{display:block}
+.spot-desc{font-size:12px;color:var(--ink-soft);line-height:1.8;font-family:'Noto Serif JP',serif;margin-bottom:10px}
+.spot-tips-title{font-size:11px;font-weight:600;color:var(--green-dark);margin-bottom:6px;font-family:'Noto Serif JP',serif}
+.spot-tip{font-size:12px;color:var(--ink-soft);padding:4px 0 4px 14px;position:relative;font-family:'Noto Serif JP',serif;line-height:1.7}
+.spot-tip::before{content:'✦';position:absolute;left:0;color:var(--green);font-size:9px;top:6px}
+.spot-divider{height:1px;background:repeating-linear-gradient(90deg,var(--green-light) 0,var(--green-light) 4px,transparent 4px,transparent 8px);margin:8px 0}
+.spot-info-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px}
+.spot-info-item{font-size:11px;color:var(--stone);font-family:'Noto Serif JP',serif;display:flex;align-items:center;gap:4px}
+.spot-arrow{font-size:11px;color:var(--stone);transition:transform .2s;flex-shrink:0}
+/* tips */
+.tip-card{background:var(--cream);border-radius:8px;border:var(--border);box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden}
+.tip-header{padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer}
+.tip-icon{font-size:22px;width:38px;height:38px;background:var(--green-pale);border-radius:6px;display:flex;align-items:center;justify-content:center;border:var(--border);flex-shrink:0}
+.tip-name{font-family:'Zen Kurenaido',serif;font-size:15px;color:var(--ink)}
+.tip-sub{font-size:11px;color:var(--stone);font-family:'Noto Serif JP',serif;margin-top:1px}
+.tip-body{padding:0 14px 12px;display:none}
+.tip-body.open{display:block}
+.tip-item{display:flex;gap:8px;padding:6px 0;border-bottom:1px dashed rgba(92,74,48,.12)}
+.tip-item:last-child{border-bottom:none}
+.tip-num{width:20px;height:20px;border-radius:50%;background:var(--green-pale);border:1px solid var(--green-light);color:var(--green-dark);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.tip-text{font-size:12px;color:var(--ink-soft);font-family:'Noto Serif JP',serif;line-height:1.7}
+/* split */
+.rate-card{background:var(--green-dark);border-radius:8px;padding:14px 16px;margin-bottom:16px;border:var(--border);box-shadow:var(--shadow);display:flex;justify-content:space-between;align-items:center}
+.rate-label{font-family:'Noto Serif JP',serif;font-size:10px;color:rgba(253,251,245,.6);letter-spacing:2px;margin-bottom:3px}
+.rate-value{font-family:'Zen Kurenaido',serif;font-size:26px;color:var(--cream)}
+.rate-sub{font-size:11px;color:rgba(253,251,245,.4)}
+.rate-input{width:90px;padding:7px 10px;border-radius:4px;text-align:right;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:var(--cream);font-size:15px;outline:none;font-family:'Zen Kurenaido',serif}
+.rate-result{font-size:11px;color:var(--green-light);margin-top:4px;text-align:right;font-family:'Noto Serif JP',serif}
+.member-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.member-chip{display:flex;align-items:center;gap:5px;background:var(--green-pale);border:var(--border);border-radius:4px;padding:5px 11px;font-size:12px;font-family:'Noto Serif JP',serif;box-shadow:1px 2px 0 rgba(92,74,48,.08)}
+.member-avatar{width:20px;height:20px;border-radius:50%;background:var(--green);color:var(--cream);font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.expense-item{background:var(--cream);border-radius:6px;padding:11px 13px;margin-bottom:8px;border:var(--border);box-shadow:var(--shadow);display:flex;justify-content:space-between;align-items:center}
+.settlement-card{background:var(--green-pale);border:var(--border);border-radius:6px;padding:12px 14px;margin-bottom:8px}
+.settlement-amount{font-family:'Zen Kurenaido',serif;font-size:18px;color:var(--green-dark)}
+.split-summary{background:var(--green-dark);border-radius:8px;padding:16px;margin-top:16px;border:var(--border);box-shadow:var(--shadow)}
+/* photos */
+.ibb-section{background:var(--cream);border-radius:8px;border:var(--border);box-shadow:var(--shadow);padding:14px;margin-bottom:14px}
+.ibb-drop{border:2px dashed var(--green-light);border-radius:6px;padding:20px;text-align:center;cursor:pointer;background:var(--green-mist);position:relative;transition:all .2s}
+.ibb-drop:hover{border-color:var(--green);background:var(--green-pale)}
+.ibb-preview{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.ibb-img{aspect-ratio:1;border-radius:5px;overflow:hidden;border:var(--border);box-shadow:var(--shadow);position:relative;cursor:pointer;background:var(--green-pale)}
+.ibb-img img{width:100%;height:100%;object-fit:cover}
+.ibb-img-del{position:absolute;top:3px;right:3px;background:rgba(61,51,37,.65);color:white;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s}
+.ibb-img:hover .ibb-img-del{opacity:1}
+.ibb-url-input{display:flex;gap:8px;margin-top:10px}
+.ibb-url-field{flex:1;padding:9px 12px;border-radius:5px;border:var(--border);background:var(--white);font-size:13px;color:var(--ink);outline:none}
+.ibb-url-field:focus{border-color:var(--green)}
+.btn-ibb{background:var(--green);color:var(--cream);border:none;border-radius:5px;padding:9px 12px;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:'Noto Serif JP',serif}
+/* map */
+.map-placeholder{border-radius:8px;height:160px;background:var(--green-pale);margin-bottom:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:var(--border);box-shadow:var(--shadow)}
+.location-item{background:var(--cream);border-radius:6px;padding:10px 13px;display:flex;align-items:center;gap:10px;border:var(--border);box-shadow:var(--shadow);cursor:pointer;transition:all .15s;margin-bottom:7px}
+.location-item:hover{transform:translateX(3px)}
+.location-num{width:26px;height:26px;border-radius:50%;background:var(--green);color:var(--cream);font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nav-btn{background:var(--green-pale);color:var(--green-dark);border:var(--border);border-radius:4px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;margin-left:auto;flex-shrink:0;font-family:'Noto Serif JP',serif}
+/* sync */
+.setup-card{background:var(--cream);border-radius:8px;padding:18px;border:var(--border);box-shadow:var(--shadow);margin-bottom:16px}
+.connected-banner{background:var(--green-pale);border:1.5px solid var(--green-light);border-radius:8px;padding:14px;margin-bottom:16px}
+/* modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(61,51,37,.55);z-index:200;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(3px)}
+.modal{background:var(--cream);border-radius:16px 16px 0 0;padding:22px 20px 38px;width:100%;max-width:430px;animation:slideUp .25s cubic-bezier(.34,1.4,.64,1);background-image:repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(92,138,90,0.05) 27px,rgba(92,138,90,0.05) 28px)}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:36px;height:3px;background:var(--green-light);border-radius:2px;margin:0 auto 18px}
+.modal-title{font-family:'Zen Kurenaido','Noto Serif JP',serif;font-size:18px;color:var(--ink);margin-bottom:16px;padding-bottom:10px;border-bottom:1px dashed rgba(92,74,48,.2)}
+.form-group{margin-bottom:13px}
+.form-label{font-size:11px;font-weight:500;color:var(--stone);letter-spacing:1px;margin-bottom:5px;display:block;text-transform:uppercase;font-family:'Noto Serif JP',serif}
+.form-input,.form-select{width:100%;padding:10px 13px;border-radius:5px;border:var(--border);background:var(--white);font-family:'Noto Sans TC',sans-serif;font-size:14px;color:var(--ink);outline:none;-webkit-appearance:none}
+.form-input:focus,.form-select:focus{border-color:var(--green)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-primary{width:100%;background:var(--green-dark);color:var(--cream);border:none;border-radius:5px;padding:13px;font-size:14px;font-weight:500;cursor:pointer;margin-top:7px;font-family:'Noto Serif JP',serif;letter-spacing:1px;box-shadow:2px 3px 0 rgba(58,107,56,.3);transition:all .15s}
+.btn-primary:hover{transform:translateY(-1px)}
+.btn-cancel{background:var(--cream-dark);color:var(--stone);box-shadow:1px 2px 0 rgba(92,74,48,.1);margin-top:9px}
+.empty-state{text-align:center;padding:36px 16px}
+.empty-icon{font-size:42px;margin-bottom:10px;opacity:.7}
+.empty-text{color:var(--stone);font-size:13px;line-height:1.7;font-family:'Noto Serif JP',serif}
+.toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--cream);padding:10px 20px;border-radius:6px;font-size:12px;z-index:300;box-shadow:2px 3px 0 rgba(92,74,48,.2);white-space:nowrap;font-family:'Noto Serif JP',serif;animation:fadeInOut 2.5s forwards}
+@keyframes fadeInOut{0%{opacity:0;transform:translateX(-50%) translateY(8px)}15%{opacity:1;transform:translateX(-50%) translateY(0)}80%{opacity:1}100%{opacity:0}}
+.loading-overlay{position:fixed;inset:0;background:var(--green-dark);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+.loading-leaves{font-size:36px;animation:sway 2s ease-in-out infinite}
+@keyframes sway{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+/* join mode */
+.join-card{background:var(--cream);border-radius:8px;padding:20px;border:2px dashed var(--green-light);margin-bottom:16px;text-align:center}
 </style>
 </head>
 <body>
-
 <div class="loading-overlay" id="loadingScreen">
   <div class="loading-leaves">🌿</div>
-  <div class="loading-logo">東京手帳</div>
-  <div class="loading-sub">TOKYO TECHO</div>
-  <div style="font-size:12px;color:rgba(253,251,245,.4);font-family:'Noto Serif JP',serif;margin-top:4px" id="loadingMsg">啟動中...</div>
+  <div style="font-family:'Zen Kurenaido',serif;font-size:26px;color:var(--cream);letter-spacing:4px">熊本・博多</div>
+  <div style="font-family:'Noto Serif JP',serif;font-size:10px;color:rgba(253,251,245,.5);letter-spacing:5px">KUMAMOTO · HAKATA</div>
+  <div style="font-size:11px;color:rgba(253,251,245,.35);font-family:'Noto Serif JP',serif;margin-top:4px" id="loadingMsg">啟動中...</div>
 </div>
 
 <div id="app" style="display:none">
   <div class="app-header">
-    <div class="app-header-top">
+    <div class="hdr-top">
       <div>
-        <div class="app-title">
-          🌿 東京手帳
-          <span class="title-stamp">TECHO</span>
-        </div>
-        <div class="app-subtitle">TOKYO TRAVEL JOURNAL</div>
+        <div class="app-title">🌿 熊本・博多<span class="title-stamp">8D7N</span></div>
+        <div class="app-subtitle">KUMAMOTO · HAKATA JOURNEY</div>
       </div>
       <div style="text-align:right">
-        <div style="font-family:'Zen Kurenaido',serif;font-size:14px;color:var(--cream);opacity:.8" id="dayBadge">5天行程</div>
+        <div style="font-family:'Zen Kurenaido',serif;font-size:13px;color:var(--cream);opacity:.8" id="dayBadge">8天行程</div>
         <div class="sync-row" style="justify-content:flex-end;margin-top:4px">
           <span class="sync-dot" id="syncDot"></span>
           <span class="sync-text" id="syncText">單機模式</span>
@@ -675,181 +214,161 @@ body {
     </div>
     <div class="date-scroller" id="dateScroller"></div>
     <div class="nav-tabs">
-      <div class="nav-tab active" onclick="switchTab('schedule')" id="tab-schedule">
-        <span class="tab-icon">📅</span>行程
-      </div>
-      <div class="nav-tab" onclick="switchTab('photos')" id="tab-photos">
-        <span class="tab-icon">📷</span>相簿
-      </div>
-      <div class="nav-tab" onclick="switchTab('split')" id="tab-split">
-        <span class="tab-icon">💴</span>分帳
-      </div>
-      <div class="nav-tab" onclick="switchTab('map')" id="tab-map">
-        <span class="tab-icon">🗺</span>地圖
-      </div>
-      <div class="nav-tab" onclick="switchTab('firebase')" id="tab-firebase">
-        <span class="tab-icon">☁️</span>同步
-      </div>
+      <div class="nav-tab active" onclick="switchTab('schedule')" id="tab-schedule"><span class="tab-icon">📅</span>行程</div>
+      <div class="nav-tab" onclick="switchTab('checklist')" id="tab-checklist"><span class="tab-icon">🧳</span>清單</div>
+      <div class="nav-tab" onclick="switchTab('spots')" id="tab-spots"><span class="tab-icon">🌸</span>景點</div>
+      <div class="nav-tab" onclick="switchTab('tips')" id="tab-tips"><span class="tab-icon">📷</span>拍照</div>
+      <div class="nav-tab" onclick="switchTab('photos')" id="tab-photos"><span class="tab-icon">🖼</span>相簿</div>
+      <div class="nav-tab" onclick="switchTab('split')" id="tab-split"><span class="tab-icon">💴</span>分帳</div>
+      <div class="nav-tab" onclick="switchTab('map')" id="tab-map"><span class="tab-icon">🗺</span>地圖</div>
+      <div class="nav-tab" onclick="switchTab('firebase')" id="tab-firebase"><span class="tab-icon">☁️</span>同步</div>
     </div>
   </div>
 
   <!-- 行程 -->
   <div class="content" id="pane-schedule">
     <div class="weather-card">
-      <div class="deco-leaf">🍃</div>
+      <div style="position:absolute;right:12px;top:10px;font-size:18px;opacity:.25;transform:rotate(15deg)">🍃</div>
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div class="weather-main">
-          <div class="weather-icon" id="wx-icon">☀️</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="font-size:34px" id="wx-icon">☀️</div>
           <div>
-            <div class="weather-temp" id="wx-temp">28°</div>
+            <div class="weather-temp" id="wx-temp">26°</div>
             <div class="weather-desc" id="wx-desc">晴天</div>
-            <div class="weather-city" id="wx-city">TOKYO · DAY 1</div>
+            <div style="font-size:9px;color:var(--stone);letter-spacing:2px;margin-top:2px" id="wx-city">熊本 · D1</div>
           </div>
         </div>
-        <div class="weather-extra" id="wx-extra">💧 62%<br>🌬 3.2m/s<br>🌡 22~31°</div>
+        <div class="weather-extra" id="wx-extra">💧 65%<br>🌬 3.0m/s<br>🌡 20~29°</div>
       </div>
     </div>
+    <div id="cityBadgeArea"></div>
     <div class="section-header">
-      <div>
-        <span class="section-jp">ほんじつのよてい</span>
-        <div class="section-title">今日行程</div>
-      </div>
+      <div><span class="section-jp" id="dayJp">ついたちめ</span><div class="section-title" id="dayTitle">D1 · 今日行程</div></div>
       <button class="btn-add" onclick="openSchedModal()">＋ 新增</button>
     </div>
     <div class="timeline" id="schedList"></div>
   </div>
 
+  <!-- 清單 -->
+  <div class="content" id="pane-checklist" style="display:none">
+    <div style="display:flex;gap:0;margin-bottom:18px;border:var(--border);border-radius:6px;overflow:hidden;box-shadow:var(--shadow)">
+      <button id="cl-tab-luggage" onclick="switchChecklist('luggage')" style="flex:1;padding:10px;font-family:'Noto Serif JP',serif;font-size:13px;background:var(--green-dark);color:var(--cream);border:none;cursor:pointer">🧳 行李清單</button>
+      <button id="cl-tab-shopping" onclick="switchChecklist('shopping')" style="flex:1;padding:10px;font-family:'Noto Serif JP',serif;font-size:13px;background:var(--cream);color:var(--stone);border:none;cursor:pointer;border-left:var(--border)">🛍 購買清單</button>
+    </div>
+    <div id="cl-luggage">
+      <div class="progress-row"><div style="font-size:13px;color:var(--green-dark);font-family:'Noto Serif JP',serif">已打包</div><div class="progress-bar"><div class="progress-fill" id="luggage-progress" style="width:0%"></div></div><div class="progress-text" id="luggage-count">0/0</div></div>
+      <div class="cat-filter" id="luggage-cats"></div>
+      <div class="section-header"><div><span class="section-jp">にもつ</span><div class="section-title">行李清單</div></div><button class="btn-add" onclick="openCheckModal('luggage')">＋ 新增</button></div>
+      <div id="luggageList"></div>
+    </div>
+    <div id="cl-shopping" style="display:none">
+      <div class="progress-row"><div style="font-size:13px;color:var(--green-dark);font-family:'Noto Serif JP',serif">已購買</div><div class="progress-bar"><div class="progress-fill" id="shopping-progress" style="width:0%"></div></div><div class="progress-text" id="shopping-count">0/0</div></div>
+      <div class="cat-filter" id="shopping-cats"></div>
+      <div class="section-header"><div><span class="section-jp">かいもの</span><div class="section-title">購買清單</div></div><button class="btn-add" onclick="openCheckModal('shopping')">＋ 新增</button></div>
+      <div id="shoppingList"></div>
+    </div>
+  </div>
+
+  <!-- 景點 -->
+  <div class="content" id="pane-spots" style="display:none">
+    <div class="section-header"><div><span class="section-jp">かんこうあんない</span><div class="section-title">景點介紹</div></div></div>
+    <div id="spotList"></div>
+  </div>
+
+  <!-- 拍照 -->
+  <div class="content" id="pane-tips" style="display:none">
+    <div class="section-header"><div><span class="section-jp">しゃしんのこつ</span><div class="section-title">拍照技巧</div></div></div>
+    <div style="background:var(--green-pale);border-radius:6px;padding:12px 14px;margin-bottom:16px;border:var(--border)">
+      <div style="font-size:12px;color:var(--green-dark);font-family:'Noto Serif JP',serif;line-height:1.8">🌿 針對熊本・博多的拍攝地點與技巧整理，讓每張照片都像明信片！</div>
+    </div>
+    <div id="tipsList"></div>
+  </div>
+
   <!-- 相簿 -->
   <div class="content" id="pane-photos" style="display:none">
-    <div class="section-header">
-      <div>
-        <span class="section-jp">おもいで</span>
-        <div class="section-title">旅遊相簿</div>
-      </div>
-    </div>
+    <div class="section-header"><div><span class="section-jp">おもいで</span><div class="section-title">旅遊相簿</div></div></div>
     <div class="ibb-section">
-      <div class="ibb-title">🖼 上傳照片</div>
-      <div class="ibb-desc">使用 imgBB 平台儲存照片，貼上圖片網址或直接選擇檔案上傳</div>
-      <!-- 貼網址 -->
+      <div style="font-family:'Zen Kurenaido',serif;font-size:15px;color:var(--ink);margin-bottom:4px">🖼 加入照片</div>
+      <div style="font-size:12px;color:var(--stone);margin-bottom:12px;font-family:'Noto Serif JP',serif;line-height:1.6">貼上 imgBB 網址，或直接選擇照片</div>
       <div class="ibb-url-input">
         <input class="ibb-url-field" id="ibbUrlInput" placeholder="貼上 imgBB 圖片網址...">
         <button class="btn-ibb" onclick="addPhotoByUrl()">加入</button>
       </div>
       <div style="text-align:center;color:var(--stone);font-size:11px;margin:10px 0;font-family:'Noto Serif JP',serif">── 或直接上傳 ──</div>
-      <!-- 上傳區 -->
       <div class="ibb-drop" onclick="document.getElementById('ibbFileInput').click()">
         <input type="file" id="ibbFileInput" accept="image/*" multiple onchange="handleFileUpload(event)" style="display:none">
-        <div class="ibb-drop-icon">📸</div>
-        <div class="ibb-drop-text">點此選擇照片</div>
-        <div class="ibb-drop-sub">支援 JPG、PNG、GIF</div>
-      </div>
-      <div style="font-size:11px;color:var(--stone);margin-top:8px;line-height:1.7;font-family:'Noto Serif JP',serif">
-        💡 上傳到 <a href="https://imgbb.com" target="_blank" style="color:var(--green-dark)">imgBB.com</a> 後，複製「直接連結」貼到上方網址欄
+        <div style="font-size:26px;margin-bottom:6px">📸</div>
+        <div style="font-size:13px;color:var(--stone);font-family:'Noto Serif JP',serif">點此選擇照片</div>
       </div>
     </div>
     <div class="section-header">
-      <div>
-        <span class="section-jp" id="photoDay">第 1 天</span>
-        <div class="section-title">今日照片</div>
-      </div>
+      <div><span class="section-jp" id="photoDay">第 1 天</span><div class="section-title">今日照片</div></div>
       <div style="font-size:11px;color:var(--stone);font-family:'Noto Serif JP',serif" id="photoCount">0 張</div>
     </div>
     <div class="ibb-preview" id="photoGrid"></div>
-    <div id="photoEmpty" class="empty-state" style="display:none">
-      <div class="empty-icon">🌸</div>
-      <div class="empty-text">今天還沒有照片<br>用上方上傳或貼網址加入</div>
-    </div>
+    <div id="photoEmpty" class="empty-state"><div class="empty-icon">🌸</div><div class="empty-text">今天還沒有照片</div></div>
   </div>
 
   <!-- 分帳 -->
   <div class="content" id="pane-split" style="display:none">
     <div class="rate-card">
-      <div>
-        <div class="rate-label">匯率 · EXCHANGE RATE</div>
-        <div class="rate-value" id="rateDisplay">4.65</div>
-        <div class="rate-sub">TWD per 100 JPY</div>
-      </div>
+      <div><div class="rate-label">匯率 · EXCHANGE RATE</div><div class="rate-value" id="rateDisplay">4.65</div><div class="rate-sub">TWD per 100 JPY</div></div>
       <div style="display:flex;flex-direction:column;align-items:flex-end">
-        <div style="display:flex;align-items:center;gap:7px">
-          <span style="font-size:18px">🇯🇵</span>
-          <input class="rate-input" type="number" id="convertInput" placeholder="0" oninput="doConvert()">
-        </div>
+        <div style="display:flex;align-items:center;gap:7px"><span style="font-size:18px">🇯🇵</span><input class="rate-input" type="number" id="convertInput" placeholder="0" oninput="doConvert()"></div>
         <div class="rate-result" id="convertResult"></div>
       </div>
     </div>
-    <div class="section-header">
-      <div><span class="section-jp">たびなかま</span><div class="section-title">旅伴</div></div>
-      <button class="btn-add" onclick="openMemberModal()">＋ 加人</button>
-    </div>
+    <div class="section-header"><div><span class="section-jp">たびなかま</span><div class="section-title">旅伴</div></div><button class="btn-add" onclick="openMemberModal()">＋ 加人</button></div>
     <div class="member-chips" id="memberList"></div>
-    <div class="section-header">
-      <div><span class="section-jp">しゅっぴ</span><div class="section-title">費用紀錄</div></div>
-      <button class="btn-add" onclick="openExpenseModal()">＋ 記帳</button>
-    </div>
+    <div class="section-header"><div><span class="section-jp">しゅっぴ</span><div class="section-title">費用紀錄</div></div><button class="btn-add" onclick="openExpenseModal()">＋ 記帳</button></div>
     <div id="expenseList"></div>
-    <div class="section-header" style="margin-top:22px">
-      <div><span class="section-jp">せいさん</span><div class="section-title">結算</div></div>
-    </div>
-    <div id="settlementList"></div>
-    <div id="totalSummary"></div>
+    <div class="section-header" style="margin-top:20px"><div><span class="section-jp">せいさん</span><div class="section-title">結算</div></div></div>
+    <div id="settlementList"></div><div id="totalSummary"></div>
   </div>
 
   <!-- 地圖 -->
   <div class="content" id="pane-map" style="display:none">
-    <div class="section-header">
-      <div><span class="section-jp">きょうのばしょ</span><div class="section-title">今日地點</div></div>
-      <div style="font-size:11px;background:var(--green-pale);color:var(--green-dark);padding:4px 12px;border-radius:4px;border:var(--border-sketch);font-family:'Noto Serif JP',serif" id="placeCount">0 個地點</div>
-    </div>
-    <div class="map-placeholder">
-      <div style="font-size:36px">🗺</div>
-      <div style="font-size:12px;color:var(--stone);font-family:'Noto Serif JP',serif">點下方地點開啟 Google Maps</div>
-      <button onclick="openAllOnMap()" style="background:var(--green);color:var(--cream);border:none;border-radius:4px;padding:7px 18px;font-size:12px;cursor:pointer;font-family:'Noto Serif JP',serif;box-shadow:1px 2px 0 rgba(58,107,56,.3)">全部地點導航 ↗</button>
-    </div>
+    <div class="section-header"><div><span class="section-jp">きょうのばしょ</span><div class="section-title">今日地點</div></div><div style="font-size:11px;background:var(--green-pale);color:var(--green-dark);padding:4px 10px;border-radius:4px;border:var(--border);font-family:'Noto Serif JP',serif" id="placeCount">0 個地點</div></div>
+    <div class="map-placeholder"><div style="font-size:32px">🗺</div><div style="font-size:12px;color:var(--stone);font-family:'Noto Serif JP',serif">點下方地點開啟 Google Maps</div><button onclick="openAllOnMap()" style="background:var(--green);color:var(--cream);border:none;border-radius:4px;padding:7px 16px;font-size:12px;cursor:pointer;font-family:'Noto Serif JP',serif">全部導航 ↗</button></div>
     <div id="locationList"></div>
   </div>
 
-  <!-- Firebase 同步 -->
+  <!-- 同步 -->
   <div class="content" id="pane-firebase" style="display:none">
+    <!-- 已連線顯示 -->
     <div id="connectedBanner" style="display:none" class="connected-banner">
-      <div style="font-size:14px;font-weight:600;color:var(--green-dark);margin-bottom:4px;font-family:'Zen Kurenaido',serif">✅ 已連線 Firebase！</div>
-      <div style="font-size:12px;color:var(--stone);font-family:'Noto Serif JP',serif;line-height:1.6">行程資料即時同步中<br>朋友使用相同代碼即可共同編輯</div>
-      <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
-        <div style="flex:1;background:var(--white);border-radius:5px;padding:9px 12px;font-family:monospace;font-size:14px;border:var(--border-sketch);color:var(--ink)" id="shareCodeDisplay"></div>
-        <button onclick="copyShareCode()" style="background:var(--green);color:var(--cream);border:none;border-radius:5px;padding:9px 14px;font-size:12px;font-weight:500;cursor:pointer;box-shadow:1px 2px 0 rgba(58,107,56,.3);font-family:'Noto Serif JP',serif">複製</button>
+      <div style="font-size:14px;font-weight:600;color:var(--green-dark);margin-bottom:4px;font-family:'Zen Kurenaido',serif">✅ 已連線！即時同步中</div>
+      <div style="font-size:12px;color:var(--stone);font-family:'Noto Serif JP',serif;line-height:1.6;margin-bottom:10px">朋友只要輸入行程代碼就能加入</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div style="flex:1;background:var(--white);border-radius:5px;padding:8px 12px;font-family:monospace;font-size:14px;border:var(--border);color:var(--ink)" id="shareCodeDisplay"></div>
+        <button onclick="copyShareCode()" style="background:var(--green);color:var(--cream);border:none;border-radius:5px;padding:8px 12px;font-size:12px;cursor:pointer;font-family:'Noto Serif JP',serif">複製</button>
       </div>
     </div>
+
+    <!-- 主人：填完整設定 -->
     <div class="setup-card" id="setupCard">
-      <div style="font-family:'Zen Kurenaido',serif;font-size:19px;color:var(--ink);margin-bottom:6px">🔥 連接 Firebase</div>
-      <div style="font-size:12px;color:var(--stone);line-height:1.7;margin-bottom:18px;font-family:'Noto Serif JP',serif">填入設定後，與朋友即時共同編輯行程！</div>
-      <div class="form-group">
-        <label class="form-label">API Key</label>
-        <input class="form-input" id="fb-apiKey" placeholder="AIzaSyXXXXXXXXXXXXX">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Project ID</label>
-        <input class="form-input" id="fb-projectId" placeholder="travel-1009">
-      </div>
-      <div class="form-group">
-        <label class="form-label">App ID</label>
-        <input class="form-input" id="fb-appId" placeholder="1:XXXXXXX:web:XXXXXXX">
-      </div>
-      <div class="form-group">
-        <label class="form-label">行程代碼（朋友填一樣的）</label>
-        <input class="form-input" id="fb-tripCode" placeholder="tokyo-2025">
-      </div>
-      <button class="btn-primary" onclick="connectFirebase()" id="connectBtn">🔗 連接 Firebase</button>
+      <div style="font-family:'Zen Kurenaido',serif;font-size:18px;color:var(--ink);margin-bottom:4px">🔥 建立行程（主人）</div>
+      <div style="font-size:12px;color:var(--stone);line-height:1.7;margin-bottom:16px;font-family:'Noto Serif JP',serif">填入你的 Firebase 設定，建立行程後分享代碼給朋友</div>
+      <div class="form-group"><label class="form-label">API Key</label><input class="form-input" id="fb-apiKey" placeholder="AIzaSyXXXX"></div>
+      <div class="form-group"><label class="form-label">Project ID</label><input class="form-input" id="fb-projectId" placeholder="travel-1009"></div>
+      <div class="form-group"><label class="form-label">App ID</label><input class="form-input" id="fb-appId" placeholder="1:XXXXXX:web:XXXXXX"></div>
+      <div class="form-group"><label class="form-label">行程代碼（自訂，朋友要填一樣的）</label><input class="form-input" id="fb-tripCode" placeholder="kumamoto-2025"></div>
+      <button class="btn-primary" onclick="connectFirebase()" id="connectBtn">🔗 建立並連接</button>
     </div>
-    <div class="setup-card">
-      <div style="font-family:'Zen Kurenaido',serif;font-size:17px;color:var(--ink);margin-bottom:14px">⚙️ 行程設定</div>
-      <div class="form-group">
-        <label class="form-label">出發日期</label>
-        <input class="form-input" type="date" id="tripStartDate" value="2025-10-01" onchange="updateDates()">
-      </div>
-      <div class="form-group">
-        <label class="form-label">旅行天數</label>
-        <input class="form-input" type="number" id="tripDayCount" value="5" min="1" max="14" onchange="updateDates()">
-      </div>
-      <button class="btn-primary" onclick="updateDates();showToast('設定已儲存！')">儲存設定</button>
+
+    <!-- 朋友：只填代碼 -->
+    <div class="join-card" id="joinCard">
+      <div style="font-family:'Zen Kurenaido',serif;font-size:17px;color:var(--ink);margin-bottom:6px">👥 加入行程（朋友）</div>
+      <div style="font-size:12px;color:var(--stone);line-height:1.7;margin-bottom:14px;font-family:'Noto Serif JP',serif">朋友傳給你的行程代碼填這裡，不需要 Firebase 設定！</div>
+      <input class="form-input" id="join-code" placeholder="輸入行程代碼，例如：kumamoto-2025" style="margin-bottom:10px">
+      <button class="btn-primary" onclick="joinTrip()" style="margin-top:0">🌿 加入行程</button>
+    </div>
+
+    <!-- 行程設定 -->
+    <div class="setup-card" style="margin-top:4px">
+      <div style="font-family:'Zen Kurenaido',serif;font-size:16px;color:var(--ink);margin-bottom:12px">⚙️ 行程設定</div>
+      <div class="form-group"><label class="form-label">出發日期</label><input class="form-input" type="date" id="tripStartDate" value="2025-10-01" onchange="updateDates()"></div>
+      <button class="btn-primary" onclick="updateDates();showToast('設定已儲存！')">儲存</button>
     </div>
   </div>
 
@@ -859,78 +378,58 @@ body {
       <div class="modal-handle"></div>
       <div class="modal-title" id="schedModalTitle">新增行程 📝</div>
       <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">時間</label>
-          <input class="form-input" type="time" id="sf-time" value="10:00">
-        </div>
-        <div class="form-group">
-          <label class="form-label">類型</label>
+        <div class="form-group"><label class="form-label">時間</label><input class="form-input" type="time" id="sf-time" value="10:00"></div>
+        <div class="form-group"><label class="form-label">類型</label>
           <select class="form-select" id="sf-type">
-            <option value="sight">🌸 景點</option>
-            <option value="food">🍜 餐廳</option>
-            <option value="shop">🛍 購物</option>
-            <option value="hotel">🏨 住宿</option>
+            <option value="sight">🌸 景點</option><option value="food">🍜 餐廳</option>
+            <option value="shop">🛍 購物</option><option value="hotel">🏨 住宿</option>
             <option value="transport">🚃 交通</option>
           </select>
         </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">名稱</label>
-        <input class="form-input" id="sf-name" placeholder="淺草寺參拜">
-      </div>
-      <div class="form-group">
-        <label class="form-label">地點</label>
-        <input class="form-input" id="sf-place" placeholder="東京都台東區淺草2-3-1">
-      </div>
-      <div class="form-group">
-        <label class="form-label">備註</label>
-        <input class="form-input" id="sf-note" placeholder="備註...">
-      </div>
+      <div class="form-group"><label class="form-label">名稱</label><input class="form-input" id="sf-name" placeholder="熊本城"></div>
+      <div class="form-group"><label class="form-label">地點</label><input class="form-input" id="sf-place" placeholder="熊本市中央區本丸1-1"></div>
+      <div class="form-group"><label class="form-label">備註</label><input class="form-input" id="sf-note" placeholder="備註..."></div>
       <button class="btn-primary" onclick="saveSched()">儲存行程</button>
-      <button class="btn-primary btn-cancel" onclick="closeModal('schedModal')" style="margin-top:10px">取消</button>
+      <button class="btn-primary btn-cancel" onclick="closeModal('schedModal')" style="margin-top:9px">取消</button>
     </div>
   </div>
-
+  <div class="modal-overlay" id="checkModal" style="display:none" onclick="if(event.target===this)closeModal('checkModal')">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title" id="checkModalTitle">新增項目</div>
+      <div class="form-group"><label class="form-label">名稱</label><input class="form-input" id="ck-name" placeholder="護照"></div>
+      <div class="form-group"><label class="form-label">分類</label><select class="form-select" id="ck-cat"></select></div>
+      <div class="form-group"><label class="form-label">備註（選填）</label><input class="form-input" id="ck-note" placeholder="備註..."></div>
+      <button class="btn-primary" onclick="saveCheckItem()">新增</button>
+      <button class="btn-primary btn-cancel" onclick="closeModal('checkModal')" style="margin-top:9px">取消</button>
+    </div>
+  </div>
   <div class="modal-overlay" id="expModal" style="display:none" onclick="if(event.target===this)closeModal('expModal')">
     <div class="modal">
       <div class="modal-handle"></div>
       <div class="modal-title">記錄費用 💴</div>
-      <div class="form-group">
-        <label class="form-label">費用名稱</label>
-        <input class="form-input" id="ef-name" placeholder="壽司午餐">
-      </div>
+      <div class="form-group"><label class="form-label">費用名稱</label><input class="form-input" id="ef-name" placeholder="博多拉麵"></div>
       <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">日幣金額 (¥)</label>
-          <input class="form-input" type="number" id="ef-amount" placeholder="3500" oninput="updateExpHint()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">付款人</label>
-          <select class="form-select" id="ef-payer"></select>
-        </div>
+        <div class="form-group"><label class="form-label">日幣金額 (¥)</label><input class="form-input" type="number" id="ef-amount" placeholder="1200" oninput="updateExpHint()"></div>
+        <div class="form-group"><label class="form-label">付款人</label><select class="form-select" id="ef-payer"></select></div>
       </div>
-      <div id="expHint" style="background:var(--green-pale);border-radius:5px;padding:9px 12px;font-size:12px;color:var(--green-dark);margin-bottom:10px;display:none;font-family:'Noto Serif JP',serif;border:var(--border-sketch)"></div>
+      <div id="expHint" style="background:var(--green-pale);border-radius:5px;padding:8px 12px;font-size:12px;color:var(--green-dark);margin-bottom:10px;display:none;font-family:'Noto Serif JP',serif;border:var(--border)"></div>
       <button class="btn-primary" onclick="saveExpense()">記錄費用</button>
-      <button class="btn-primary btn-cancel" onclick="closeModal('expModal')" style="margin-top:10px">取消</button>
+      <button class="btn-primary btn-cancel" onclick="closeModal('expModal')" style="margin-top:9px">取消</button>
     </div>
   </div>
-
   <div class="modal-overlay" id="memberModal" style="display:none" onclick="if(event.target===this)closeModal('memberModal')">
     <div class="modal">
       <div class="modal-handle"></div>
       <div class="modal-title">新增旅伴 🌿</div>
-      <div class="form-group">
-        <label class="form-label">姓名</label>
-        <input class="form-input" id="mem-name" placeholder="小明">
-      </div>
-      <button class="btn-primary" onclick="addMember()">加入旅伴</button>
-      <button class="btn-primary btn-cancel" onclick="closeModal('memberModal')" style="margin-top:10px">取消</button>
+      <div class="form-group"><label class="form-label">姓名</label><input class="form-input" id="mem-name" placeholder="小明"></div>
+      <button class="btn-primary" onclick="addMember()">加入</button>
+      <button class="btn-primary btn-cancel" onclick="closeModal('memberModal')" style="margin-top:9px">取消</button>
     </div>
   </div>
-
-  <!-- 圖片 Lightbox -->
-  <div id="lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:400;display:none;align-items:center;justify-content:center" onclick="closeLightbox()">
-    <img id="lightboxImg" style="max-width:90%;max-height:90%;border-radius:6px;box-shadow:0 8px 40px rgba(0,0,0,.5)">
+  <div id="lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:400;align-items:center;justify-content:center" onclick="this.style.display='none'">
+    <img id="lightboxImg" style="max-width:92%;max-height:92%;border-radius:6px">
   </div>
 </div>
 
@@ -938,130 +437,284 @@ body {
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
 import { getFirestore, doc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
+let db=null,fbApp=null,tripCode='',unsubs=[];
 
-let db = null, fbApp = null, tripCode = '', unsubscribers = [];
-
-window.connectFirebase = async function() {
-  const apiKey = document.getElementById('fb-apiKey').value.trim();
-  const projectId = document.getElementById('fb-projectId').value.trim();
-  const appId = document.getElementById('fb-appId').value.trim();
-  tripCode = document.getElementById('fb-tripCode').value.trim() || 'tokyo-2025';
-  if (!apiKey || !projectId) { showToast('請填寫 API Key 和 Project ID'); return; }
-  document.getElementById('connectBtn').textContent = '連線中...';
-  try {
-    const config = { apiKey, authDomain: projectId+'.firebaseapp.com', projectId, storageBucket: projectId+'.appspot.com', appId: appId||'1:000:web:000' };
-    if (!fbApp) fbApp = initializeApp(config);
-    db = getFirestore(fbApp);
-    await setDoc(doc(db,'trips',tripCode), { schedules, members, expenses, photos, updatedAt: Date.now() }, {merge:true});
-    startListening();
+// 主人連接
+window.connectFirebase=async function(){
+  const apiKey=document.getElementById('fb-apiKey').value.trim();
+  const projectId=document.getElementById('fb-projectId').value.trim();
+  const appId=document.getElementById('fb-appId').value.trim();
+  tripCode=document.getElementById('fb-tripCode').value.trim()||'kumamoto-2025';
+  if(!apiKey||!projectId){showToast('請填寫 API Key 和 Project ID');return;}
+  document.getElementById('connectBtn').textContent='連線中...';
+  try{
+    if(!fbApp)fbApp=initializeApp({apiKey,authDomain:projectId+'.firebaseapp.com',projectId,storageBucket:projectId+'.appspot.com',appId:appId||'1:000:web:000'});
+    db=getFirestore(fbApp);
+    await setDoc(doc(db,'trips',tripCode),{schedules,members,expenses,photos,luggage,shopping,updatedAt:Date.now()},{merge:true});
+    startListen();
     document.getElementById('syncDot').classList.add('on');
-    document.getElementById('syncText').textContent = '即時同步中';
-    document.getElementById('connectedBanner').style.display = 'block';
-    document.getElementById('shareCodeDisplay').textContent = tripCode;
-    document.getElementById('setupCard').style.display = 'none';
-    showToast('🌿 Firebase 連線成功！');
-    localStorage.setItem('fb_config', JSON.stringify({apiKey,projectId,appId,tripCode}));
-  } catch(e) {
-    showToast('連線失敗：請確認設定是否正確');
-    document.getElementById('connectBtn').textContent = '🔗 連接 Firebase';
-  }
+    document.getElementById('syncText').textContent='即時同步中';
+    document.getElementById('connectedBanner').style.display='block';
+    document.getElementById('shareCodeDisplay').textContent=tripCode;
+    document.getElementById('setupCard').style.display='none';
+    document.getElementById('joinCard').style.display='none';
+    showToast('🌿 已建立行程！分享代碼給朋友');
+    localStorage.setItem('fb_config',JSON.stringify({apiKey,projectId,appId,tripCode}));
+  }catch(e){showToast('連線失敗，請確認設定');document.getElementById('connectBtn').textContent='🔗 建立並連接';}
 };
 
-function startListening() {
-  unsubscribers.forEach(u=>u()); unsubscribers=[];
-  const unsub = onSnapshot(doc(db,'trips',tripCode), snap=>{
-    if (snap.exists()) {
-      const d = snap.data();
-      if (d.schedules) { schedules=d.schedules; localStorage.setItem('schedules',JSON.stringify(schedules)); }
-      if (d.members) { members=d.members; localStorage.setItem('members',JSON.stringify(members)); }
-      if (d.expenses) { expenses=d.expenses; localStorage.setItem('expenses',JSON.stringify(expenses)); }
-      if (d.photos) { photos=d.photos; localStorage.setItem('photos',JSON.stringify(photos)); }
-      renderAll();
+// 朋友加入（只需代碼）
+window.joinTrip=async function(){
+  const code=document.getElementById('join-code').value.trim();
+  if(!code){showToast('請輸入行程代碼');return;}
+  // 朋友使用主人的同一個 Firebase 設定（需要主人先提供）
+  // 這裡改為讀取儲存的設定
+  const saved=localStorage.getItem('fb_config');
+  if(!saved){
+    showToast('請先請主人傳給你完整設定，或用下方主人設定欄連接');
+    return;
+  }
+  try{
+    const c=JSON.parse(saved);tripCode=code;
+    if(!fbApp)fbApp=initializeApp({apiKey:c.apiKey,authDomain:c.projectId+'.firebaseapp.com',projectId:c.projectId,storageBucket:c.projectId+'.appspot.com',appId:c.appId||'1:000:web:000'});
+    db=getFirestore(fbApp);
+    startListen();
+    document.getElementById('syncDot').classList.add('on');
+    document.getElementById('syncText').textContent='即時同步中';
+    document.getElementById('connectedBanner').style.display='block';
+    document.getElementById('shareCodeDisplay').textContent=tripCode;
+    showToast('🌿 已加入行程！');
+    localStorage.setItem('fb_config',JSON.stringify({...c,tripCode}));
+  }catch(e){showToast('加入失敗：'+e.message);}
+};
+
+function startListen(){
+  unsubs.forEach(u=>u());unsubs=[];
+  const unsub=onSnapshot(doc(db,'trips',tripCode),snap=>{
+    if(snap.exists()){const d=snap.data();
+      if(d.schedules){schedules=d.schedules;localStorage.setItem('schedules',JSON.stringify(schedules));}
+      if(d.members){members=d.members;localStorage.setItem('members',JSON.stringify(members));}
+      if(d.expenses){expenses=d.expenses;localStorage.setItem('expenses',JSON.stringify(expenses));}
+      if(d.photos){photos=d.photos;localStorage.setItem('photos',JSON.stringify(photos));}
+      if(d.luggage){luggage=d.luggage;localStorage.setItem('luggage',JSON.stringify(luggage));}
+      if(d.shopping){shopping=d.shopping;localStorage.setItem('shopping',JSON.stringify(shopping));}
+      renderAll();renderChecklist();
     }
   });
-  unsubscribers.push(unsub);
+  unsubs.push(unsub);
 }
-
-window.syncToFirebase = async function() {
-  if (!db) return;
-  try { await setDoc(doc(db,'trips',tripCode), {schedules,members,expenses,photos,updatedAt:Date.now()},{merge:true}); }
-  catch(e) { console.error(e); }
+window.syncToFirebase=async function(){
+  if(!db)return;
+  try{await setDoc(doc(db,'trips',tripCode),{schedules,members,expenses,photos,luggage,shopping,updatedAt:Date.now()},{merge:true});}catch(e){}
 };
-
-window.copyShareCode = function() { navigator.clipboard?.writeText(tripCode); showToast('代碼已複製！'); };
-
-window.addEventListener('load', ()=>{
-  const saved = localStorage.getItem('fb_config');
-  if (saved) { try { const c=JSON.parse(saved); document.getElementById('fb-apiKey').value=c.apiKey||''; document.getElementById('fb-projectId').value=c.projectId||''; document.getElementById('fb-appId').value=c.appId||''; document.getElementById('fb-tripCode').value=c.tripCode||''; } catch(e){} }
+window.copyShareCode=function(){navigator.clipboard?.writeText(tripCode);showToast('代碼已複製！傳給朋友');};
+window.addEventListener('load',()=>{
+  const s=localStorage.getItem('fb_config');
+  if(s){try{const c=JSON.parse(s);document.getElementById('fb-apiKey').value=c.apiKey||'';document.getElementById('fb-projectId').value=c.projectId||'';document.getElementById('fb-appId').value=c.appId||'';document.getElementById('fb-tripCode').value=c.tripCode||'';}catch(e){}}
 });
 </script>
 
 <script>
 const DOW=['日','一','二','三','四','五','六'];
-const WX=[
-  {icon:'☀️',temp:28,desc:'晴天',h:62,w:3.2,lo:22,hi:31},
-  {icon:'⛅',temp:25,desc:'多雲',h:70,w:4.1,lo:20,hi:27},
-  {icon:'🌧',temp:22,desc:'雨天',h:85,w:5.5,lo:18,hi:24},
-  {icon:'🌤',temp:26,desc:'晴時多雲',h:65,w:2.8,lo:21,hi:29},
-  {icon:'☁️',temp:23,desc:'陰天',h:75,w:3.9,lo:19,hi:26},
-];
-const TAGS={sight:'🌸 景點',food:'🍜 餐廳',shop:'🛍 購物',hotel:'🏨 住宿',transport:'🚃 交通'};
 
-let curDay=0, rate=4.65, editSchedId=null;
+// 8天行程資料
+const TRIP_DAYS=[
+  {city:'熊本',emoji:'🏯',jp:'いちにちめ',wx:{icon:'✈️',temp:26,desc:'抵達熊本',h:65,w:2.5,lo:20,hi:28}},
+  {city:'熊本',emoji:'🏯',jp:'ふつかめ',wx:{icon:'☀️',temp:27,desc:'晴天',h:60,w:3.0,lo:21,hi:29}},
+  {city:'熊本',emoji:'🌋',jp:'みっかめ',wx:{icon:'⛅',temp:24,desc:'多雲',h:68,w:3.5,lo:18,hi:26}},
+  {city:'博多',emoji:'🍜',jp:'よっかめ',wx:{icon:'☀️',temp:25,desc:'晴天',h:62,w:2.8,lo:19,hi:27}},
+  {city:'博多',emoji:'🌊',jp:'いつかめ',wx:{icon:'🌤',temp:23,desc:'晴時多雲',h:70,w:4.0,lo:18,hi:25}},
+  {city:'博多',emoji:'⛩',jp:'むいかめ',wx:{icon:'☀️',temp:26,desc:'晴天',h:58,w:2.2,lo:20,hi:28}},
+  {city:'熊本',emoji:'🏯',jp:'なのかめ',wx:{icon:'⛅',temp:24,desc:'多雲',h:66,w:3.1,lo:19,hi:26}},
+  {city:'熊本',emoji:'✈️',jp:'ようかめ',wx:{icon:'🌤',temp:25,desc:'晴時多雲',h:63,w:2.9,lo:19,hi:27}},
+];
 
-let schedules=JSON.parse(localStorage.getItem('schedules')||'null')||[
-  {id:'s1',day:0,time:'09:00',name:'淺草寺',place:'東京都台東區淺草2-3-1',type:'sight',note:'建議早上去，可拍雷門大燈籠'},
-  {id:'s2',day:0,time:'11:30',name:'仲見世通商店街',place:'台東區淺草1-36-3',type:'shop',note:'日本傳統零食必逛'},
-  {id:'s3',day:0,time:'13:00',name:'壽司大（豐洲市場）',place:'江東區豐洲6-6-1',type:'food',note:'需提早排隊'},
-  {id:'s4',day:1,time:'10:00',name:'新宿御苑',place:'新宿區内藤町11',type:'sight',note:''},
-  {id:'s5',day:1,time:'19:00',name:'黃金街居酒屋',place:'新宿區歌舞伎町',type:'food',note:'昭和風小酒館'},
+// 預設行程（對應圖片）
+const DEFAULT_SCHEDULES=[
+  // D1 熊本
+  {id:'s101',day:0,time:'14:00',name:'抵達熊本機場',place:'熊本空港',type:'transport',note:'機場巴士直達飯店'},
+  {id:'s102',day:0,time:'16:00',name:'飯店 Check-in',place:'熊本市中心',type:'hotel',note:''},
+  {id:'s103',day:0,time:'19:00',name:'下通商店街美食',place:'熊本市中央區下通',type:'food',note:'深夜美食探索'},
+  // D2 熊本
+  {id:'s201',day:1,time:'09:00',name:'熊本城',place:'熊本市中央區本丸1-1',type:'sight',note:'日本三大名城之一'},
+  {id:'s202',day:1,time:'11:30',name:'櫻之馬場 城彩苑',place:'熊本市中央區二之丸1-1',type:'sight',note:'熊本傳統工藝與美食'},
+  {id:'s203',day:1,time:'14:00',name:'上下通採買',place:'熊本市中央區上通・下通',type:'shop',note:'熊本最繁華商店街'},
+  // D3 阿蘇一日遊
+  {id:'s301',day:2,time:'08:00',name:'阿蘇火山口',place:'熊本縣阿蘇市阿蘇山上',type:'sight',note:'JR Pass D1・世界最大級火山口'},
+  {id:'s302',day:2,time:'11:00',name:'草千里ヶ浜',place:'熊本縣阿蘇市黑川',type:'sight',note:'翠綠草原絕景'},
+  {id:'s303',day:2,time:'13:30',name:'阿蘇男孩號',place:'阿蘇站',type:'transport',note:'JR Pass 觀光列車'},
+  // D4 熊本→博多
+  {id:'s401',day:3,time:'08:00',name:'新幹線至博多',place:'熊本站→博多站',type:'transport',note:'JR Pass D2・約40分鐘'},
+  {id:'s402',day:3,time:'10:00',name:'櫛田神社',place:'福岡市博多區上川端町1-41',type:'sight',note:'博多祇園山笠發源地'},
+  {id:'s403',day:3,time:'19:00',name:'中洲屋台',place:'福岡市博多區中洲',type:'food',note:'博多必體驗的屋台文化'},
+  // D5 系島一日遊
+  {id:'s501',day:4,time:'09:00',name:'夫婦岩（二見浦）',place:'福岡縣糸島市志摩桜井',type:'sight',note:'JR Pass D3・糸島地標'},
+  {id:'s502',day:4,time:'12:00',name:'海邊咖啡廳拍美照',place:'福岡縣糸島市',type:'food',note:'INS打卡必訪咖啡廳'},
+  {id:'s503',day:4,time:'15:00',name:'糸島採買',place:'福岡縣糸島市',type:'shop',note:'手作雜貨・海鮮'},
+  // D6 太宰府・天神
+  {id:'s601',day:5,time:'09:00',name:'太宰府天滿宮',place:'福岡縣太宰府市宰府4-7-1',type:'sight',note:'西鐵電車・學問之神'},
+  {id:'s602',day:5,time:'12:00',name:'梅ヶ枝餅',place:'太宰府天滿宮参道',type:'food',note:'必吃名物'},
+  {id:'s603',day:5,time:'14:00',name:'天神商圈採買',place:'福岡市中央區天神',type:'shop',note:'地鐵天神站・博多一番街'},
+  {id:'s604',day:5,time:'19:30',name:'博多一雙拉麵',place:'福岡市博多區',type:'food',note:'豚骨拉麵名店'},
+  // D7 博多→熊本
+  {id:'s701',day:6,time:'16:00',name:'新幹線回熊本',place:'博多站→熊本站',type:'transport',note:'JR Pass D4'},
+  {id:'s702',day:6,time:'18:30',name:'飯店 Check-in',place:'熊本市中心',type:'hotel',note:''},
+  {id:'s703',day:6,time:'19:30',name:'熊本屋台村',place:'熊本市中央區花畑町11-10',type:'food',note:'最後夜晚慶祝'},
+  // D8 返台
+  {id:'s801',day:7,time:'09:00',name:'熊本熊廣場',place:'熊本市中央區手取本町8',type:'sight',note:''},
+  {id:'s802',day:7,time:'11:00',name:'水前寺成趣園',place:'熊本市中央區水前寺公園8-1',type:'sight',note:'江戶時代迴遊式庭園'},
+  {id:'s803',day:7,time:'14:00',name:'熊本機場 返台',place:'熊本空港',type:'transport',note:'機場巴士前往'},
 ];
-let members=JSON.parse(localStorage.getItem('members')||'null')||[
-  {id:'m1',name:'小明'},{id:'m2',name:'小美'},{id:'m3',name:'阿強'}
+
+// ═══ 景點資料（熊本・博多版）═══
+const SPOTS=[
+  {
+    id:'sp1',name:'熊本城',area:'熊本市中央區',tag:'城堡',tagColor:'var(--green-dark)',camera:'🏯',
+    desc:'日本三大名城之一，黑色外牆莊嚴壯觀。2016年熊本地震後大規模修復，現在已部分重新開放，見證了歷史的韌性。城內可見熊本熊的各種身影。',
+    info:[{icon:'🕐',text:'9:00-17:00'},{icon:'💴',text:'800日幣'},{icon:'🚃',text:'市電「熊本城・市役所前」5分'},{icon:'⏱',text:'建議1.5-2小時'}],
+    tips:['加藤神社前廣場是拍攝熊本城全景的最佳位置','城牆石積的特寫搭配遠景很有質感','黃昏時分城牆的影子延伸效果極佳','和服租借後在城下拍攝更有氛圍']
+  },
+  {
+    id:'sp2',name:'阿蘇火山',area:'熊本縣阿蘇市',tag:'自然',tagColor:'#8B4A2A',camera:'🌋',
+    desc:'世界最大規模的火山口，周長約120公里。活火山的噴煙、湛藍的火口湖、無邊際的草千里，是九州最震撼的自然奇景，也是絕佳的攝影聖地。',
+    info:[{icon:'🕐',text:'8:30-17:00（視火山活動）'},{icon:'💴',text:'入場免費，纜車另計'},{icon:'🚃',text:'JR阿蘇站→巴士30分'},{icon:'⏱',text:'建議3-4小時'}],
+    tips:['早晨雲海出現機率高，建議8點前抵達','火口展望台的噴煙逆光拍攝效果震撼','草千里的馬匹前景構圖很有日系感','360度環形拍攝，每個角度都不同']
+  },
+  {
+    id:'sp3',name:'太宰府天滿宮',area:'福岡縣太宰府市',tag:'神社',tagColor:'var(--red)',camera:'⛩',
+    desc:'日本全國約12000座天滿宮的總本社，供奉學問之神菅原道真。參道上的梅ヶ枝餅是必吃名物，境內的飛梅傳說更是千年浪漫。',
+    info:[{icon:'🕐',text:'6:00-19:00'},{icon:'💴',text:'免費參觀'},{icon:'🚃',text:'西鐵太宰府站徒步5分'},{icon:'⏱',text:'建議1.5-2小時'}],
+    tips:['本殿前的大楠樹（樹齡千年）是最美的自然背景','連廊的長走廊構圖感很強，利用透視感','參道上邊走邊吃梅ヶ枝餅的街拍很自然','紅色太鼓橋倒影在水面的效果完美']
+  },
+  {
+    id:'sp4',name:'糸島・夫婦岩',area:'福岡縣糸島市',tag:'海景',tagColor:'#2A6B8A',camera:'🌊',
+    desc:'糸島最具代表性的地標，兩塊海中巨岩以注連繩相連，象徵夫妻緣分。海邊的咖啡廳和彩虹鞦韆更是IG打卡熱點，堪稱九州最美海岸線。',
+    info:[{icon:'🕐',text:'全天開放'},{icon:'💴',text:'免費'},{icon:'🚃',text:'JR筑前前原站→巴士/計程車'},{icon:'⏱',text:'建議3-4小時'}],
+    tips:['夕陽時分拍夫婦岩是最美的時刻','海邊咖啡廳的彩虹鞦韆需排隊，建議平日前往','海浪慢快門拍出絲滑感（1/4秒以上）','淺藍色海水和白色細沙搭配人物構圖很清新']
+  },
+  {
+    id:'sp5',name:'中洲屋台',area:'福岡市博多區',tag:'美食',tagColor:'var(--gold)',camera:'🍜',
+    desc:'那珂川沿岸的屋台文化是博多最獨特的飲食體驗。豚骨拉麵、明太子、烤串在小小的屋台內飄香，坐在吧台與老闆天南地北聊天，才是真正的博多夜晚。',
+    info:[{icon:'🕐',text:'18:00-深夜'},{icon:'💴',text:'拉麵約900-1200日幣'},{icon:'🚃',text:'地鐵中洲川端站徒步5分'},{icon:'⏱',text:'建議1.5-2小時'}],
+    tips:['屋台外觀的暖黃燈光和夜景構成絕美夜拍','人物坐在屋台前的背影+霓虹倒影是定番','熱騰騰拉麵的蒸氣逆光拍攝最有食欲','廣角鏡頭拍整排屋台的全景最壯觀']
+  },
+  {
+    id:'sp6',name:'熊本屋台村',area:'熊本市中央區',tag:'美食',tagColor:'var(--gold)',camera:'🏮',
+    desc:'熊本版的屋台美食聚落，集合了馬刺、辛子蓮根、太平燕等熊本特色料理。比博多更輕鬆的氛圍，是旅程最後一晚最理想的慶祝場所。',
+    info:[{icon:'🕐',text:'17:00-深夜'},{icon:'💴',text:'視消費'},{icon:'🚃',text:'熊本站電車10分，花畑町'},{icon:'⏱',text:'建議2小時'}],
+    tips:['木造街區的暖光燈籠是最有日本氛圍的背景','和旅伴乾杯的瞬間捕捉笑容最自然','馬刺（馬肉刺身）盛盤精緻，值得特寫','夜晚燈光不足，可提高ISO或開啟夜拍模式']
+  },
 ];
-let expenses=JSON.parse(localStorage.getItem('expenses')||'null')||[
-  {id:'e1',name:'便利商店早餐',amount:850,payerId:'m1',date:'Day1'},
-  {id:'e2',name:'地鐵一日券×3',amount:2400,payerId:'m2',date:'Day1'},
+
+// ═══ 拍照 Tips（針對熊本・博多）═══
+const TIPS=[
+  {
+    icon:'🏯',name:'城堡・神社拍攝',sub:'和風傳統場景',
+    items:['熊本城最佳角度：加藤神社前廣場，清晨6-7點無人且光線完美','太宰府本殿：正面仰拍，天空作背景，避開中午強光','石板參道利用「消失點」構圖，讓視線往深處延伸','穿和服或浴衣拍攝，色彩和環境最搭配']
+  },
+  {
+    icon:'🌋',name:'阿蘇火山・草千里',sub:'大自然壯闊場景',
+    items:['草千里廣角橫拍，前景放馬匹或人物，強調空間感','火口展望台俯瞰，用護欄作框架構圖','噴煙逆光拍攝，戲劇性十足','早晨7-8點有機會出現雲海，值得早起等待']
+  },
+  {
+    icon:'🌊',name:'糸島海岸',sub:'清新海邊日系風',
+    items:['夕陽前1小時抵達夫婦岩，光線從橘轉紅漸層','彩虹鞦韆：人在鞦韆上，遠處大海為背景，仰拍讓天空更大','低角度貼近沙灘拍，水面反光很夢幻','海邊咖啡廳選靠窗座位，自然光+海景的人像最美']
+  },
+  {
+    icon:'🍜',name:'美食拍攝',sub:'博多・熊本名物',
+    items:['豚骨拉麵：熱氣繚繞時立刻拍，側光角度讓湯頭發亮','屋台夜景：長曝光拍出路人虛化效果，屋台燈光成主角','馬刺生魚片：俯拍90度，呈現精緻擺盤','梅ヶ枝餅剛烤好時拍，表面金黃光澤最誘人']
+  },
+  {
+    icon:'🌃',name:'屋台夜景',sub:'博多・熊本夜晚',
+    items:['手持夜拍開夜間模式，靠在柱子或牆上穩定','暖黃燈光和路面濕氣反光，雨後效果更好','廣角拍整排屋台，長曝光車流成光軌','人物在屋台前背光剪影，最有日系電影感']
+  },
+  {
+    icon:'🚆',name:'JR火車・新幹線',sub:'旅途中的移動感',
+    items:['月台拍新幹線進站，廣角+低角度最有氣勢','車窗外流動的九州風景用慢快門拍出動感','阿蘇男孩號車內的懷舊座椅+窗外風景構圖','車票、JR Pass和地圖一起拍的旅行感平拍']
+  },
+  {
+    icon:'📱',name:'手機拍攝技巧',sub:'不帶相機也能拍大片',
+    items:['開啟格線，三分法讓地平線在1/3處，更平衡','人像模式拍美食和景點建築，背景虛化更專業','順光（早上）比逆光更容易控制，初學者首選','後期推薦 VSCO 的 A4 或 HB1 濾鏡，符合日系清新風格']
+  },
 ];
+
+let curDay=0,rate=4.65,editSchedId=null,curCheckType='luggage';
+
+let schedules=JSON.parse(localStorage.getItem('schedules')||'null')||DEFAULT_SCHEDULES;
+let members=JSON.parse(localStorage.getItem('members')||'null')||[{id:'m1',name:'我'},{id:'m2',name:'旅伴'}];
+let expenses=JSON.parse(localStorage.getItem('expenses')||'null')||[];
 let photos=JSON.parse(localStorage.getItem('photos')||'null')||[];
+
+let luggage=JSON.parse(localStorage.getItem('luggage')||'null')||[
+  {id:'l1',name:'護照',cat:'證件',note:'有效期6個月以上',done:false},
+  {id:'l2',name:'機票電子票',cat:'證件',note:'',done:false},
+  {id:'l3',name:'飯店訂單',cat:'證件',note:'',done:false},
+  {id:'l4',name:'JR Pass',cat:'證件',note:'九州3日/5日 Pass',done:false},
+  {id:'l5',name:'旅遊保險',cat:'證件',note:'',done:false},
+  {id:'l6',name:'換洗衣物',cat:'衣物',note:'8天份',done:false},
+  {id:'l7',name:'外套',cat:'衣物',note:'九州早晚偏涼',done:false},
+  {id:'l8',name:'舒適步行鞋',cat:'衣物',note:'每天走很多路',done:false},
+  {id:'l9',name:'充電線',cat:'電子',note:'',done:false},
+  {id:'l10',name:'行動電源',cat:'電子',note:'',done:false},
+  {id:'l11',name:'轉接頭',cat:'電子',note:'日本A型插頭',done:false},
+  {id:'l12',name:'相機/手機',cat:'電子',note:'',done:false},
+  {id:'l13',name:'日幣現金',cat:'金融',note:'建議帶6-8萬',done:false},
+  {id:'l14',name:'信用卡',cat:'金融',note:'VISA/Mastercard',done:false},
+  {id:'l15',name:'常備藥',cat:'醫藥',note:'腸胃藥、感冒藥',done:false},
+];
+
+let shopping=JSON.parse(localStorage.getItem('shopping')||'null')||[
+  {id:'sh1',name:'熊本熊商品',cat:'禮品',note:'限定版',done:false},
+  {id:'sh2',name:'辛子蓮根',cat:'食品',note:'熊本名物',done:false},
+  {id:'sh3',name:'太平燕（インスタント）',cat:'食品',note:'',done:false},
+  {id:'sh4',name:'一蘭拉麵調理包',cat:'食品',note:'博多限定',done:false},
+  {id:'sh5',name:'明太子',cat:'食品',note:'真空包裝可帶回',done:false},
+  {id:'sh6',name:'梅ヶ枝餅',cat:'食品',note:'太宰府現場吃',done:false},
+  {id:'sh7',name:'藥妝護膚品',cat:'藥妝',note:'KOSE、資生堂',done:false},
+  {id:'sh8',name:'眼藥水',cat:'藥妝',note:'Rohto系列',done:false},
+  {id:'sh9',name:'糸島手作雜貨',cat:'禮品',note:'',done:false},
+  {id:'sh10',name:'博多織布品',cat:'禮品',note:'傳統工藝',done:false},
+];
 
 function save(){
   localStorage.setItem('schedules',JSON.stringify(schedules));
   localStorage.setItem('members',JSON.stringify(members));
   localStorage.setItem('expenses',JSON.stringify(expenses));
   localStorage.setItem('photos',JSON.stringify(photos));
-  if(window.syncToFirebase) window.syncToFirebase();
+  localStorage.setItem('luggage',JSON.stringify(luggage));
+  localStorage.setItem('shopping',JSON.stringify(shopping));
+  if(window.syncToFirebase)window.syncToFirebase();
 }
 
-/* ─ Dates ─ */
+/* ── Dates ── */
 function getDates(){
-  const arr=[];
-  const start=new Date(document.getElementById('tripStartDate').value+'T00:00:00');
-  const n=parseInt(document.getElementById('tripDayCount').value)||5;
-  for(let i=0;i<n;i++){const d=new Date(start);d.setDate(start.getDate()+i);arr.push({num:String(d.getDate()).padStart(2,'0'),lbl:'週'+DOW[d.getDay()]});}
+  const arr=[];const start=new Date(document.getElementById('tripStartDate').value+'T00:00:00');
+  for(let i=0;i<8;i++){const d=new Date(start);d.setDate(start.getDate()+i);arr.push({num:String(d.getDate()).padStart(2,'0'),lbl:'週'+DOW[d.getDay()]});}
   return arr;
 }
 function updateDates(){
-  const dates=getDates();
-  document.getElementById('dayBadge').textContent=dates.length+'天行程';
-  const sc=document.getElementById('dateScroller');
-  sc.innerHTML='';
+  const dates=getDates();document.getElementById('dayBadge').textContent='8天行程';
+  const sc=document.getElementById('dateScroller');sc.innerHTML='';
   dates.forEach((d,i)=>{
-    const el=document.createElement('div');
-    el.className='date-chip'+(i===curDay?' active':'');
-    el.innerHTML=`<span class="day-num">${d.num}</span><span class="day-label">${d.lbl}</span>`;
-    el.onclick=()=>{curDay=i;updateDates();renderSchedule();renderPhotos();renderMap();};
+    const trip=TRIP_DAYS[i];
+    const el=document.createElement('div');el.className='date-chip'+(i===curDay?' active':'');
+    el.innerHTML=`<span class="day-num">D${i+1}</span><span class="day-label">${d.num}/${d.lbl}</span><span class="day-city">${trip.emoji}${trip.city}</span>`;
+    el.onclick=()=>{curDay=i;updateDates();renderSchedule();renderMap();renderPhotos();};
     sc.appendChild(el);
   });
-  const wx=WX[curDay%WX.length];
+  const trip=TRIP_DAYS[curDay];
+  const wx=trip.wx;
   document.getElementById('wx-icon').textContent=wx.icon;
   document.getElementById('wx-temp').textContent=wx.temp+'°';
   document.getElementById('wx-desc').textContent=wx.desc;
-  document.getElementById('wx-city').textContent='TOKYO · DAY '+(curDay+1);
+  document.getElementById('wx-city').textContent=trip.city+' · D'+(curDay+1);
   document.getElementById('wx-extra').innerHTML=`💧 ${wx.h}%<br>🌬 ${wx.w}m/s<br>🌡 ${wx.lo}~${wx.hi}°`;
+  document.getElementById('dayJp').textContent=trip.jp;
+  document.getElementById('dayTitle').textContent='D'+(curDay+1)+' · '+trip.city+'行程';
+  document.getElementById('cityBadgeArea').innerHTML=`<div class="city-badge">${trip.emoji} 今日地點：${trip.city}</div>`;
 }
 
-/* ─ Schedule ─ */
+/* ── Schedule ── */
 function renderSchedule(){
   const list=schedules.filter(s=>s.day===curDay).sort((a,b)=>a.time.localeCompare(b.time));
   const el=document.getElementById('schedList');
@@ -1071,164 +724,155 @@ function renderSchedule(){
       <div class="time-col"><div class="time-text">${s.time}</div></div>
       <div class="time-dot"></div>
       <div class="schedule-card">
-        <div class="card-actions">
-          <button class="card-btn" onclick="editSched('${s.id}')">✏️</button>
-          <button class="card-btn" onclick="delSched('${s.id}')">🗑</button>
-        </div>
+        <div class="card-actions"><button class="card-btn" onclick="editSched('${s.id}')">✏️</button><button class="card-btn" onclick="delSched('${s.id}')">🗑</button></div>
         <div class="schedule-name">${s.name}</div>
         ${s.place?`<div class="schedule-place">📍 ${s.place}</div>`:''}
-        <span class="tag tag-${s.type}">${TAGS[s.type]}</span>
+        <span class="tag tag-${s.type}">${{sight:'🌸 景點',food:'🍜 餐廳',shop:'🛍 購物',hotel:'🏨 住宿',transport:'🚃 交通'}[s.type]}</span>
         ${s.note?`<div class="schedule-note">${s.note}</div>`:''}
       </div>
     </div>`).join('');
 }
-function openSchedModal(){editSchedId=null;document.getElementById('schedModalTitle').textContent='新增行程 📝';document.getElementById('sf-time').value='10:00';document.getElementById('sf-type').value='sight';document.getElementById('sf-name').value='';document.getElementById('sf-place').value='';document.getElementById('sf-note').value='';document.getElementById('schedModal').style.display='flex';}
+function openSchedModal(){editSchedId=null;document.getElementById('schedModalTitle').textContent='新增行程 📝';document.getElementById('sf-time').value='10:00';document.getElementById('sf-type').value='sight';['sf-name','sf-place','sf-note'].forEach(id=>document.getElementById(id).value='');document.getElementById('schedModal').style.display='flex';}
 function editSched(id){const s=schedules.find(x=>x.id===id);if(!s)return;editSchedId=id;document.getElementById('schedModalTitle').textContent='編輯行程 ✏️';document.getElementById('sf-time').value=s.time;document.getElementById('sf-type').value=s.type;document.getElementById('sf-name').value=s.name;document.getElementById('sf-place').value=s.place||'';document.getElementById('sf-note').value=s.note||'';document.getElementById('schedModal').style.display='flex';}
-function saveSched(){
-  const name=document.getElementById('sf-name').value.trim();
-  if(!name){showToast('請輸入行程名稱');return;}
-  const obj={id:editSchedId||('s'+Date.now()),day:curDay,time:document.getElementById('sf-time').value,name,place:document.getElementById('sf-place').value.trim(),type:document.getElementById('sf-type').value,note:document.getElementById('sf-note').value.trim()};
-  if(editSchedId){const i=schedules.findIndex(s=>s.id===editSchedId);schedules[i]=obj;}
-  else schedules.push(obj);
-  save();closeModal('schedModal');renderSchedule();renderMap();showToast(editSchedId?'行程已更新！':'行程已新增 🌿');
-}
+function saveSched(){const name=document.getElementById('sf-name').value.trim();if(!name){showToast('請輸入名稱');return;}const obj={id:editSchedId||('s'+Date.now()),day:curDay,time:document.getElementById('sf-time').value,name,place:document.getElementById('sf-place').value.trim(),type:document.getElementById('sf-type').value,note:document.getElementById('sf-note').value.trim()};if(editSchedId){const i=schedules.findIndex(s=>s.id===editSchedId);schedules[i]=obj;}else schedules.push(obj);save();closeModal('schedModal');renderSchedule();renderMap();showToast(editSchedId?'行程已更新！':'行程已新增 🌿');}
 function delSched(id){if(!confirm('確定刪除？'))return;schedules=schedules.filter(s=>s.id!==id);save();renderSchedule();renderMap();}
 
-/* ─ Photos ─ */
-function renderPhotos(){
-  const dayPhotos=photos.filter(p=>p.day===curDay);
-  document.getElementById('photoDay').textContent='第 '+(curDay+1)+' 天';
-  document.getElementById('photoCount').textContent=dayPhotos.length+' 張';
-  const grid=document.getElementById('photoGrid');
-  const empty=document.getElementById('photoEmpty');
-  if(!dayPhotos.length){grid.innerHTML='';empty.style.display='block';return;}
-  empty.style.display='none';
-  grid.innerHTML=dayPhotos.map(p=>`
-    <div class="ibb-img">
-      <img src="${p.url}" alt="${p.name||''}" onerror="this.parentElement.style.background='var(--green-pale)'" onclick="openLightbox('${p.url}')">
-      <button class="ibb-img-del" onclick="event.stopPropagation();delPhoto('${p.id}')">✕</button>
+/* ── Checklist ── */
+const LUGGAGE_CATS=['全部','證件','衣物','電子','金融','醫藥'];
+const SHOPPING_CATS=['全部','食品','藥妝','禮品','服飾','其他'];
+let luggageCatFilter='全部',shoppingCatFilter='全部';
+function switchChecklist(type){
+  curCheckType=type;
+  document.getElementById('cl-luggage').style.display=type==='luggage'?'block':'none';
+  document.getElementById('cl-shopping').style.display=type==='shopping'?'block':'none';
+  const lBtn=document.getElementById('cl-tab-luggage');const sBtn=document.getElementById('cl-tab-shopping');
+  lBtn.style.background=type==='luggage'?'var(--green-dark)':'var(--cream)';lBtn.style.color=type==='luggage'?'var(--cream)':'var(--stone)';
+  sBtn.style.background=type==='shopping'?'var(--green-dark)':'var(--cream)';sBtn.style.color=type==='shopping'?'var(--cream)':'var(--stone)';
+  renderChecklist();
+}
+function renderChecklist(){
+  renderCheckItems('luggage',luggage,LUGGAGE_CATS,luggageCatFilter,'luggage-cats','luggageList','luggage-progress','luggage-count');
+  renderCheckItems('shopping',shopping,SHOPPING_CATS,shoppingCatFilter,'shopping-cats','shoppingList','shopping-progress','shopping-count');
+}
+function renderCheckItems(type,items,cats,filter,catsId,listId,progId,countId){
+  document.getElementById(catsId).innerHTML=cats.map(c=>`<div class="cat-chip${c===filter?' active':''}" onclick="${type==='luggage'?'luggageCatFilter':'shoppingCatFilter'}='${c}';renderChecklist()">${c}</div>`).join('');
+  const filtered=filter==='全部'?items:items.filter(i=>i.cat===filter);
+  const allDone=items.filter(i=>i.done).length;
+  document.getElementById(progId).style.width=items.length?(allDone/items.length*100)+'%':'0%';
+  document.getElementById(countId).textContent=allDone+'/'+items.length;
+  const el=document.getElementById(listId);
+  if(!filtered.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">此分類沒有項目</div></div>`;return;}
+  el.innerHTML=filtered.map(item=>`
+    <div class="check-item${item.done?' done':''}">
+      <div class="check-box${item.done?' checked':''}" onclick="toggleCheck('${type}','${item.id}')"></div>
+      <div class="check-label">${item.name}${item.note?`<div style="font-size:10px;color:var(--stone);margin-top:1px">${item.note}</div>`:''}</div>
+      <span class="check-category">${item.cat}</span>
+      <button class="check-del" onclick="delCheck('${type}','${item.id}')">🗑</button>
     </div>`).join('');
 }
-function addPhotoByUrl(){
-  const url=document.getElementById('ibbUrlInput').value.trim();
-  if(!url){showToast('請輸入圖片網址');return;}
-  if(!/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(url)&&!url.includes('ibb.co')&&!url.includes('i.ibb.co')){
-    if(!confirm('網址格式可能不是圖片，仍要加入嗎？'))return;
-  }
-  photos.push({id:'p'+Date.now(),day:curDay,url,name:'旅遊照片'});
-  save();renderPhotos();document.getElementById('ibbUrlInput').value='';showToast('照片已加入！🌸');
-}
-function handleFileUpload(e){
-  const files=Array.from(e.target.files);
-  files.forEach(file=>{
-    const reader=new FileReader();
-    reader.onload=ev=>{
-      photos.push({id:'p'+Date.now(),day:curDay,url:ev.target.result,name:file.name});
-      save();renderPhotos();
-    };
-    reader.readAsDataURL(file);
-  });
-  if(files.length) showToast(`已加入 ${files.length} 張照片 📸`);
-}
-function delPhoto(id){photos=photos.filter(p=>p.id!==id);save();renderPhotos();}
-function openLightbox(url){const lb=document.getElementById('lightbox');document.getElementById('lightboxImg').src=url;lb.style.display='flex';}
-function closeLightbox(){document.getElementById('lightbox').style.display='none';}
+function toggleCheck(type,id){const arr=type==='luggage'?luggage:shopping;const item=arr.find(i=>i.id===id);if(item)item.done=!item.done;save();renderChecklist();}
+function delCheck(type,id){if(type==='luggage')luggage=luggage.filter(i=>i.id!==id);else shopping=shopping.filter(i=>i.id!==id);save();renderChecklist();}
+function openCheckModal(type){curCheckType=type;document.getElementById('checkModalTitle').textContent=type==='luggage'?'新增行李項目 🧳':'新增購買項目 🛍';document.getElementById('ck-name').value='';document.getElementById('ck-note').value='';const cats=type==='luggage'?LUGGAGE_CATS.slice(1):SHOPPING_CATS.slice(1);document.getElementById('ck-cat').innerHTML=cats.map(c=>`<option value="${c}">${c}</option>`).join('');document.getElementById('checkModal').style.display='flex';}
+function saveCheckItem(){const name=document.getElementById('ck-name').value.trim();if(!name){showToast('請輸入名稱');return;}const item={id:(curCheckType==='luggage'?'l':'sh')+Date.now(),name,cat:document.getElementById('ck-cat').value,note:document.getElementById('ck-note').value.trim(),done:false};if(curCheckType==='luggage')luggage.push(item);else shopping.push(item);save();closeModal('checkModal');renderChecklist();showToast('已新增 🌿');}
 
-/* ─ Split ─ */
+/* ── Spots ── */
+function renderSpots(){
+  document.getElementById('spotList').innerHTML=SPOTS.map(s=>`
+    <div class="spot-card" id="spot-${s.id}">
+      <div class="spot-header" onclick="toggleSpot('${s.id}')">
+        <div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:20px">${s.camera}</span><div class="spot-name">${s.name}</div></div><div class="spot-area">📍 ${s.area}</div></div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span class="spot-tag" style="color:${s.tagColor}">${s.tag}</span><span class="spot-arrow" id="sarrow-${s.id}">▼</span></div>
+      </div>
+      <div class="spot-body" id="spotbody-${s.id}">
+        <div class="spot-desc">${s.desc}</div>
+        <div class="spot-divider"></div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px">${s.info.map(i=>`<div class="spot-info-item"><span>${i.icon}</span><span>${i.text}</span></div>`).join('')}</div>
+        <div class="spot-divider"></div>
+        <div class="spot-tips-title">📷 拍攝建議</div>
+        ${s.tips.map(t=>`<div class="spot-tip">${t}</div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+function toggleSpot(id){const body=document.getElementById('spotbody-'+id);const arrow=document.getElementById('sarrow-'+id);const isOpen=body.classList.contains('open');body.classList.toggle('open',!isOpen);arrow.style.transform=isOpen?'rotate(0)':'rotate(180deg)';}
+
+/* ── Tips ── */
+function renderTips(){
+  document.getElementById('tipsList').innerHTML=TIPS.map((t,ti)=>`
+    <div class="tip-card">
+      <div class="tip-header" onclick="toggleTip(${ti})">
+        <div class="tip-icon">${t.icon}</div>
+        <div style="flex:1"><div class="tip-name">${t.name}</div><div class="tip-sub">${t.sub}</div></div>
+        <span style="color:var(--stone);font-size:11px;transition:transform .2s" id="tip-arrow-${ti}">▼</span>
+      </div>
+      <div class="tip-body" id="tipbody-${ti}">
+        ${t.items.map((item,i)=>`<div class="tip-item"><div class="tip-num">${i+1}</div><div class="tip-text">${item}</div></div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+function toggleTip(i){const body=document.getElementById('tipbody-'+i);const arrow=document.getElementById('tip-arrow-'+i);const isOpen=body.classList.contains('open');body.classList.toggle('open',!isOpen);arrow.style.transform=isOpen?'rotate(0)':'rotate(180deg)';}
+
+/* ── Photos ── */
+function renderPhotos(){
+  const dp=photos.filter(p=>p.day===curDay);
+  document.getElementById('photoDay').textContent='D'+(curDay+1)+' · '+TRIP_DAYS[curDay].city;
+  document.getElementById('photoCount').textContent=dp.length+' 張';
+  const grid=document.getElementById('photoGrid');const empty=document.getElementById('photoEmpty');
+  if(!dp.length){grid.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  grid.innerHTML=dp.map(p=>`<div class="ibb-img"><img src="${p.url}" alt="" onerror="this.style.display='none'" onclick="openLightbox('${p.url}')"><button class="ibb-img-del" onclick="event.stopPropagation();delPhoto('${p.id}')">✕</button></div>`).join('');
+}
+function addPhotoByUrl(){const url=document.getElementById('ibbUrlInput').value.trim();if(!url){showToast('請輸入網址');return;}photos.push({id:'p'+Date.now(),day:curDay,url});save();renderPhotos();document.getElementById('ibbUrlInput').value='';showToast('照片已加入 🌸');}
+function handleFileUpload(e){const files=Array.from(e.target.files);files.forEach(file=>{const reader=new FileReader();reader.onload=ev=>{photos.push({id:'p'+Date.now(),day:curDay,url:ev.target.result});save();renderPhotos();};reader.readAsDataURL(file);});if(files.length)showToast(`已加入 ${files.length} 張 📸`);}
+function delPhoto(id){photos=photos.filter(p=>p.id!==id);save();renderPhotos();}
+function openLightbox(url){document.getElementById('lightboxImg').src=url;document.getElementById('lightbox').style.display='flex';}
+
+/* ── Split ── */
 function renderSplit(){
   document.getElementById('rateDisplay').textContent=rate.toFixed(2);
-  document.getElementById('memberList').innerHTML=members.map(m=>`
-    <div class="member-chip"><div class="member-avatar">${m.name[0]}</div>${m.name}
-    <span onclick="delMember('${m.id}')" style="margin-left:4px;opacity:.4;cursor:pointer;font-size:12px">✕</span></div>`).join('');
+  document.getElementById('memberList').innerHTML=members.map(m=>`<div class="member-chip"><div class="member-avatar">${m.name[0]}</div>${m.name}<span onclick="delMember('${m.id}')" style="margin-left:4px;opacity:.35;cursor:pointer;font-size:11px">✕</span></div>`).join('');
   const eEl=document.getElementById('expenseList');
-  eEl.innerHTML=expenses.length?expenses.map(e=>`
-    <div class="expense-item">
-      <div><div class="expense-name">${e.name}</div><div class="expense-payer">${getMemberName(e.payerId)} 付 · ${e.date}</div></div>
-      <div><div class="expense-jpy">¥${e.amount.toLocaleString()}</div><div class="expense-twd">≈ NT$ ${Math.round(e.amount/rate)}</div></div>
-      <button onclick="delExpense('${e.id}')" class="card-btn" style="margin-left:8px;opacity:.35">✕</button>
-    </div>`).join(''):`<div class="empty-state"><div class="empty-icon">🍵</div><div class="empty-text">還沒有費用記錄</div></div>`;
-  const sets=calcSettlements();
-  document.getElementById('settlementList').innerHTML=sets.length?sets.map(s=>`
-    <div class="settlement-card">
-      <div style="font-size:13px;font-weight:500;color:var(--green-dark);font-family:'Noto Serif JP',serif">${s.from} → 應給 → ${s.to}</div>
-      <div style="display:flex;align-items:baseline;gap:8px;margin-top:5px">
-        <span class="settlement-amount">¥${s.jpy.toLocaleString()}</span>
-        <span style="font-size:12px;color:var(--green-dark);font-family:'Noto Serif JP',serif">≈ NT$ ${s.twd.toLocaleString()}</span>
-      </div>
-    </div>`).join(''):`<div class="empty-state"><div class="empty-icon">${expenses.length?'🌿':'🍃'}</div><div class="empty-text">${expenses.length?'大家費用均等！':'新增費用後自動結算'}</div></div>`;
+  eEl.innerHTML=expenses.length?expenses.map(e=>`<div class="expense-item"><div><div style="font-weight:500;font-size:13px;font-family:'Noto Serif JP',serif">${e.name}</div><div style="font-size:11px;color:var(--stone)">${getMN(e.payerId)} 付 · ${e.date}</div></div><div><div class="settlement-amount" style="font-size:16px">¥${e.amount.toLocaleString()}</div><div style="font-size:11px;color:var(--green-dark)">≈ NT$${Math.round(e.amount/rate)}</div></div><button onclick="delExpense('${e.id}')" class="card-btn" style="margin-left:8px;opacity:.3">✕</button></div>`).join(''):`<div class="empty-state"><div class="empty-icon">🍵</div><div class="empty-text">還沒有費用記錄</div></div>`;
+  const sets=calcSets();
+  document.getElementById('settlementList').innerHTML=sets.length?sets.map(s=>`<div class="settlement-card"><div style="font-size:13px;font-weight:500;color:var(--green-dark);font-family:'Noto Serif JP',serif">${s.from} → 應給 → ${s.to}</div><div style="display:flex;align-items:baseline;gap:8px;margin-top:4px"><span class="settlement-amount">¥${s.jpy.toLocaleString()}</span><span style="font-size:12px;color:var(--green-dark)">≈ NT$ ${s.twd.toLocaleString()}</span></div></div>`).join(''):`<div class="empty-state"><div class="empty-icon">${expenses.length?'🌿':'🍃'}</div><div class="empty-text">${expenses.length?'大家費用均等！':'新增費用後自動結算'}</div></div>`;
   const total=expenses.reduce((s,e)=>s+e.amount,0);
-  document.getElementById('totalSummary').innerHTML=total?`
-    <div class="split-summary">
-      <div style="font-size:10px;color:rgba(253,251,245,.6);letter-spacing:3px;margin-bottom:4px;font-family:'Noto Serif JP',serif">TOTAL · 總費用</div>
-      <div style="font-family:'Zen Kurenaido',serif;font-size:32px;color:var(--cream)">¥${total.toLocaleString()}</div>
-      <div style="font-size:13px;color:rgba(253,251,245,.5);font-family:'Noto Serif JP',serif">≈ NT$ ${Math.round(total/rate).toLocaleString()}</div>
-      <div style="font-size:12px;color:var(--green-light);margin-top:8px;font-family:'Noto Serif JP',serif">每人應付 ¥${Math.round(total/members.length).toLocaleString()} (NT$ ${Math.round(total/members.length/rate).toLocaleString()})</div>
-    </div>`:'';
+  document.getElementById('totalSummary').innerHTML=total?`<div class="split-summary"><div style="font-size:10px;color:rgba(253,251,245,.6);letter-spacing:3px;margin-bottom:3px;font-family:'Noto Serif JP',serif">TOTAL · 總費用</div><div style="font-family:'Zen Kurenaido',serif;font-size:30px;color:var(--cream)">¥${total.toLocaleString()}</div><div style="font-size:12px;color:rgba(253,251,245,.5)">≈ NT$ ${Math.round(total/rate).toLocaleString()}</div><div style="font-size:12px;color:var(--green-light);margin-top:6px;font-family:'Noto Serif JP',serif">每人應付 ¥${Math.round(total/members.length).toLocaleString()} (NT$ ${Math.round(total/members.length/rate).toLocaleString()})</div></div>`:'';
 }
-function calcSettlements(){
-  if(!members.length||!expenses.length)return[];
-  const bal={};members.forEach(m=>{bal[m.id]=0;});
-  expenses.forEach(e=>{const sh=e.amount/members.length;members.forEach(m=>{bal[m.id]-=sh;});bal[e.payerId]+=e.amount;});
-  const res=[];
-  const deb=members.filter(m=>bal[m.id]<-1).map(m=>({...m,b:bal[m.id]}));
-  const cre=members.filter(m=>bal[m.id]>1).map(m=>({...m,b:bal[m.id]}));
-  for(const d of deb){let debt=-d.b;for(const c of cre){if(c.b<=0||debt<=0)continue;const p=Math.min(debt,c.b);res.push({from:d.name,to:c.name,jpy:Math.round(p),twd:Math.round(p/rate)});debt-=p;c.b-=p;}}
-  return res;
-}
-function getMemberName(id){return(members.find(m=>m.id===id)||{name:'?'}).name;}
-function doConvert(){const v=parseFloat(document.getElementById('convertInput').value);document.getElementById('convertResult').textContent=v?`≈ NT$ ${Math.round(v/rate)} 元`:''}
+function calcSets(){if(!members.length||!expenses.length)return[];const bal={};members.forEach(m=>{bal[m.id]=0;});expenses.forEach(e=>{const sh=e.amount/members.length;members.forEach(m=>{bal[m.id]-=sh;});bal[e.payerId]+=e.amount;});const res=[];const deb=members.filter(m=>bal[m.id]<-1).map(m=>({...m,b:bal[m.id]}));const cre=members.filter(m=>bal[m.id]>1).map(m=>({...m,b:bal[m.id]}));for(const d of deb){let debt=-d.b;for(const c of cre){if(c.b<=0||debt<=0)continue;const p=Math.min(debt,c.b);res.push({from:d.name,to:c.name,jpy:Math.round(p),twd:Math.round(p/rate)});debt-=p;c.b-=p;}}return res;}
+function getMN(id){return(members.find(m=>m.id===id)||{name:'?'}).name;}
+function doConvert(){const v=parseFloat(document.getElementById('convertInput').value);document.getElementById('convertResult').textContent=v?`≈ NT$ ${Math.round(v/rate)} 元`:'';}
 function openMemberModal(){document.getElementById('mem-name').value='';document.getElementById('memberModal').style.display='flex';}
 function addMember(){const n=document.getElementById('mem-name').value.trim();if(!n)return;members.push({id:'m'+Date.now(),name:n});save();closeModal('memberModal');renderSplit();showToast('已新增旅伴 🌿');}
 function delMember(id){members=members.filter(m=>m.id!==id);save();renderSplit();}
 function openExpenseModal(){document.getElementById('ef-name').value='';document.getElementById('ef-amount').value='';document.getElementById('ef-payer').innerHTML=members.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');document.getElementById('expHint').style.display='none';document.getElementById('expModal').style.display='flex';}
 function updateExpHint(){const v=parseFloat(document.getElementById('ef-amount').value);const h=document.getElementById('expHint');if(v){h.textContent=`約 NT$ ${Math.round(v/rate)} 元`;h.style.display='block';}else h.style.display='none';}
-function saveExpense(){
-  const name=document.getElementById('ef-name').value.trim();
-  const amount=parseFloat(document.getElementById('ef-amount').value);
-  if(!name||!amount){showToast('請填寫完整資訊');return;}
-  expenses.push({id:'e'+Date.now(),name,amount,payerId:document.getElementById('ef-payer').value,date:'Day'+(curDay+1)});
-  save();closeModal('expModal');renderSplit();showToast('費用已記錄 🌿');
-}
+function saveExpense(){const name=document.getElementById('ef-name').value.trim();const amount=parseFloat(document.getElementById('ef-amount').value);if(!name||!amount){showToast('請填寫完整資訊');return;}expenses.push({id:'e'+Date.now(),name,amount,payerId:document.getElementById('ef-payer').value,date:'D'+(curDay+1)});save();closeModal('expModal');renderSplit();showToast('費用已記錄 🌿');}
 function delExpense(id){expenses=expenses.filter(e=>e.id!==id);save();renderSplit();}
 
-/* ─ Map ─ */
+/* ── Map ── */
 function renderMap(){
   const places=schedules.filter(s=>s.day===curDay&&s.place).sort((a,b)=>a.time.localeCompare(b.time));
   document.getElementById('placeCount').textContent=places.length+' 個地點';
   const el=document.getElementById('locationList');
-  if(!places.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon">🌱</div><div class="empty-text">今天沒有地點<br>在行程頁新增含地點的行程</div></div>`;return;}
-  el.innerHTML=places.map((p,i)=>`
-    <div class="location-item" onclick="openNav('${encodeURIComponent(p.place||p.name)}')">
-      <div class="location-num">${i+1}</div>
-      <div>
-        <div style="font-weight:500;font-size:13px;color:var(--ink);font-family:'Noto Serif JP',serif">${p.name}</div>
-        <div style="font-size:11px;color:var(--stone)">📍 ${p.place} · ${p.time}</div>
-      </div>
-      <button class="nav-btn">導航 ↗</button>
-    </div>`).join('');
+  if(!places.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon">🌱</div><div class="empty-text">今天沒有地點</div></div>`;return;}
+  el.innerHTML=places.map((p,i)=>`<div class="location-item" onclick="openNav('${encodeURIComponent(p.place||p.name)}')"><div class="location-num">${i+1}</div><div><div style="font-weight:500;font-size:13px;font-family:'Noto Serif JP',serif">${p.name}</div><div style="font-size:11px;color:var(--stone)">📍 ${p.place} · ${p.time}</div></div><button class="nav-btn">導航 ↗</button></div>`).join('');
 }
 function openNav(q){window.open('https://www.google.com/maps/search/'+q,'_blank');}
-function openAllOnMap(){const places=schedules.filter(s=>s.day===curDay&&s.place);const q=places.length?encodeURIComponent(places.map(p=>p.place).join(' ')):'Tokyo+Japan';window.open('https://www.google.com/maps/search/'+q,'_blank');}
+function openAllOnMap(){const places=schedules.filter(s=>s.day===curDay&&s.place);const q=places.length?encodeURIComponent(places.map(p=>p.place).join(' ')):'Kumamoto+Japan';window.open('https://www.google.com/maps/search/'+q,'_blank');}
 
-/* ─ UI ─ */
-function switchTab(t){
-  ['schedule','photos','split','map','firebase'].forEach(id=>{
-    document.getElementById('tab-'+id).classList.toggle('active',id===t);
-    document.getElementById('pane-'+id).style.display=id===t?'block':'none';
-  });
-  if(t==='photos')renderPhotos();
-}
+/* ── UI ── */
+const ALL_TABS=['schedule','checklist','spots','tips','photos','split','map','firebase'];
+function switchTab(t){ALL_TABS.forEach(id=>{document.getElementById('tab-'+id).classList.toggle('active',id===t);document.getElementById('pane-'+id).style.display=id===t?'block':'none';});if(t==='checklist')renderChecklist();if(t==='spots')renderSpots();if(t==='tips')renderTips();if(t==='photos')renderPhotos();}
 function closeModal(id){document.getElementById(id).style.display='none';}
 
 let toastTimer;
 function showToast(msg){const old=document.querySelector('.toast');if(old)old.remove();const el=document.createElement('div');el.className='toast';el.textContent=msg;document.body.appendChild(el);clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.remove(),2500);}
 
-function renderAll(){updateDates();renderSchedule();renderSplit();renderMap();renderPhotos();}
+function renderAll(){updateDates();renderSchedule();renderSplit();renderMap();}
 
 window.addEventListener('load',async()=>{
   document.getElementById('loadingMsg').textContent='載入行程資料...';
   try{const r=await fetch('https://api.exchangerate-api.com/v4/latest/JPY');if(r.ok){const d=await r.json();if(d.rates?.TWD)rate=parseFloat((1/d.rates.TWD).toFixed(4));}}catch(e){}
-  renderAll();
+  renderAll();renderChecklist();
   setTimeout(()=>{document.getElementById('loadingScreen').style.display='none';document.getElementById('app').style.display='block';},900);
 });
 </script>

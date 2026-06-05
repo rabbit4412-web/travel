@@ -389,19 +389,24 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
 
     <!-- 主人：填完整設定 -->
     <div class="setup-card" id="setupCard">
-      <div style="font-family:'Zen Kurenaido',serif;font-size:18px;color:var(--ink);margin-bottom:4px">🔥 建立行程（主人）</div>
-      <div style="font-size:12px;color:var(--stone);line-height:1.7;margin-bottom:16px;font-family:'Noto Serif JP',serif">填入你的 Firebase 設定，建立行程後分享代碼給朋友</div>
+      <div style="font-family:'Zen Kurenaido',serif;font-size:18px;color:var(--ink);margin-bottom:4px">🔥 Firebase 連線設定</div>
+      <div style="background:var(--green-pale);border-radius:6px;padding:10px 12px;margin-bottom:14px;border:var(--border)">
+        <div style="font-size:12px;color:var(--green-dark);font-family:'Noto Serif JP',serif;line-height:1.8">
+          ✅ 設定已內建，開啟 App 會<strong>自動連線</strong><br>
+          不需要每次重新輸入！
+        </div>
+      </div>
       <div class="form-group"><label class="form-label">API Key</label><input class="form-input" id="fb-apiKey" placeholder="AIzaSyXXXX"></div>
       <div class="form-group"><label class="form-label">Project ID</label><input class="form-input" id="fb-projectId" placeholder="travel-1009"></div>
       <div class="form-group"><label class="form-label">App ID</label><input class="form-input" id="fb-appId" placeholder="1:XXXXXX:web:XXXXXX"></div>
-      <div class="form-group"><label class="form-label">行程代碼（自訂，朋友要填一樣的）</label><input class="form-input" id="fb-tripCode" placeholder="kumamoto-2025"></div>
-      <button class="btn-primary" onclick="connectFirebase()" id="connectBtn">🔗 建立並連接</button>
+      <div class="form-group"><label class="form-label">行程代碼</label><input class="form-input" id="fb-tripCode" placeholder="kumamoto-2025"></div>
+      <button class="btn-primary" onclick="connectFirebase()" id="connectBtn">🔗 手動重新連接</button>
     </div>
 
     <!-- 朋友：只填代碼 -->
     <div class="join-card" id="joinCard">
-      <div style="font-family:'Zen Kurenaido',serif;font-size:17px;color:var(--ink);margin-bottom:6px">👥 加入行程（朋友）</div>
-      <div style="font-size:12px;color:var(--stone);line-height:1.7;margin-bottom:14px;font-family:'Noto Serif JP',serif">朋友傳給你的行程代碼填這裡，不需要 Firebase 設定！</div>
+      <div style="font-family:'Zen Kurenaido',serif;font-size:17px;color:var(--ink);margin-bottom:6px">👥 朋友加入行程</div>
+      <div style="font-size:12px;color:var(--stone);line-height:1.7;margin-bottom:14px;font-family:'Noto Serif JP',serif">只需要輸入行程代碼就能加入，不用設定 Firebase！</div>
       <input class="form-input" id="join-code" placeholder="輸入行程代碼，例如：kumamoto-2025" style="margin-bottom:10px">
       <button class="btn-primary" onclick="joinTrip()" style="margin-top:0">🌿 加入行程</button>
     </div>
@@ -498,11 +503,22 @@ import { getFirestore, doc, setDoc, onSnapshot } from 'https://www.gstatic.com/f
 let db=null,fbApp=null,tripCode='',unsubs=[];
 
 // 主人連接
+// ══════════════════════════════════════════
+//  ★ 固定設定：填好後不需每次重打
+//  朋友只要把 TRIP_CODE 改成你給的代碼
+// ══════════════════════════════════════════
+const AUTO_CONFIG = {
+  apiKey: 'AIzaSyDlNDBg0wXAwVy4hha2qcQpRyGeVNUE78c',
+  projectId: 'travel-1009',
+  appId: '1:931635663706:web:6852f080738b54110d1963',
+  tripCode: 'kumamoto-2025'   // ← 朋友版只改這行
+};
+
 window.connectFirebase=async function(){
-  const apiKey=document.getElementById('fb-apiKey').value.trim();
-  const projectId=document.getElementById('fb-projectId').value.trim();
-  const appId=document.getElementById('fb-appId').value.trim();
-  tripCode=document.getElementById('fb-tripCode').value.trim()||'kumamoto-2025';
+  const apiKey=document.getElementById('fb-apiKey').value.trim()||AUTO_CONFIG.apiKey;
+  const projectId=document.getElementById('fb-projectId').value.trim()||AUTO_CONFIG.projectId;
+  const appId=document.getElementById('fb-appId').value.trim()||AUTO_CONFIG.appId;
+  tripCode=document.getElementById('fb-tripCode').value.trim()||AUTO_CONFIG.tripCode;
   if(!apiKey||!projectId){showToast('請填寫 API Key 和 Project ID');return;}
   document.getElementById('connectBtn').textContent='連線中...';
   try{
@@ -566,8 +582,13 @@ window.syncToFirebase=async function(){
 };
 window.copyShareCode=function(){navigator.clipboard?.writeText(tripCode);showToast('代碼已複製！傳給朋友');};
 window.addEventListener('load',()=>{
-  const s=localStorage.getItem('fb_config');
-  if(s){try{const c=JSON.parse(s);document.getElementById('fb-apiKey').value=c.apiKey||'';document.getElementById('fb-projectId').value=c.projectId||'';document.getElementById('fb-appId').value=c.appId||'';document.getElementById('fb-tripCode').value=c.tripCode||'';}catch(e){}}
+  // 填入欄位顯示
+  document.getElementById('fb-apiKey').value=AUTO_CONFIG.apiKey;
+  document.getElementById('fb-projectId').value=AUTO_CONFIG.projectId;
+  document.getElementById('fb-appId').value=AUTO_CONFIG.appId;
+  document.getElementById('fb-tripCode').value=AUTO_CONFIG.tripCode;
+  // 自動連線（不需手動按按鈕）
+  setTimeout(()=>{ window.connectFirebase && window.connectFirebase(); }, 1500);
 });
 </script>
 

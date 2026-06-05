@@ -753,12 +753,33 @@ let curClPerson = null;
 let luggage = [], shopping = [];
 
 function save(){
-  localStorage.setItem('schedules',JSON.stringify(schedules));
-  localStorage.setItem('members',JSON.stringify(members));
-  localStorage.setItem('expenses',JSON.stringify(expenses));
-  localStorage.setItem('photos',JSON.stringify(photos));
-  localStorage.setItem('personLists',JSON.stringify(personLists));
+  try{localStorage.setItem('schedules',JSON.stringify(schedules));}catch(e){}
+  try{localStorage.setItem('members',JSON.stringify(members));}catch(e){}
+  try{localStorage.setItem('expenses',JSON.stringify(expenses));}catch(e){}
+  try{localStorage.setItem('photos',JSON.stringify(photos));}catch(e){}
+  try{
+    const plCopy=JSON.parse(JSON.stringify(personLists)); // 深複製確保完整
+    localStorage.setItem('personLists',JSON.stringify(plCopy));
+  }catch(e){console.error('personLists save error',e);}
   if(window.syncToFirebase)window.syncToFirebase();
+}
+
+// 隨時可呼叫，確認 personLists 有正確讀取
+function loadPersonLists(){
+  try{
+    const raw=localStorage.getItem('personLists');
+    if(raw){
+      const parsed=JSON.parse(raw);
+      // 合併，保留記憶體中新增但尚未覆蓋的資料
+      Object.keys(parsed).forEach(mid=>{
+        if(!personLists[mid]) personLists[mid]=parsed[mid];
+        else{
+          // 以 localStorage 版本為主（重整後以儲存版為準）
+          personLists[mid]=parsed[mid];
+        }
+      });
+    }
+  }catch(e){console.error('personLists load error',e);}
 }
 
 /* ── Dates ── */
@@ -840,7 +861,15 @@ function defaultShopping(p){return[
   {id:p+'sh5',name:'藥妝護膚品',cat:'藥妝',note:'',done:false},
 ];}
 function getPersonList(mid,type){
-  if(!personLists[mid])personLists[mid]={luggage:defaultLuggage(mid),shopping:defaultShopping(mid)};
+  if(!personLists[mid]){
+    // 嘗試從 localStorage 補讀
+    try{
+      const raw=localStorage.getItem('personLists');
+      if(raw){const parsed=JSON.parse(raw);if(parsed[mid])personLists[mid]=parsed[mid];}
+    }catch(e){}
+    // 還是沒有就用預設值
+    if(!personLists[mid]) personLists[mid]={luggage:defaultLuggage(mid),shopping:defaultShopping(mid)};
+  }
   return personLists[mid][type];
 }
 function setPersonList(mid,type,arr){
@@ -993,9 +1022,18 @@ function saveCheckItem(){
   if(!curClPerson){showToast('請先選擇旅伴');return;}
   const img=curCheckType==='shopping'?document.getElementById('ck-img-url').value.trim():'';
   const item={id:(curCheckType==='luggage'?'l':'sh')+Date.now(),name,cat:document.getElementById('ck-cat').value,note:document.getElementById('ck-note').value.trim(),done:false,img:img||''};
-  const arr=getPersonList(curClPerson,curCheckType);arr.push(item);
-  setPersonList(curClPerson,curCheckType,arr);
-  save();closeModal('checkModal');renderChecklistItems();showToast('已新增 🌿');
+  // 確保 personLists[curClPerson] 存在
+  if(!personLists[curClPerson]) personLists[curClPerson]={luggage:defaultLuggage(curClPerson),shopping:defaultShopping(curClPerson)};
+  const arr=personLists[curClPerson][curCheckType];
+  arr.push(item);
+  personLists[curClPerson][curCheckType]=arr; // 直接更新
+  save();
+  // 驗證有沒有存成功
+  const check=JSON.parse(localStorage.getItem('personLists')||'{}');
+  const saved=check[curClPerson]?.[curCheckType]?.find(i=>i.id===item.id);
+  if(!saved) showToast('⚠️ 儲存失敗，請再試一次');
+  else showToast('已新增：'+name+' 🌿');
+  closeModal('checkModal');renderChecklistItems();
 }
 
 /* ── Spots ── */
@@ -1239,6 +1277,7 @@ function renderAll(){updateDates();renderSchedule();renderSplit();renderMap();}
 window.addEventListener('load',async()=>{
   document.getElementById('loadingMsg').textContent='載入行程資料...';
   try{const r=await fetch('https://api.exchangerate-api.com/v4/latest/JPY');if(r.ok){const d=await r.json();if(d.rates?.TWD)rate=parseFloat((1/d.rates.TWD).toFixed(4));}}catch(e){}
+  loadPersonLists(); // 先確保 personLists 從 localStorage 完整讀回
   renderAll();
   if(members.length){curClPerson=members[0].id;}
   renderChecklist();

@@ -321,18 +321,45 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
   <!-- 相簿 -->
   <div class="content" id="pane-photos" style="display:none">
     <div class="section-header"><div><span class="section-jp">旅行回憶</span><div class="section-title">旅遊相簿</div></div></div>
-    <div class="ibb-section">
-      <div style="font-family:'Zen Kurenaido',serif;font-size:15px;color:var(--ink);margin-bottom:4px">🖼 加入照片</div>
-      <div style="font-size:12px;color:var(--stone);margin-bottom:12px;font-family:'Noto Serif JP',serif;line-height:1.6">貼上 imgBB 網址，或直接選擇照片</div>
-      <div class="ibb-url-input">
-        <input class="ibb-url-field" id="ibbUrlInput" placeholder="貼上 imgBB 圖片網址...">
-        <button class="btn-ibb" onclick="addPhotoByUrl()">加入</button>
+
+    <!-- imgBB API Key 設定 -->
+    <div id="ibb-key-banner" style="background:rgba(233,196,106,.15);border:1.5px solid var(--gold);border-radius:10px;padding:14px;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:600;color:#7A5C00;margin-bottom:6px;font-family:'Zen Kurenaido',serif">🔑 imgBB API 設定</div>
+      <div style="font-size:11px;color:#7A5C00;line-height:1.8;margin-bottom:8px;font-family:'Noto Serif JP',serif">
+        設定後，照片自動上傳至 imgBB 雲端，旅伴和電腦都能看到<br>
+        ① 前往 <a href="https://api.imgbb.com" target="_blank" style="color:var(--green-dark);font-weight:600">api.imgbb.com</a> 免費取得 API Key<br>
+        ② 貼上後按儲存，之後自動上傳
       </div>
-      <div style="text-align:center;color:var(--stone);font-size:11px;margin:10px 0;font-family:'Noto Serif JP',serif">── 或直接上傳 ──</div>
-      <div class="ibb-drop" onclick="document.getElementById('ibbFileInput').click()">
+      <div style="display:flex;gap:8px">
+        <input class="form-input" id="ibb-api-key-input" placeholder="貼上 imgBB API Key..." style="flex:1;padding:9px 12px;font-size:13px">
+        <button onclick="saveIbbKey()" style="background:var(--green-dark);color:var(--cream);border:none;border-radius:6px;padding:9px 14px;font-size:12px;cursor:pointer;white-space:nowrap;font-family:'Noto Serif JP',serif">儲存</button>
+      </div>
+      <div id="ibb-key-status" style="font-size:11px;margin-top:6px;font-family:'Noto Serif JP',serif"></div>
+    </div>
+
+    <div class="ibb-section">
+      <div style="font-family:'Zen Kurenaido',serif;font-size:15px;color:var(--ink);margin-bottom:4px">📸 上傳照片</div>
+      <div style="font-size:11px;color:var(--stone);margin-bottom:10px;font-family:'Noto Serif JP',serif;line-height:1.6">照片會自動上傳至 imgBB 雲端，所有旅伴都能看到</div>
+
+      <!-- 直接上傳按鈕 -->
+      <div class="ibb-drop" onclick="document.getElementById('ibbFileInput').click()" id="ibb-upload-area">
         <input type="file" id="ibbFileInput" accept="image/*" multiple onchange="handleFileUpload(event)" style="display:none">
-        <div style="font-size:26px;margin-bottom:6px">📸</div>
-        <div style="font-size:13px;color:var(--stone);font-family:'Noto Serif JP',serif">點此選擇照片</div>
+        <div style="font-size:28px;margin-bottom:6px">📷</div>
+        <div style="font-size:13px;color:var(--stone);font-family:'Noto Serif JP',serif">點此選擇照片上傳</div>
+        <div style="font-size:10px;color:var(--green-light);margin-top:3px">自動上傳至 imgBB 雲端，旅伴可見</div>
+      </div>
+      <!-- 上傳進度 -->
+      <div id="upload-progress" style="display:none;margin-top:10px;padding:10px 12px;background:var(--green-pale);border-radius:8px;border:var(--border)">
+        <div style="font-size:12px;color:var(--green-dark);font-family:'Noto Serif JP',serif" id="upload-status">上傳中...</div>
+        <div style="margin-top:6px;height:4px;background:rgba(92,74,48,.12);border-radius:2px;overflow:hidden">
+          <div id="upload-bar" style="height:100%;background:var(--green);width:0%;transition:width .3s;border-radius:2px"></div>
+        </div>
+      </div>
+
+      <div style="text-align:center;color:var(--stone);font-size:11px;margin:10px 0;font-family:'Noto Serif JP',serif">── 或貼上已有的網址 ──</div>
+      <div class="ibb-url-input">
+        <input class="ibb-url-field" id="ibbUrlInput" placeholder="貼上任何圖片網址...">
+        <button class="btn-ibb" onclick="addPhotoByUrl()">加入</button>
       </div>
     </div>
     <div class="section-header">
@@ -549,7 +576,9 @@ window.connectFirebase=async function(){
   try{
     if(!fbApp)fbApp=initializeApp({apiKey,authDomain:projectId+'.firebaseapp.com',projectId,storageBucket:projectId+'.appspot.com',appId:appId||'1:000:web:000'});
     db=getFirestore(fbApp);
-    await setDoc(doc(db,'trips',tripCode),{schedules,members,expenses,photos,personLists,updatedAt:Date.now()},{merge:true});
+    // photos 只同步「網址型」圖片（imgBB 等），本機 idb: 圖片不上傳 Firebase
+    const photosForSync=photos.filter(p=>p.url&&!p.url.startsWith('idb:'));
+    await setDoc(doc(db,'trips',tripCode),{schedules,members,expenses,photos:photosForSync,personLists,updatedAt:Date.now()},{merge:true});
     startListen();
     document.getElementById('syncDot').classList.add('on');
     document.getElementById('syncText').textContent='即時同步中';
@@ -594,7 +623,16 @@ function startListen(){
       if(d.schedules){schedules=d.schedules;localStorage.setItem('schedules',JSON.stringify(schedules));}
       if(d.members){members=d.members;localStorage.setItem('members',JSON.stringify(members));renderPersonChips();}
       if(d.expenses){expenses=d.expenses;localStorage.setItem('expenses',JSON.stringify(expenses));}
-      if(d.photos){photos=d.photos;localStorage.setItem('photos',JSON.stringify(photos));}
+      if(d.photos){
+        // 保留本機 idb: 圖片，合併雲端網址圖片
+        const localPhotos=photos.filter(p=>p.url&&p.url.startsWith('idb:'));
+        const cloudPhotos=d.photos.filter(p=>p.url&&!p.url.startsWith('idb:'));
+        // 去重複（以 id 為準）
+        const merged=[...cloudPhotos];
+        localPhotos.forEach(lp=>{if(!merged.find(cp=>cp.id===lp.id))merged.push(lp);});
+        photos=merged;
+        localStorage.setItem('photos',JSON.stringify(photos.filter(p=>!p.url.startsWith('idb:'))));
+      }
       if(d.personLists){personLists=d.personLists;localStorage.setItem('personLists',JSON.stringify(personLists));}
       renderAll();renderChecklist();
     }
@@ -603,7 +641,21 @@ function startListen(){
 }
 window.syncToFirebase=async function(){
   if(!db)return;
-  try{await setDoc(doc(db,'trips',tripCode),{schedules,members,expenses,photos,personLists,updatedAt:Date.now()},{merge:true});}catch(e){}
+  try{
+    const photosForSync=photos.filter(p=>p.url&&!p.url.startsWith('idb:'));
+    // personLists 的 img 也過濾掉 idb: 圖片（購買清單商品圖）
+    const plForSync={};
+    Object.keys(personLists).forEach(mid=>{
+      plForSync[mid]={
+        luggage:(personLists[mid].luggage||[]),
+        shopping:(personLists[mid].shopping||[]).map(item=>({
+          ...item,
+          img:(item.img&&!item.img.startsWith('idb:'))?item.img:''
+        }))
+      };
+    });
+    await setDoc(doc(db,'trips',tripCode),{schedules,members,expenses,photos:photosForSync,personLists:plForSync,updatedAt:Date.now()},{merge:true});
+  }catch(e){console.error('sync error',e);}
 };
 window.copyShareCode=function(){navigator.clipboard?.writeText(tripCode);showToast('代碼已複製！傳給朋友');};
 window.addEventListener('load',()=>{
@@ -830,7 +882,11 @@ function save(){
   try{localStorage.setItem('schedules',JSON.stringify(schedules));}catch(e){}
   try{localStorage.setItem('members',JSON.stringify(members));}catch(e){}
   try{localStorage.setItem('expenses',JSON.stringify(expenses));}catch(e){}
-  try{localStorage.setItem('photos',JSON.stringify(photos));}catch(e){}
+  try{
+    // localStorage 只存網址型照片（idb: 圖片已在 IndexedDB，不重複存）
+    const photosToSave=photos.filter(p=>p.url&&!p.url.startsWith('idb:'));
+    localStorage.setItem('photos',JSON.stringify(photosToSave));
+  }catch(e){console.error('photos save error',e);}
   try{
     const plCopy=JSON.parse(JSON.stringify(personLists)); // 深複製確保完整
     localStorage.setItem('personLists',JSON.stringify(plCopy));
@@ -1183,44 +1239,124 @@ function toggleTip(i){const body=document.getElementById('tipbody-'+i);const arr
 
 /* ── Photos ── */
 async function renderPhotos(){
+  updateIbbKeyUI();
   const dp=photos.filter(p=>p.day===curDay);
   document.getElementById('photoDay').textContent='D'+(curDay+1)+' · '+TRIP_DAYS[curDay].city;
   document.getElementById('photoCount').textContent=dp.length+' 張';
   const grid=document.getElementById('photoGrid');const empty=document.getElementById('photoEmpty');
   if(!dp.length){grid.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
-  // 先畫出佔位框架，圖片非同步載入
-  grid.innerHTML=dp.map(p=>`<div class="ibb-img" id="photo-${p.id}"><div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--stone);font-size:11px">載入中...</div></div>`).join('');
+  grid.innerHTML=dp.map(p=>`<div class="ibb-img" id="photo-${p.id}" style="position:relative">
+    <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--stone);font-size:11px;font-family:'Noto Serif JP',serif">載入中...</div>
+    ${p.localOnly?`<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(184,134,11,.85);color:#fff;font-size:9px;text-align:center;padding:2px;font-family:'Noto Serif JP',serif">本機</div>`:''}
+  </div>`).join('');
   for(const p of dp){
     const src=await resolveImgSrc(p.url);
     const el=document.getElementById('photo-'+p.id);
     if(!el)continue;
     if(src){
-      el.innerHTML=`<img src="${src}" alt="" onerror="this.style.display='none'" onclick="openLightbox('${src}')"><button class="ibb-img-del" onclick="event.stopPropagation();delPhoto('${p.id}')">✕</button>`;
+      el.innerHTML=`<img src="${src}" alt="" onerror="this.style.background='var(--green-pale)'" onclick="openLightbox('${src}')">
+        <button class="ibb-img-del" onclick="event.stopPropagation();delPhoto('${p.id}')">✕</button>
+        ${p.localOnly?`<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(184,134,11,.85);color:#fff;font-size:9px;text-align:center;padding:2px;font-family:'Noto Serif JP',serif">⚠️ 本機</div>`:''}`;
     }else{
-      el.innerHTML=`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--stone);font-size:10px;flex-direction:column;gap:4px"><span>⚠️</span><span>讀取失敗</span></div><button class="ibb-img-del" onclick="event.stopPropagation();delPhoto('${p.id}')">✕</button>`;
+      el.innerHTML=`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--stone);font-size:9px;flex-direction:column;gap:3px;padding:4px;text-align:center"><span>⚠️</span><span style="font-family:'Noto Serif JP',serif">讀取失敗</span></div>
+        <button class="ibb-img-del" onclick="event.stopPropagation();delPhoto('${p.id}')">✕</button>`;
     }
   }
 }
 function addPhotoByUrl(){const url=document.getElementById('ibbUrlInput').value.trim();if(!url){showToast('請輸入網址');return;}photos.push({id:'p'+Date.now(),day:curDay,url});save();renderPhotos();document.getElementById('ibbUrlInput').value='';showToast('照片已加入 🌸');}
+// ══════════════════════════════════════════
+//  ★ imgBB API Key（直接填在這裡）
+//  取得方式：登入 imgbb.com → API → 複製 key
+// ══════════════════════════════════════════
+const IMGBB_API_KEY = '37aa0f571e7acc757470fe991d8179af'; // ← 把這裡換成你的 Key
+
+function getIbbKey(){
+  // 優先用寫死的 Key，其次用 localStorage（給朋友版用）
+  return IMGBB_API_KEY !== 'YOUR_IMGBB_API_KEY_HERE'
+    ? IMGBB_API_KEY
+    : localStorage.getItem('ibb_api_key') || '';
+}
+function saveIbbKey(){
+  const key=document.getElementById('ibb-api-key-input')?.value.trim();
+  if(!key){showToast('請輸入 API Key');return;}
+  localStorage.setItem('ibb_api_key',key);
+  updateIbbKeyUI();
+  showToast('API Key 已儲存 🌿');
+}
+function updateIbbKeyUI(){
+  const key=getIbbKey();
+  const banner=document.getElementById('ibb-key-banner');
+  // 如果 Key 已內建，直接隱藏設定區
+  if(IMGBB_API_KEY !== 'YOUR_IMGBB_API_KEY_HERE'){
+    if(banner) banner.style.display='none';
+    return;
+  }
+  const input=document.getElementById('ibb-api-key-input');
+  const status=document.getElementById('ibb-key-status');
+  if(input) input.value=key ? key.slice(0,6)+'****' : '';
+  if(status){
+    status.textContent=key
+      ?'✅ API Key 已設定，照片自動上傳 imgBB 雲端'
+      :'⚠️ 尚未設定，照片只存本機（旅伴看不到）';
+    status.style.color=key?'var(--green-dark)':'#B8860B';
+  }
+  if(banner) banner.style.borderColor=key?'var(--green-light)':'rgba(233,196,106,.5)';
+}
+
+// 上傳單張圖片到 imgBB
+async function uploadToIBB(file){
+  const key=getIbbKey();
+  if(!key) return null; // 沒有 key，回傳 null 表示不上傳
+  const form=new FormData();
+  form.append('image',file);
+  form.append('key',key);
+  const res=await fetch('https://api.imgbb.com/1/upload',{method:'POST',body:form});
+  if(!res.ok) throw new Error('imgBB 回應錯誤：'+res.status);
+  const data=await res.json();
+  if(!data.success) throw new Error(data.error?.message||'上傳失敗');
+  return data.data.url; // 永久公開圖片 URL
+}
+
 async function handleFileUpload(e){
   const files=Array.from(e.target.files);
   if(!files.length)return;
-  showToast('正在儲存照片...');
-  for(const file of files){
-    const id='p'+Date.now()+Math.random().toString(36).slice(2,6);
-    const idbKey='idb:'+id;
-    try{
-      await idbSet(idbKey,file); // 直接存 File（Blob），不轉 base64，省空間
-      photos.push({id,day:curDay,url:idbKey});
-    }catch(err){
-      console.error('照片儲存失敗',err);
-      showToast('照片儲存失敗：'+file.name);
+  const key=getIbbKey();
+  const prog=document.getElementById('upload-progress');
+  const statusEl=document.getElementById('upload-status');
+  const bar=document.getElementById('upload-bar');
+  prog.style.display='block';
+  let success=0,fail=0;
+  for(let i=0;i<files.length;i++){
+    const file=files[i];
+    const pct=Math.round(i/files.length*100);
+    bar.style.width=pct+'%';
+    statusEl.textContent=`上傳中 ${i+1}/${files.length}：${file.name}`;
+    if(key){
+      // 有 API Key -> 上傳到 imgBB 雲端
+      try{
+        const url=await uploadToIBB(file);
+        photos.push({id:'p'+Date.now()+i,day:curDay,url});
+        success++;
+      }catch(err){
+        console.error('imgBB 上傳失敗',err);
+        // 失敗 fallback：存 IndexedDB（本機）
+        const idbKey='idb:'+Date.now()+i;
+        try{await idbSet(idbKey,file);photos.push({id:'p'+Date.now()+i,day:curDay,url:idbKey,localOnly:true});}catch(e){}
+        fail++;
+      }
+    }else{
+      // 沒有 API Key -> 存 IndexedDB（本機，旅伴看不到）
+      const idbKey='idb:'+Date.now()+i;
+      try{await idbSet(idbKey,file);photos.push({id:'p'+Date.now()+i,day:curDay,url:idbKey,localOnly:true});success++;}catch(err){fail++;}
     }
   }
+  bar.style.width='100%';
   save();
-  renderPhotos();
-  showToast(`已加入 ${files.length} 張 📸`);
+  await renderPhotos();
+  setTimeout(()=>{prog.style.display='none';bar.style.width='0%';},1500);
+  if(key) showToast(fail?`上傳完成（${success}張成功，${fail}張失敗）`:`✅ 已上傳 ${success} 張至 imgBB 🌿`);
+  else showToast(`已儲存 ${success} 張（本機，旅伴看不到）`);
 }
 async function delPhoto(id){
   const p=photos.find(x=>x.id===id);
@@ -1423,6 +1559,7 @@ window.addEventListener('load',async()=>{
   document.getElementById('loadingMsg').textContent='載入行程資料...';
   try{const r=await fetch('https://api.exchangerate-api.com/v4/latest/JPY');if(r.ok){const d=await r.json();if(d.rates?.TWD)rate=parseFloat((1/d.rates.TWD).toFixed(4));}}catch(e){}
   loadPersonLists(); // 先確保 personLists 從 localStorage 完整讀回
+  updateIbbKeyUI();
   renderAll();
   if(members.length){curClPerson=members[0].id;}
   renderChecklist();

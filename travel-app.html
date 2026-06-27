@@ -446,6 +446,25 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
       <div class="form-group"><label class="form-label">名稱</label><input class="form-input" id="sf-name" placeholder="熊本城"></div>
       <div class="form-group"><label class="form-label">地點</label><input class="form-input" id="sf-place" placeholder="熊本市中央區本丸1-1"></div>
       <div class="form-group"><label class="form-label">備註</label><input class="form-input" id="sf-note" placeholder="備註..."></div>
+
+      <!-- 景點照片 -->
+      <div class="form-group">
+        <label class="form-label">景點照片（選填）</label>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input class="form-input" id="sf-img-url" placeholder="貼上圖片網址..." style="flex:1;font-size:13px">
+          <button onclick="previewSchedImg()" style="background:var(--green);color:var(--cream);border:none;border-radius:5px;padding:0 12px;font-size:12px;cursor:pointer;white-space:nowrap;font-family:'Noto Serif JP',serif">預覽</button>
+        </div>
+        <div onclick="document.getElementById('sf-img-file').click()" style="border:2px dashed var(--green-light);border-radius:6px;padding:12px;text-align:center;cursor:pointer;background:var(--green-mist)">
+          <input type="file" id="sf-img-file" accept="image/*" style="display:none" onchange="handleSchedImgFile(event)">
+          <div style="font-size:11px;color:var(--stone);font-family:'Noto Serif JP',serif">📷 點此選擇或拍攝景點照片</div>
+        </div>
+        <div id="sf-img-preview" style="display:none;margin-top:8px;position:relative">
+          <img id="sf-img-preview-img" style="width:100%;max-height:160px;object-fit:cover;border-radius:8px;border:var(--border)">
+          <button onclick="clearSchedImg()" style="position:absolute;top:6px;right:6px;background:rgba(61,51,37,.7);color:#fff;border:none;border-radius:50%;width:24px;height:24px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+        </div>
+        <div id="sf-img-upload-status" style="display:none;font-size:11px;color:var(--green-dark);font-family:'Noto Serif JP',serif;margin-top:6px;padding:6px 10px;background:var(--green-pale);border-radius:5px;border:var(--border)"></div>
+      </div>
+
       <button class="btn-primary" onclick="saveSched()">儲存行程</button>
       <button class="btn-primary btn-cancel" onclick="closeModal('schedModal')" style="margin-top:9px">取消</button>
     </div>
@@ -931,27 +950,130 @@ function updateDates(){
 }
 
 /* ── Schedule ── */
-function renderSchedule(){
+async function renderSchedule(){
   const list=schedules.filter(s=>s.day===curDay).sort((a,b)=>a.time.localeCompare(b.time));
   const el=document.getElementById('schedList');
   if(!list.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon">🍃</div><div class="empty-text">今天還沒有行程<br>點右上角「＋ 新增」開始規劃</div></div>`;return;}
+  // 先畫框架
   el.innerHTML=list.map(s=>`
-    <div class="schedule-item">
+    <div class="schedule-item" id="si-${s.id}">
       <div class="time-col"><div class="time-text">${s.time}</div></div>
       <div class="time-dot"></div>
       <div class="schedule-card">
         <div class="card-actions"><button class="card-btn" onclick="editSched('${s.id}')">✏️</button><button class="card-btn" onclick="delSched('${s.id}')">🗑</button></div>
+        ${s.img?`<div id="simg-${s.id}" style="width:calc(100% + 26px);margin:-11px -13px 10px;height:130px;background:var(--green-pale);border-radius:6px 6px 0 0;display:flex;align-items:center;justify-content:center"><span style="font-size:11px;color:var(--stone);font-family:'Noto Serif JP',serif">載入中...</span></div>`:''}
         <div class="schedule-name">${s.name}</div>
         ${s.place?`<div class="schedule-place">📍 ${s.place}</div>`:''}
         <span class="tag tag-${s.type}">${{sight:'🌸 景點',food:'🍜 餐廳',shop:'🛍 購物',hotel:'🏨 住宿',transport:'🚃 交通'}[s.type]}</span>
         ${s.note?`<div class="schedule-note">${s.note}</div>`:''}
       </div>
     </div>`).join('');
+  // 非同步載入圖片
+  for(const s of list){
+    if(!s.img) continue;
+    const src=await resolveImgSrc(s.img);
+    const imgEl=document.getElementById('simg-'+s.id);
+    if(!imgEl) continue;
+    if(src){
+      imgEl.outerHTML=`<img src="${src}" style="width:calc(100% + 26px);margin:-11px -13px 10px;height:130px;object-fit:cover;border-radius:6px 6px 0 0;display:block;cursor:pointer" onerror="this.style.display='none'" onclick="event.stopPropagation();openLightbox('${src}')">`;
+    }else{
+      imgEl.style.display='none';
+    }
+  }
 }
-function openSchedModal(){editSchedId=null;document.getElementById('schedModalTitle').textContent='新增行程 📝';document.getElementById('sf-time').value='10:00';document.getElementById('sf-type').value='sight';['sf-name','sf-place','sf-note'].forEach(id=>document.getElementById(id).value='');document.getElementById('schedModal').style.display='flex';}
-function editSched(id){const s=schedules.find(x=>x.id===id);if(!s)return;editSchedId=id;document.getElementById('schedModalTitle').textContent='編輯行程 ✏️';document.getElementById('sf-time').value=s.time;document.getElementById('sf-type').value=s.type;document.getElementById('sf-name').value=s.name;document.getElementById('sf-place').value=s.place||'';document.getElementById('sf-note').value=s.note||'';document.getElementById('schedModal').style.display='flex';}
-function saveSched(){const name=document.getElementById('sf-name').value.trim();if(!name){showToast('請輸入名稱');return;}const obj={id:editSchedId||('s'+Date.now()),day:curDay,time:document.getElementById('sf-time').value,name,place:document.getElementById('sf-place').value.trim(),type:document.getElementById('sf-type').value,note:document.getElementById('sf-note').value.trim()};if(editSchedId){const i=schedules.findIndex(s=>s.id===editSchedId);schedules[i]=obj;}else schedules.push(obj);save();closeModal('schedModal');renderSchedule();renderMap();showToast(editSchedId?'行程已更新！':'行程已新增 🌿');}
+function openSchedModal(){
+  editSchedId=null;
+  document.getElementById('schedModalTitle').textContent='新增行程 📝';
+  document.getElementById('sf-time').value='10:00';
+  document.getElementById('sf-type').value='sight';
+  ['sf-name','sf-place','sf-note','sf-img-url'].forEach(id=>document.getElementById(id).value='');
+  clearSchedImg();
+  document.getElementById('schedModal').style.display='flex';
+}
+function editSched(id){
+  const s=schedules.find(x=>x.id===id);if(!s)return;
+  editSchedId=id;
+  document.getElementById('schedModalTitle').textContent='編輯行程 ✏️';
+  document.getElementById('sf-time').value=s.time;
+  document.getElementById('sf-type').value=s.type;
+  document.getElementById('sf-name').value=s.name;
+  document.getElementById('sf-place').value=s.place||'';
+  document.getElementById('sf-note').value=s.note||'';
+  document.getElementById('sf-img-url').value=s.img||'';
+  clearSchedImg();
+  if(s.img){
+    document.getElementById('sf-img-preview-img').src=s.img;
+    document.getElementById('sf-img-preview').style.display='block';
+  }
+  document.getElementById('schedModal').style.display='flex';
+}
+let pendingSchedImgFile=null;
+async function saveSched(){
+  const name=document.getElementById('sf-name').value.trim();
+  if(!name){showToast('請輸入名稱');return;}
+  const btn=document.querySelector('#schedModal .btn-primary');
+  let img=document.getElementById('sf-img-url').value.trim();
+  // 如果有選擇本機檔案，先上傳到 imgBB
+  if(pendingSchedImgFile){
+    btn.textContent='上傳圖片中...';btn.disabled=true;
+    const statusEl=document.getElementById('sf-img-upload-status');
+    statusEl.style.display='block';statusEl.textContent='📤 上傳景點照片至雲端...';
+    try{
+      const url=await uploadToIBB(pendingSchedImgFile);
+      img=url||img;
+      statusEl.textContent='✅ 圖片上傳成功！';
+    }catch(err){
+      statusEl.textContent='⚠️ 上傳失敗，使用本機圖片';
+      // fallback: 存 IndexedDB
+      const idbKey='idb:sched'+Date.now();
+      try{await idbSet(idbKey,pendingSchedImgFile);img=idbKey;}catch(e){}
+    }
+    btn.textContent='儲存行程';btn.disabled=false;
+  }
+  const obj={
+    id:editSchedId||('s'+Date.now()),
+    day:curDay,
+    time:document.getElementById('sf-time').value,
+    name,
+    place:document.getElementById('sf-place').value.trim(),
+    type:document.getElementById('sf-type').value,
+    note:document.getElementById('sf-note').value.trim(),
+    img:img||''
+  };
+  if(editSchedId){const i=schedules.findIndex(s=>s.id===editSchedId);schedules[i]=obj;}
+  else schedules.push(obj);
+  pendingSchedImgFile=null;
+  save();closeModal('schedModal');renderSchedule();renderMap();
+  showToast(editSchedId?'行程已更新！':'行程已新增 🌿');
+}
 function delSched(id){if(!confirm('確定刪除？'))return;schedules=schedules.filter(s=>s.id!==id);save();renderSchedule();renderMap();}
+
+function previewSchedImg(){
+  const url=document.getElementById('sf-img-url').value.trim();
+  if(!url){showToast('請輸入圖片網址');return;}
+  document.getElementById('sf-img-preview-img').src=url;
+  document.getElementById('sf-img-preview').style.display='block';
+  pendingSchedImgFile=null;
+}
+function handleSchedImgFile(e){
+  const file=e.target.files[0];if(!file)return;
+  pendingSchedImgFile=file;
+  const url=URL.createObjectURL(file);
+  document.getElementById('sf-img-preview-img').src=url;
+  document.getElementById('sf-img-preview').style.display='block';
+  document.getElementById('sf-img-url').value='';
+  document.getElementById('sf-img-upload-status').style.display='block';
+  document.getElementById('sf-img-upload-status').textContent='📷 已選擇照片，儲存時自動上傳 imgBB';
+}
+function clearSchedImg(){
+  pendingSchedImgFile=null;
+  const preview=document.getElementById('sf-img-preview');
+  const status=document.getElementById('sf-img-upload-status');
+  if(preview) preview.style.display='none';
+  if(status) status.style.display='none';
+  const img=document.getElementById('sf-img-preview-img');
+  if(img) img.src='';
+}
 
 /* ── Checklist（每人獨立） ── */
 const LUGGAGE_CATS=['全部','證件','衣物','電子','金融','醫藥'];

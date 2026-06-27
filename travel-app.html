@@ -582,9 +582,24 @@ window.connectFirebase=async function(){
   try{
     if(!fbApp)fbApp=initializeApp({apiKey,authDomain:projectId+'.firebaseapp.com',projectId,storageBucket:projectId+'.appspot.com',appId:appId||'1:000:web:000'});
     db=getFirestore(fbApp);
-    // photos 只同步「網址型」圖片（imgBB 等），本機 idb: 圖片不上傳 Firebase
-    const photosForSync=photos.filter(p=>p.url&&!p.url.startsWith('idb:'));
-    await setDoc(doc(db,'trips',tripCode),{schedules,members,expenses,photos:photosForSync,personLists,updatedAt:Date.now()},{merge:true});
+    // ── 先從 Firebase 讀取，有資料就用 Firebase 的（不蓋掉）──
+    const existingSnap=await getDoc(doc(db,'trips',tripCode));
+    if(existingSnap.exists()){
+      // Firebase 有資料 → 拉下來用，不上傳本機（避免空資料蓋掉雲端）
+      const d=existingSnap.data();
+      if(d.schedules&&d.schedules.length){schedules=d.schedules;localStorage.setItem('schedules',JSON.stringify(schedules));}
+      if(d.members&&d.members.length){members=d.members;localStorage.setItem('members',JSON.stringify(members));}
+      if(d.expenses&&d.expenses.length){expenses=d.expenses;localStorage.setItem('expenses',JSON.stringify(expenses));}
+      if(d.photos&&d.photos.length){photos=d.photos.filter(p=>p.url&&!p.url.startsWith('idb:'));localStorage.setItem('photos',JSON.stringify(photos));}
+      if(d.personLists&&Object.keys(d.personLists).length){personLists=d.personLists;localStorage.setItem('personLists',JSON.stringify(personLists));}
+      renderAll();renderChecklist();
+      showToast('✅ 已從 Firebase 載入資料！');
+    } else {
+      // Firebase 沒有資料 → 上傳本機資料建立新行程
+      const photosForSync=photos.filter(p=>p.url&&!p.url.startsWith('idb:'));
+      await setDoc(doc(db,'trips',tripCode),{schedules,members,expenses,photos:photosForSync,personLists,updatedAt:Date.now()},{merge:true});
+      showToast('🌿 已建立行程！分享代碼給朋友');
+    }
     startListen();
     document.getElementById('syncDot').classList.add('on');
     document.getElementById('syncText').textContent='即時同步中';
@@ -592,7 +607,6 @@ window.connectFirebase=async function(){
     document.getElementById('shareCodeDisplay').textContent=tripCode;
     document.getElementById('setupCard').style.display='none';
     document.getElementById('joinCard').style.display='none';
-    showToast('🌿 已建立行程！分享代碼給朋友');
     localStorage.setItem('fb_config',JSON.stringify({apiKey,projectId,appId,tripCode}));
   }catch(e){showToast('連線失敗，請確認設定');document.getElementById('connectBtn').textContent='🔗 建立並連接';}
 };
@@ -612,12 +626,23 @@ window.joinTrip=async function(){
     const c=JSON.parse(saved);tripCode=code;
     if(!fbApp)fbApp=initializeApp({apiKey:c.apiKey,authDomain:c.projectId+'.firebaseapp.com',projectId:c.projectId,storageBucket:c.projectId+'.appspot.com',appId:c.appId||'1:000:web:000'});
     db=getFirestore(fbApp);
+    // 先從 Firebase 讀取資料
+    const joinSnap=await getDoc(doc(db,'trips',tripCode));
+    if(joinSnap.exists()){
+      const d=joinSnap.data();
+      if(d.schedules&&d.schedules.length){schedules=d.schedules;localStorage.setItem('schedules',JSON.stringify(schedules));}
+      if(d.members&&d.members.length){members=d.members;localStorage.setItem('members',JSON.stringify(members));}
+      if(d.expenses&&d.expenses.length){expenses=d.expenses;localStorage.setItem('expenses',JSON.stringify(expenses));}
+      if(d.photos&&d.photos.length){photos=d.photos.filter(p=>!p.url?.startsWith('idb:'));localStorage.setItem('photos',JSON.stringify(photos));}
+      if(d.personLists&&Object.keys(d.personLists).length){personLists=d.personLists;localStorage.setItem('personLists',JSON.stringify(personLists));}
+      renderAll();renderChecklist();
+    }
     startListen();
     document.getElementById('syncDot').classList.add('on');
     document.getElementById('syncText').textContent='即時同步中';
     document.getElementById('connectedBanner').style.display='block';
     document.getElementById('shareCodeDisplay').textContent=tripCode;
-    showToast('🌿 已加入行程！');
+    showToast('🌿 已加入行程！資料載入完成');
     localStorage.setItem('fb_config',JSON.stringify({...c,tripCode}));
   }catch(e){showToast('加入失敗：'+e.message);}
 };
@@ -695,7 +720,7 @@ window.addEventListener('load',()=>{
   document.getElementById('fb-appId').value=AUTO_CONFIG.appId;
   document.getElementById('fb-tripCode').value=AUTO_CONFIG.tripCode;
   // 自動連線（不需手動按按鈕）
-  setTimeout(()=>{ window.connectFirebase && window.connectFirebase(); }, 1500);
+  setTimeout(()=>{ window.connectFirebase && window.connectFirebase(); }, 800);
 });
 </script>
 

@@ -69,7 +69,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
 .schedule-card:hover{transform:translateY(-1px);box-shadow:2px 4px 0 rgba(92,74,48,.12)}
 .schedule-name{font-weight:500;font-size:14px;color:var(--ink);font-family:'Noto Serif JP',serif}
 .schedule-place{font-size:11px;color:var(--stone);margin-top:2px}
-.schedule-note{font-size:11px;color:var(--ink-soft);margin-top:5px;padding-top:5px;border-top:1px dashed rgba(92,74,48,.2);font-style:italic;font-family:'Noto Serif JP',serif}
+.schedule-note{font-size:11px;color:var(--ink-soft);margin-top:5px;padding-top:5px;border-top:1px dashed rgba(92,74,48,.2);font-family:'Noto Serif JP',serif}
 .card-actions{position:absolute;top:8px;right:8px;display:flex;gap:3px}
 .card-btn{background:none;border:none;font-size:13px;cursor:pointer;opacity:.4;transition:opacity .15s;padding:2px}
 .card-btn:hover{opacity:.8}
@@ -447,20 +447,19 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
       <div class="form-group"><label class="form-label">地點</label><input class="form-input" id="sf-place" placeholder="熊本市中央區本丸1-1"></div>
       <div class="form-group"><label class="form-label">備註</label><input class="form-input" id="sf-note" placeholder="備註..."></div>
 
-      <!-- 景點照片 -->
+      <!-- 景點照片（多張） -->
       <div class="form-group">
-        <label class="form-label">景點照片（選填）</label>
+        <label class="form-label">景點照片（可多張）</label>
+        <!-- 已加入的照片 -->
+        <div id="sf-imgs-list" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px"></div>
+        <!-- 新增方式 -->
         <div style="display:flex;gap:8px;margin-bottom:8px">
-          <input class="form-input" id="sf-img-url" placeholder="貼上圖片網址..." style="flex:1;font-size:13px">
-          <button onclick="previewSchedImg()" style="background:var(--green);color:var(--cream);border:none;border-radius:5px;padding:0 12px;font-size:12px;cursor:pointer;white-space:nowrap;font-family:'Noto Serif JP',serif">預覽</button>
+          <input class="form-input" id="sf-img-url" placeholder="貼上圖片網址後按＋" style="flex:1;font-size:13px">
+          <button onclick="addSchedImgByUrl()" style="background:var(--green);color:var(--cream);border:none;border-radius:5px;padding:0 14px;font-size:16px;cursor:pointer;font-weight:700">＋</button>
         </div>
-        <div onclick="document.getElementById('sf-img-file').click()" style="border:2px dashed var(--green-light);border-radius:6px;padding:12px;text-align:center;cursor:pointer;background:var(--green-mist)">
-          <input type="file" id="sf-img-file" accept="image/*" style="display:none" onchange="handleSchedImgFile(event)">
-          <div style="font-size:11px;color:var(--stone);font-family:'Noto Serif JP',serif">📷 點此選擇或拍攝景點照片</div>
-        </div>
-        <div id="sf-img-preview" style="display:none;margin-top:8px;position:relative">
-          <img id="sf-img-preview-img" style="width:100%;max-height:160px;object-fit:cover;border-radius:8px;border:var(--border)">
-          <button onclick="clearSchedImg()" style="position:absolute;top:6px;right:6px;background:rgba(61,51,37,.7);color:#fff;border:none;border-radius:50%;width:24px;height:24px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+        <div onclick="document.getElementById('sf-img-file').click()" style="border:2px dashed var(--green-light);border-radius:6px;padding:10px;text-align:center;cursor:pointer;background:var(--green-mist)">
+          <input type="file" id="sf-img-file" accept="image/*" multiple style="display:none" onchange="handleSchedImgFile(event)">
+          <div style="font-size:11px;color:var(--stone);font-family:'Noto Serif JP',serif">📷 點此選擇多張照片上傳</div>
         </div>
         <div id="sf-img-upload-status" style="display:none;font-size:11px;color:var(--green-dark);font-family:'Noto Serif JP',serif;margin-top:6px;padding:6px 10px;background:var(--green-pale);border-radius:5px;border:var(--border)"></div>
       </div>
@@ -746,12 +745,7 @@ async function resolveImgSrc(refOrUrl){
   // 舊資料相容：base64 data URL 直接回傳
   return refOrUrl;
 }
-function dataURLtoBlob(dataurl){
-  const arr=dataurl.split(','),mime=arr[0].match(/:(.*?);/)[1];
-  const bstr=atob(arr[1]);let n=bstr.length;const u8arr=new Uint8Array(n);
-  while(n--) u8arr[n]=bstr.charCodeAt(n);
-  return new Blob([u8arr],{type:mime});
-}
+
 
 const DOW=['日','一','二','三','四','五','六'];
 
@@ -844,37 +838,6 @@ const SPOTS=[
   },
 ];
 
-// ═══ 拍照 Tips（針對熊本・博多）═══
-const TIPS=[
-  {
-    icon:'🏯',name:'城堡・神社拍攝',sub:'和風傳統場景',
-    items:['熊本城最佳角度：加藤神社前廣場，清晨6-7點無人且光線完美','太宰府本殿：正面仰拍，天空作背景，避開中午強光','石板參道利用「消失點」構圖，讓視線往深處延伸','穿和服或浴衣拍攝，色彩和環境最搭配']
-  },
-  {
-    icon:'🌋',name:'阿蘇火山・草千里',sub:'大自然壯闊場景',
-    items:['草千里廣角橫拍，前景放馬匹或人物，強調空間感','火口展望台俯瞰，用護欄作框架構圖','噴煙逆光拍攝，戲劇性十足','早晨7-8點有機會出現雲海，值得早起等待']
-  },
-  {
-    icon:'🌊',name:'糸島海岸',sub:'清新海邊日系風',
-    items:['夕陽前1小時抵達夫婦岩，光線從橘轉紅漸層','彩虹鞦韆：人在鞦韆上，遠處大海為背景，仰拍讓天空更大','低角度貼近沙灘拍，水面反光很夢幻','海邊咖啡廳選靠窗座位，自然光+海景的人像最美']
-  },
-  {
-    icon:'🍜',name:'美食拍攝',sub:'博多・熊本名物',
-    items:['豚骨拉麵：熱氣繚繞時立刻拍，側光角度讓湯頭發亮','屋台夜景：長曝光拍出路人虛化效果，屋台燈光成主角','馬刺生魚片：俯拍90度，呈現精緻擺盤','梅ヶ枝餅剛烤好時拍，表面金黃光澤最誘人']
-  },
-  {
-    icon:'🌃',name:'屋台夜景',sub:'博多・熊本夜晚',
-    items:['手持夜拍開夜間模式，靠在柱子或牆上穩定','暖黃燈光和路面濕氣反光，雨後效果更好','廣角拍整排屋台，長曝光車流成光軌','人物在屋台前背光剪影，最有日系電影感']
-  },
-  {
-    icon:'🚆',name:'JR火車・新幹線',sub:'旅途中的移動感',
-    items:['月台拍新幹線進站，廣角+低角度最有氣勢','車窗外流動的九州風景用慢快門拍出動感','阿蘇男孩號車內的懷舊座椅+窗外風景構圖','車票、JR Pass和地圖一起拍的旅行感平拍']
-  },
-  {
-    icon:'📱',name:'手機拍攝技巧',sub:'不帶相機也能拍大片',
-    items:['開啟格線，三分法讓地平線在1/3處，更平衡','人像模式拍美食和景點建築，背景虛化更專業','順光（早上）比逆光更容易控制，初學者首選','後期推薦 VSCO 的 A4 或 HB1 濾鏡，符合日系清新風格']
-  },
-];
 
 let curDay=0,rate=4.65,editSchedId=null,curCheckType='luggage';
 
@@ -961,23 +924,32 @@ async function renderSchedule(){
       <div class="time-dot"></div>
       <div class="schedule-card">
         <div class="card-actions"><button class="card-btn" onclick="editSched('${s.id}')">✏️</button><button class="card-btn" onclick="delSched('${s.id}')">🗑</button></div>
-        ${s.img?`<div id="simg-${s.id}" style="width:calc(100% + 26px);margin:-11px -13px 10px;height:130px;background:var(--green-pale);border-radius:6px 6px 0 0;display:flex;align-items:center;justify-content:center"><span style="font-size:11px;color:var(--stone);font-family:'Noto Serif JP',serif">載入中...</span></div>`:''}
+        ${(s.imgs&&s.imgs.length)||(s.img)?`<div id="simg-${s.id}" style="width:calc(100% + 26px);margin:-11px -13px 10px;height:130px;background:var(--green-pale);border-radius:6px 6px 0 0;display:flex;align-items:center;justify-content:center;overflow:hidden"><span style="font-size:11px;color:var(--stone);font-family:'Noto Serif JP',serif">載入中...</span></div>`:''}
         <div class="schedule-name">${s.name}</div>
         ${s.place?`<div class="schedule-place">📍 ${s.place}</div>`:''}
         <span class="tag tag-${s.type}">${{sight:'🌸 景點',food:'🍜 餐廳',shop:'🛍 購物',hotel:'🏨 住宿',transport:'🚃 交通'}[s.type]}</span>
         ${s.note?`<div class="schedule-note">${s.note}</div>`:''}
       </div>
     </div>`).join('');
-  // 非同步載入圖片
+  // 非同步載入圖片（支援多張）
   for(const s of list){
-    if(!s.img) continue;
-    const src=await resolveImgSrc(s.img);
+    const imgRefs = s.imgs && s.imgs.length ? s.imgs : (s.img ? [s.img] : []);
+    if(!imgRefs.length) continue;
     const imgEl=document.getElementById('simg-'+s.id);
     if(!imgEl) continue;
-    if(src){
-      imgEl.outerHTML=`<img src="${src}" style="width:calc(100% + 26px);margin:-11px -13px 10px;height:130px;object-fit:cover;border-radius:6px 6px 0 0;display:block;cursor:pointer" onerror="this.style.display='none'" onclick="event.stopPropagation();openLightbox('${src}')">`;
+    // 解析所有圖片 src
+    const srcs=[];
+    for(const ref of imgRefs){
+      const src=await resolveImgSrc(ref);
+      if(src) srcs.push(src);
+    }
+    if(!srcs.length){imgEl.style.display='none';continue;}
+    if(srcs.length===1){
+      // 單張：橫幅顯示
+      imgEl.outerHTML=`<img src="${srcs[0]}" style="width:calc(100% + 26px);margin:-11px -13px 10px;height:130px;object-fit:cover;border-radius:6px 6px 0 0;display:block;cursor:pointer" onerror="this.style.display='none'" onclick="event.stopPropagation();openLightbox('${srcs[0]}')">`;
     }else{
-      imgEl.style.display='none';
+      // 多張：橫向滑動
+      imgEl.outerHTML=`<div style="width:calc(100% + 26px);margin:-11px -13px 10px;height:130px;display:flex;overflow-x:auto;scrollbar-width:none;border-radius:6px 6px 0 0;gap:2px">${srcs.map(src=>`<img src="${src}" style="height:130px;min-width:130px;object-fit:cover;flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();openLightbox('${src}')" onerror="this.style.display='none'">`).join('')}</div>`;
     }
   }
 }
@@ -989,6 +961,7 @@ function openSchedModal(){
   ['sf-name','sf-place','sf-note','sf-img-url'].forEach(id=>document.getElementById(id).value='');
   clearSchedImg();
   document.getElementById('schedModal').style.display='flex';
+  setTimeout(renderSchedImgsList,50);
 }
 function editSched(id){
   const s=schedules.find(x=>x.id===id);if(!s)return;
@@ -999,37 +972,88 @@ function editSched(id){
   document.getElementById('sf-name').value=s.name;
   document.getElementById('sf-place').value=s.place||'';
   document.getElementById('sf-note').value=s.note||'';
-  document.getElementById('sf-img-url').value=s.img||'';
+  document.getElementById('sf-img-url').value='';
   clearSchedImg();
-  if(s.img){
-    document.getElementById('sf-img-preview-img').src=s.img;
-    document.getElementById('sf-img-preview').style.display='block';
-  }
+  // 載入既有圖片（imgs 陣列 或 舊版 img 單張）
+  const refs=s.imgs&&s.imgs.length?s.imgs:(s.img?[s.img]:[]);
+  refs.forEach(ref=>{ pendingSchedImgs.push({ref,file:null,previewUrl:null}); });
   document.getElementById('schedModal').style.display='flex';
+  setTimeout(renderSchedImgsList,50);
 }
-let pendingSchedImgFile=null;
+// 暫存多張待上傳照片 {url:預覽url, file:File|null, ref:已有的網址}
+let pendingSchedImgs=[];
+
+function renderSchedImgsList(){
+  const el=document.getElementById('sf-imgs-list');
+  if(!el)return;
+  if(!pendingSchedImgs.length){el.innerHTML='';return;}
+  el.innerHTML=pendingSchedImgs.map((p,i)=>`
+    <div style="position:relative;aspect-ratio:1;border-radius:6px;overflow:hidden;border:var(--border)">
+      <img src="${p.previewUrl||p.ref}" style="width:100%;height:100%;object-fit:cover">
+      <button onclick="removeSchedImg(${i})" style="position:absolute;top:3px;right:3px;background:rgba(61,51,37,.75);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>`).join('');
+}
+function removeSchedImg(i){
+  if(pendingSchedImgs[i]&&pendingSchedImgs[i].previewUrl&&pendingSchedImgs[i].file)
+    URL.revokeObjectURL(pendingSchedImgs[i].previewUrl);
+  pendingSchedImgs.splice(i,1);
+  renderSchedImgsList();
+}
+function addSchedImgByUrl(){
+  const url=document.getElementById('sf-img-url').value.trim();
+  if(!url){showToast('請輸入圖片網址');return;}
+  pendingSchedImgs.push({ref:url,file:null,previewUrl:null});
+  document.getElementById('sf-img-url').value='';
+  renderSchedImgsList();
+  showToast('已加入圖片 🌿');
+}
+function handleSchedImgFile(e){
+  const files=Array.from(e.target.files);
+  files.forEach(file=>{
+    const previewUrl=URL.createObjectURL(file);
+    pendingSchedImgs.push({file,previewUrl,ref:null});
+  });
+  renderSchedImgsList();
+  const s=document.getElementById('sf-img-upload-status');
+  if(s){s.style.display='block';s.textContent=`📷 已選 ${files.length} 張，儲存時自動上傳 imgBB`;}
+}
+function clearSchedImg(){
+  pendingSchedImgs.forEach(p=>{if(p.previewUrl&&p.file)URL.revokeObjectURL(p.previewUrl);});
+  pendingSchedImgs=[];
+  renderSchedImgsList();
+  const s=document.getElementById('sf-img-upload-status');
+  if(s)s.style.display='none';
+}
+
 async function saveSched(){
   const name=document.getElementById('sf-name').value.trim();
   if(!name){showToast('請輸入名稱');return;}
   const btn=document.querySelector('#schedModal .btn-primary');
-  let img=document.getElementById('sf-img-url').value.trim();
-  // 如果有選擇本機檔案，先上傳到 imgBB
-  if(pendingSchedImgFile){
+  const statusEl=document.getElementById('sf-img-upload-status');
+  // 上傳所有本機檔案到 imgBB
+  const finalImgs=[];
+  const hasFiles=pendingSchedImgs.some(p=>p.file);
+  if(hasFiles){
     btn.textContent='上傳圖片中...';btn.disabled=true;
-    const statusEl=document.getElementById('sf-img-upload-status');
-    statusEl.style.display='block';statusEl.textContent='📤 上傳景點照片至雲端...';
-    try{
-      const url=await uploadToIBB(pendingSchedImgFile);
-      img=url||img;
-      statusEl.textContent='✅ 圖片上傳成功！';
-    }catch(err){
-      statusEl.textContent='⚠️ 上傳失敗，使用本機圖片';
-      // fallback: 存 IndexedDB
-      const idbKey='idb:sched'+Date.now();
-      try{await idbSet(idbKey,pendingSchedImgFile);img=idbKey;}catch(e){}
-    }
-    btn.textContent='儲存行程';btn.disabled=false;
+    statusEl.style.display='block';
   }
+  for(let i=0;i<pendingSchedImgs.length;i++){
+    const p=pendingSchedImgs[i];
+    statusEl.textContent=`📤 上傳第 ${i+1}/${pendingSchedImgs.length} 張...`;
+    if(p.file){
+      try{
+        const url=await uploadToIBB(p.file);
+        finalImgs.push(url);
+      }catch(err){
+        // fallback IndexedDB
+        const idbKey='idb:sched'+Date.now()+i;
+        try{await idbSet(idbKey,p.file);finalImgs.push(idbKey);}catch(e){}
+      }
+    }else if(p.ref){
+      finalImgs.push(p.ref);
+    }
+  }
+  if(hasFiles){btn.textContent='儲存行程';btn.disabled=false;statusEl.textContent='✅ 上傳完成！';}
   const obj={
     id:editSchedId||('s'+Date.now()),
     day:curDay,
@@ -1038,23 +1062,18 @@ async function saveSched(){
     place:document.getElementById('sf-place').value.trim(),
     type:document.getElementById('sf-type').value,
     note:document.getElementById('sf-note').value.trim(),
-    img:img||''
+    imgs:finalImgs,
+    img:finalImgs[0]||'' // 相容舊版
   };
   if(editSchedId){const i=schedules.findIndex(s=>s.id===editSchedId);schedules[i]=obj;}
   else schedules.push(obj);
-  pendingSchedImgFile=null;
+  clearSchedImg();
   save();closeModal('schedModal');renderSchedule();renderMap();
   showToast(editSchedId?'行程已更新！':'行程已新增 🌿');
 }
 function delSched(id){if(!confirm('確定刪除？'))return;schedules=schedules.filter(s=>s.id!==id);save();renderSchedule();renderMap();}
 
-function previewSchedImg(){
-  const url=document.getElementById('sf-img-url').value.trim();
-  if(!url){showToast('請輸入圖片網址');return;}
-  document.getElementById('sf-img-preview-img').src=url;
-  document.getElementById('sf-img-preview').style.display='block';
-  pendingSchedImgFile=null;
-}
+
 function handleSchedImgFile(e){
   const file=e.target.files[0];if(!file)return;
   pendingSchedImgFile=file;
@@ -1334,48 +1353,6 @@ function renderSpots(){
 function toggleSpot(id){const body=document.getElementById('spotbody-'+id);const arrow=document.getElementById('sarrow-'+id);const isOpen=body.classList.contains('open');body.classList.toggle('open',!isOpen);arrow.style.transform=isOpen?'rotate(0)':'rotate(180deg)';}
 
 /* ── Tips ── */
-function renderTips(){
-  document.getElementById('tipsList').innerHTML=TIPS.map((t,ti)=>`
-    <div class="tip-card">
-      <div class="tip-header" onclick="toggleTip(${ti})">
-        <div class="tip-icon">${t.icon}</div>
-        <div style="flex:1"><div class="tip-name">${t.name}</div><div class="tip-sub">${t.sub}</div></div>
-        <span style="color:var(--stone);font-size:11px;transition:transform .2s" id="tip-arrow-${ti}">▼</span>
-      </div>
-      <div class="tip-body" id="tipbody-${ti}">
-        ${t.items.map((item,i)=>`<div class="tip-item"><div class="tip-num">${i+1}</div><div class="tip-text">${item}</div></div>`).join('')}
-      </div>
-    </div>`).join('');
-}
-function toggleTip(i){const body=document.getElementById('tipbody-'+i);const arrow=document.getElementById('tip-arrow-'+i);const isOpen=body.classList.contains('open');body.classList.toggle('open',!isOpen);arrow.style.transform=isOpen?'rotate(0)':'rotate(180deg)';}
-
-/* ── Photos ── */
-async function renderPhotos(){
-  updateIbbKeyUI();
-  const dp=photos.filter(p=>p.day===curDay);
-  document.getElementById('photoDay').textContent='D'+(curDay+1)+' · '+TRIP_DAYS[curDay].city;
-  document.getElementById('photoCount').textContent=dp.length+' 張';
-  const grid=document.getElementById('photoGrid');const empty=document.getElementById('photoEmpty');
-  if(!dp.length){grid.innerHTML='';empty.style.display='block';return;}
-  empty.style.display='none';
-  grid.innerHTML=dp.map(p=>`<div class="ibb-img" id="photo-${p.id}" style="position:relative">
-    <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--stone);font-size:11px;font-family:'Noto Serif JP',serif">載入中...</div>
-    ${p.localOnly?`<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(184,134,11,.85);color:#fff;font-size:9px;text-align:center;padding:2px;font-family:'Noto Serif JP',serif">本機</div>`:''}
-  </div>`).join('');
-  for(const p of dp){
-    const src=await resolveImgSrc(p.url);
-    const el=document.getElementById('photo-'+p.id);
-    if(!el)continue;
-    if(src){
-      el.innerHTML=`<img src="${src}" alt="" onerror="this.style.background='var(--green-pale)'" onclick="openLightbox('${src}')">
-        <button class="ibb-img-del" onclick="event.stopPropagation();delPhoto('${p.id}')">✕</button>
-        ${p.localOnly?`<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(184,134,11,.85);color:#fff;font-size:9px;text-align:center;padding:2px;font-family:'Noto Serif JP',serif">⚠️ 本機</div>`:''}`;
-    }else{
-      el.innerHTML=`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--stone);font-size:9px;flex-direction:column;gap:3px;padding:4px;text-align:center"><span>⚠️</span><span style="font-family:'Noto Serif JP',serif">讀取失敗</span></div>
-        <button class="ibb-img-del" onclick="event.stopPropagation();delPhoto('${p.id}')">✕</button>`;
-    }
-  }
-}
 function addPhotoByUrl(){const url=document.getElementById('ibbUrlInput').value.trim();if(!url){showToast('請輸入網址');return;}photos.push({id:'p'+Date.now(),day:curDay,url});save();renderPhotos();document.getElementById('ibbUrlInput').value='';showToast('照片已加入 🌸');}
 // ══════════════════════════════════════════
 //  ★ imgBB API Key（直接填在這裡）
@@ -1389,13 +1366,7 @@ function getIbbKey(){
     ? IMGBB_API_KEY
     : localStorage.getItem('ibb_api_key') || '';
 }
-function saveIbbKey(){
-  const key=document.getElementById('ibb-api-key-input')?.value.trim();
-  if(!key){showToast('請輸入 API Key');return;}
-  localStorage.setItem('ibb_api_key',key);
-  updateIbbKeyUI();
-  showToast('API Key 已儲存 🌿');
-}
+
 function updateIbbKeyUI(){
   const key=getIbbKey();
   const banner=document.getElementById('ibb-key-banner');

@@ -1269,7 +1269,7 @@ function addPhotoByUrl(){const url=document.getElementById('ibbUrlInput').value.
 //  ★ imgBB API Key（直接填在這裡）
 //  取得方式：登入 imgbb.com → API → 複製 key
 // ══════════════════════════════════════════
-const IMGBB_API_KEY = '37aa0f571e7acc757470fe991d8179af'; // ← 把這裡換成你的 Key
+const IMGBB_API_KEY = 'YOUR_IMGBB_API_KEY_HERE'; // ← 把這裡換成你的 Key
 
 function getIbbKey(){
   // 優先用寫死的 Key，其次用 localStorage（給朋友版用）
@@ -1311,6 +1311,7 @@ async function uploadToIBB(file){
   const form=new FormData();
   form.append('image',file);
   form.append('key',key);
+  form.append('album','C1hvkS'); // 旅行相簿
   const res=await fetch('https://api.imgbb.com/1/upload',{method:'POST',body:form});
   if(!res.ok) throw new Error('imgBB 回應錯誤：'+res.status);
   const data=await res.json();

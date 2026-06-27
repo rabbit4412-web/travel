@@ -974,35 +974,50 @@ function editSched(id){
   document.getElementById('sf-note').value=s.note||'';
   document.getElementById('sf-img-url').value='';
   clearSchedImg();
-  // 載入既有圖片（imgs 陣列 或 舊版 img 單張）
+  // 載入既有圖片到 existingSchedImgs（不是 pendingSchedImgs）
   const refs=s.imgs&&s.imgs.length?s.imgs:(s.img?[s.img]:[]);
-  refs.forEach(ref=>{ pendingSchedImgs.push({ref,file:null,previewUrl:null}); });
+  existingSchedImgs=[...refs]; // 直接複製，不混入新增清單
   document.getElementById('schedModal').style.display='flex';
   setTimeout(renderSchedImgsList,50);
 }
-// 暫存多張待上傳照片 {url:預覽url, file:File|null, ref:已有的網址}
-let pendingSchedImgs=[];
+// 行程圖片：分兩個清單
+let existingSchedImgs=[]; // 已有的圖片網址（編輯時帶入）
+let newSchedImgFiles=[];  // 新選的本機 File（儲存時上傳）
 
 function renderSchedImgsList(){
   const el=document.getElementById('sf-imgs-list');
   if(!el)return;
-  if(!pendingSchedImgs.length){el.innerHTML='';return;}
-  el.innerHTML=pendingSchedImgs.map((p,i)=>`
+  const total=existingSchedImgs.length+newSchedImgFiles.length;
+  if(!total){el.innerHTML='';return;}
+  // 已有圖片
+  const existHtml=existingSchedImgs.map((url,i)=>`
     <div style="position:relative;aspect-ratio:1;border-radius:6px;overflow:hidden;border:var(--border)">
-      <img src="${p.previewUrl||p.ref}" style="width:100%;height:100%;object-fit:cover">
-      <button onclick="removeSchedImg(${i})" style="position:absolute;top:3px;right:3px;background:rgba(61,51,37,.75);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+      <img src="${url}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.opacity='.3'">
+      <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(58,107,56,.8);color:#fff;font-size:9px;text-align:center;padding:2px;font-family:'Noto Serif JP',serif">已有</div>
+      <button onclick="removeExistingSchedImg(${i})" style="position:absolute;top:3px;right:3px;background:rgba(61,51,37,.75);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:10px;cursor:pointer">✕</button>
     </div>`).join('');
+  // 新選圖片
+  const newHtml=newSchedImgFiles.map((f,i)=>`
+    <div style="position:relative;aspect-ratio:1;border-radius:6px;overflow:hidden;border:1.5px dashed var(--green)">
+      <img src="${f.previewUrl}" style="width:100%;height:100%;object-fit:cover">
+      <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(78,205,196,.85);color:#1A1A2E;font-size:9px;text-align:center;padding:2px;font-family:'Noto Serif JP',serif">待上傳</div>
+      <button onclick="removeNewSchedImg(${i})" style="position:absolute;top:3px;right:3px;background:rgba(61,51,37,.75);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:10px;cursor:pointer">✕</button>
+    </div>`).join('');
+  el.innerHTML=existHtml+newHtml;
 }
-function removeSchedImg(i){
-  if(pendingSchedImgs[i]&&pendingSchedImgs[i].previewUrl&&pendingSchedImgs[i].file)
-    URL.revokeObjectURL(pendingSchedImgs[i].previewUrl);
-  pendingSchedImgs.splice(i,1);
+function removeExistingSchedImg(i){
+  existingSchedImgs.splice(i,1);
+  renderSchedImgsList();
+}
+function removeNewSchedImg(i){
+  if(newSchedImgFiles[i]&&newSchedImgFiles[i].previewUrl) URL.revokeObjectURL(newSchedImgFiles[i].previewUrl);
+  newSchedImgFiles.splice(i,1);
   renderSchedImgsList();
 }
 function addSchedImgByUrl(){
   const url=document.getElementById('sf-img-url').value.trim();
   if(!url){showToast('請輸入圖片網址');return;}
-  pendingSchedImgs.push({ref:url,file:null,previewUrl:null});
+  existingSchedImgs.push(url);
   document.getElementById('sf-img-url').value='';
   renderSchedImgsList();
   showToast('已加入圖片 🌿');
@@ -1011,15 +1026,16 @@ function handleSchedImgFile(e){
   const files=Array.from(e.target.files);
   files.forEach(file=>{
     const previewUrl=URL.createObjectURL(file);
-    pendingSchedImgs.push({file,previewUrl,ref:null});
+    newSchedImgFiles.push({file,previewUrl});
   });
   renderSchedImgsList();
   const s=document.getElementById('sf-img-upload-status');
   if(s){s.style.display='block';s.textContent=`📷 已選 ${files.length} 張，儲存時自動上傳 imgBB`;}
 }
 function clearSchedImg(){
-  pendingSchedImgs.forEach(p=>{if(p.previewUrl&&p.file)URL.revokeObjectURL(p.previewUrl);});
-  pendingSchedImgs=[];
+  newSchedImgFiles.forEach(f=>{if(f.previewUrl)URL.revokeObjectURL(f.previewUrl);});
+  newSchedImgFiles=[];
+  existingSchedImgs=[];
   renderSchedImgsList();
   const s=document.getElementById('sf-img-upload-status');
   if(s)s.style.display='none';
@@ -1030,30 +1046,25 @@ async function saveSched(){
   if(!name){showToast('請輸入名稱');return;}
   const btn=document.querySelector('#schedModal .btn-primary');
   const statusEl=document.getElementById('sf-img-upload-status');
-  // 上傳所有本機檔案到 imgBB
-  const finalImgs=[];
-  const hasFiles=pendingSchedImgs.some(p=>p.file);
-  if(hasFiles){
+  // 最終圖片 = 已有圖片 + 新上傳圖片
+  const finalImgs=[...existingSchedImgs]; // 先放已有的
+  if(newSchedImgFiles.length){
     btn.textContent='上傳圖片中...';btn.disabled=true;
-    statusEl.style.display='block';
-  }
-  for(let i=0;i<pendingSchedImgs.length;i++){
-    const p=pendingSchedImgs[i];
-    statusEl.textContent=`📤 上傳第 ${i+1}/${pendingSchedImgs.length} 張...`;
-    if(p.file){
+    if(statusEl){statusEl.style.display='block';}
+    for(let i=0;i<newSchedImgFiles.length;i++){
+      const f=newSchedImgFiles[i];
+      if(statusEl) statusEl.textContent=`📤 上傳第 ${i+1}/${newSchedImgFiles.length} 張...`;
       try{
-        const url=await uploadToIBB(p.file);
+        const url=await uploadToIBB(f.file);
         finalImgs.push(url);
       }catch(err){
-        // fallback IndexedDB
         const idbKey='idb:sched'+Date.now()+i;
-        try{await idbSet(idbKey,p.file);finalImgs.push(idbKey);}catch(e){}
+        try{await idbSet(idbKey,f.file);finalImgs.push(idbKey);}catch(e){}
       }
-    }else if(p.ref){
-      finalImgs.push(p.ref);
     }
+    btn.textContent='儲存行程';btn.disabled=false;
+    if(statusEl) statusEl.textContent='✅ 上傳完成！';
   }
-  if(hasFiles){btn.textContent='儲存行程';btn.disabled=false;statusEl.textContent='✅ 上傳完成！';}
   const obj={
     id:editSchedId||('s'+Date.now()),
     day:curDay,

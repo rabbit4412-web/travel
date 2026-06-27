@@ -618,6 +618,80 @@ window.addEventListener('load',()=>{
 </script>
 
 <script>
+// ══════════════════════════════════════════
+//  IndexedDB：用於儲存大型圖片資料（base64）
+//  localStorage 只存「參照 key」，圖片實體放 IndexedDB
+// ══════════════════════════════════════════
+const DB_NAME='travelAppDB', DB_STORE='images', DB_VERSION=1;
+let idbInstance=null;
+function openIDB(){
+  return new Promise((resolve,reject)=>{
+    if(idbInstance){resolve(idbInstance);return;}
+    const req=indexedDB.open(DB_NAME,DB_VERSION);
+    req.onupgradeneeded=e=>{
+      const db=e.target.result;
+      if(!db.objectStoreNames.contains(DB_STORE)) db.createObjectStore(DB_STORE);
+    };
+    req.onsuccess=e=>{idbInstance=e.target.result;resolve(idbInstance);};
+    req.onerror=e=>reject(e);
+  });
+}
+async function idbSet(key,value){
+  const db=await openIDB();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(DB_STORE,'readwrite');
+    tx.objectStore(DB_STORE).put(value,key);
+    tx.oncomplete=()=>resolve();
+    tx.onerror=e=>reject(e);
+  });
+}
+async function idbGet(key){
+  const db=await openIDB();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(DB_STORE,'readonly');
+    const req=tx.objectStore(DB_STORE).get(key);
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=e=>reject(e);
+  });
+}
+async function idbDelete(key){
+  const db=await openIDB();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(DB_STORE,'readwrite');
+    tx.objectStore(DB_STORE).delete(key);
+    tx.oncomplete=()=>resolve();
+    tx.onerror=e=>reject(e);
+  });
+}
+// 圖片快取（記憶體），key -> blob URL
+const imgCache={};
+async function resolveImgSrc(refOrUrl){
+  if(!refOrUrl) return '';
+  // 一般網址（imgBB 等）直接回傳
+  if(refOrUrl.startsWith('http')) return refOrUrl;
+  // idb:xxxx 格式 -> 從 IndexedDB 讀取
+  if(refOrUrl.startsWith('idb:')){
+    if(imgCache[refOrUrl]) return imgCache[refOrUrl];
+    try{
+      const blob=await idbGet(refOrUrl);
+      if(blob){
+        const url=URL.createObjectURL(blob);
+        imgCache[refOrUrl]=url;
+        return url;
+      }
+    }catch(e){console.error('idb read error',e);}
+    return '';
+  }
+  // 舊資料相容：base64 data URL 直接回傳
+  return refOrUrl;
+}
+function dataURLtoBlob(dataurl){
+  const arr=dataurl.split(','),mime=arr[0].match(/:(.*?);/)[1];
+  const bstr=atob(arr[1]);let n=bstr.length;const u8arr=new Uint8Array(n);
+  while(n--) u8arr[n]=bstr.charCodeAt(n);
+  return new Blob([u8arr],{type:mime});
+}
+
 const DOW=['日','一','二','三','四','五','六'];
 
 // 8天行程資料
@@ -916,7 +990,7 @@ function renderChecklistItems(){
   const total=lug.length+sho.length,done=lug.filter(i=>i.done).length+sho.filter(i=>i.done).length;
   const sumEl=document.getElementById('cl-person-summary');if(sumEl)sumEl.textContent='完成 '+done+'/'+total+' 項';
 }
-function renderCheckItems(type,items,cats,filter,catsId,listId,progId,countId){
+async function renderCheckItems(type,items,cats,filter,catsId,listId,progId,countId){
   document.getElementById(catsId).innerHTML=cats.map(c=>`<div class="cat-chip${c===filter?' active':''}" onclick="${type==='luggage'?'luggageCatFilter':'shoppingCatFilter'}='${c}';renderChecklistItems()">${c}</div>`).join('');
   const filtered=filter==='全部'?items:items.filter(i=>i.cat===filter);
   const allDone=items.filter(i=>i.done).length;
@@ -925,18 +999,27 @@ function renderCheckItems(type,items,cats,filter,catsId,listId,progId,countId){
   const el=document.getElementById(listId);
   if(!filtered.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">此分類沒有項目</div></div>`;return;}
   el.innerHTML=filtered.map(item=>`
-    <div class="check-item${item.done?' done':''}">
+    <div class="check-item${item.done?' done':''}" id="check-${type}-${item.id}">
       <div class="check-item-row">
         <div class="check-box${item.done?' checked':''}" onclick="toggleCheck('${type}','${item.id}')"></div>
         <div class="check-label">${item.name}${item.note?`<div style="font-size:10px;color:var(--stone);margin-top:1px">${item.note}</div>`:''}</div>
         <span class="check-category">${item.cat}</span>
         <button class="check-del" onclick="delCheck('${type}','${item.id}')">🗑</button>
       </div>
-      ${type==='shopping'?(item.img
-        ?`<img class="check-item-img" src="${item.img}" onclick="openLightbox('${item.img}')" onerror="this.style.display='none'">`
-        :`<div class="check-img-add" onclick="openImgModal('${item.id}')">📷 點此新增商品圖片</div>`
-      ):''}
+      ${type==='shopping'?`<div class="check-img-area" id="checkimg-${item.id}">${item.img?'<div style="padding:10px;text-align:center;font-size:11px;color:var(--stone);font-family:\'Noto Serif JP\',serif">載入圖片中...</div>':`<div class="check-img-add" onclick="openImgModal('${item.id}')">📷 點此新增商品圖片</div>`}</div>`:''}
     </div>`).join('');
+  // 非同步載入購買清單圖片
+  if(type==='shopping'){
+    for(const item of filtered){
+      if(item.img){
+        const src=await resolveImgSrc(item.img);
+        const area=document.getElementById('checkimg-'+item.id);
+        if(!area)continue;
+        if(src) area.innerHTML=`<img class="check-item-img" src="${src}" onclick="openLightbox('${src}')" onerror="this.parentElement.innerHTML='<div class=\'check-img-add\' onclick=\'openImgModal(\\'${item.id}\\')\'>📷 圖片讀取失敗，點此重新上傳</div>'">`;
+        else area.innerHTML=`<div class="check-img-add" onclick="openImgModal('${item.id}')">📷 點此新增商品圖片</div>`;
+      }
+    }
+  }
 }
 function toggleCheck(type,id){
   if(!curClPerson)return;
@@ -944,9 +1027,15 @@ function toggleCheck(type,id){
   const item=arr.find(i=>i.id===id);if(item)item.done=!item.done;
   setPersonList(curClPerson,type,arr);save();renderChecklistItems();
 }
-function delCheck(type,id){
+async function delCheck(type,id){
   if(!curClPerson)return;
-  const arr=getPersonList(curClPerson,type).filter(i=>i.id!==id);
+  const full=getPersonList(curClPerson,type);
+  const item=full.find(i=>i.id===id);
+  if(item&&item.img&&item.img.startsWith('idb:')){
+    try{await idbDelete(item.img);}catch(e){}
+    if(imgCache[item.img]){URL.revokeObjectURL(imgCache[item.img]);delete imgCache[item.img];}
+  }
+  const arr=full.filter(i=>i.id!==id);
   setPersonList(curClPerson,type,arr);save();renderChecklistItems();
 }
 function openCheckModal(type){
@@ -968,20 +1057,21 @@ function previewCkImg(){
   document.getElementById('ck-img-preview-img').src=url;
   document.getElementById('ck-img-preview').style.display='block';
 }
+let pendingCkImgFile=null; // 暫存選擇的檔案，按儲存時才寫入 IndexedDB
 function handleCkImgFile(e){
   const file=e.target.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=ev=>{
-    document.getElementById('ck-img-preview-img').src=ev.target.result;
-    document.getElementById('ck-img-url').value=ev.target.result;
-    document.getElementById('ck-img-preview').style.display='block';
-  };
-  reader.readAsDataURL(file);
+  pendingCkImgFile=file;
+  // 用 blob URL 預覽（不佔 localStorage 空間）
+  const previewUrl=URL.createObjectURL(file);
+  document.getElementById('ck-img-preview-img').src=previewUrl;
+  document.getElementById('ck-img-url').value=''; // 清空網址欄，標記為「待上傳檔案」
+  document.getElementById('ck-img-preview').style.display='block';
 }
 function clearCkImg(){
   document.getElementById('ck-img-url').value='';
   document.getElementById('ck-img-preview').style.display='none';
   document.getElementById('ck-img-preview-img').src='';
+  pendingCkImgFile=null;
 }
 // 從清單卡片直接新增圖片
 let editImgItemId=null;
@@ -1001,15 +1091,24 @@ function openImgModal(itemId){
   document.getElementById('checkModal').style.display='flex';
   document.querySelector('#checkModal .btn-primary').onclick=saveImgOnly;
 }
-function saveImgOnly(){
+async function saveImgOnly(){
   const url=document.getElementById('ck-img-url').value.trim();
-  if(!url){showToast('請選擇或輸入圖片');return;}
+  if(!url&&!pendingCkImgFile){showToast('請選擇或輸入圖片');return;}
   if(!curClPerson||!editImgItemId)return;
+  let imgRef=url;
+  if(pendingCkImgFile){
+    const idbKey='idb:img'+Date.now()+Math.random().toString(36).slice(2,6);
+    try{
+      await idbSet(idbKey,pendingCkImgFile);
+      imgRef=idbKey;
+    }catch(err){showToast('圖片儲存失敗');return;}
+  }
   const arr=getPersonList(curClPerson,'shopping');
   const item=arr.find(i=>i.id===editImgItemId);
-  if(item)item.img=url;
+  if(item)item.img=imgRef;
   setPersonList(curClPerson,'shopping',arr);
   save();closeModal('checkModal');
+  pendingCkImgFile=null;
   // restore modal
   document.getElementById('ck-name').closest('.form-group').style.display='';
   document.getElementById('ck-cat').closest('.form-group').style.display='';
@@ -1017,10 +1116,19 @@ function saveImgOnly(){
   document.querySelector('#checkModal .btn-primary').onclick=saveCheckItem;
   renderChecklistItems();showToast('圖片已加入 🌸');
 }
-function saveCheckItem(){
+async function saveCheckItem(){
   const name=document.getElementById('ck-name').value.trim();if(!name){showToast('請輸入名稱');return;}
   if(!curClPerson){showToast('請先選擇旅伴');return;}
-  const img=curCheckType==='shopping'?document.getElementById('ck-img-url').value.trim():'';
+  let img='';
+  if(curCheckType==='shopping'){
+    const urlVal=document.getElementById('ck-img-url').value.trim();
+    if(pendingCkImgFile){
+      const idbKey='idb:img'+Date.now()+Math.random().toString(36).slice(2,6);
+      try{await idbSet(idbKey,pendingCkImgFile);img=idbKey;}catch(err){console.error(err);}
+    }else if(urlVal){
+      img=urlVal;
+    }
+  }
   const item={id:(curCheckType==='luggage'?'l':'sh')+Date.now(),name,cat:document.getElementById('ck-cat').value,note:document.getElementById('ck-note').value.trim(),done:false,img:img||''};
   // 確保 personLists[curClPerson] 存在
   if(!personLists[curClPerson]) personLists[curClPerson]={luggage:defaultLuggage(curClPerson),shopping:defaultShopping(curClPerson)};
@@ -1028,6 +1136,7 @@ function saveCheckItem(){
   arr.push(item);
   personLists[curClPerson][curCheckType]=arr; // 直接更新
   save();
+  pendingCkImgFile=null;
   // 驗證有沒有存成功
   const check=JSON.parse(localStorage.getItem('personLists')||'{}');
   const saved=check[curClPerson]?.[curCheckType]?.find(i=>i.id===item.id);
@@ -1073,18 +1182,54 @@ function renderTips(){
 function toggleTip(i){const body=document.getElementById('tipbody-'+i);const arrow=document.getElementById('tip-arrow-'+i);const isOpen=body.classList.contains('open');body.classList.toggle('open',!isOpen);arrow.style.transform=isOpen?'rotate(0)':'rotate(180deg)';}
 
 /* ── Photos ── */
-function renderPhotos(){
+async function renderPhotos(){
   const dp=photos.filter(p=>p.day===curDay);
   document.getElementById('photoDay').textContent='D'+(curDay+1)+' · '+TRIP_DAYS[curDay].city;
   document.getElementById('photoCount').textContent=dp.length+' 張';
   const grid=document.getElementById('photoGrid');const empty=document.getElementById('photoEmpty');
   if(!dp.length){grid.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
-  grid.innerHTML=dp.map(p=>`<div class="ibb-img"><img src="${p.url}" alt="" onerror="this.style.display='none'" onclick="openLightbox('${p.url}')"><button class="ibb-img-del" onclick="event.stopPropagation();delPhoto('${p.id}')">✕</button></div>`).join('');
+  // 先畫出佔位框架，圖片非同步載入
+  grid.innerHTML=dp.map(p=>`<div class="ibb-img" id="photo-${p.id}"><div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--stone);font-size:11px">載入中...</div></div>`).join('');
+  for(const p of dp){
+    const src=await resolveImgSrc(p.url);
+    const el=document.getElementById('photo-'+p.id);
+    if(!el)continue;
+    if(src){
+      el.innerHTML=`<img src="${src}" alt="" onerror="this.style.display='none'" onclick="openLightbox('${src}')"><button class="ibb-img-del" onclick="event.stopPropagation();delPhoto('${p.id}')">✕</button>`;
+    }else{
+      el.innerHTML=`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--stone);font-size:10px;flex-direction:column;gap:4px"><span>⚠️</span><span>讀取失敗</span></div><button class="ibb-img-del" onclick="event.stopPropagation();delPhoto('${p.id}')">✕</button>`;
+    }
+  }
 }
 function addPhotoByUrl(){const url=document.getElementById('ibbUrlInput').value.trim();if(!url){showToast('請輸入網址');return;}photos.push({id:'p'+Date.now(),day:curDay,url});save();renderPhotos();document.getElementById('ibbUrlInput').value='';showToast('照片已加入 🌸');}
-function handleFileUpload(e){const files=Array.from(e.target.files);files.forEach(file=>{const reader=new FileReader();reader.onload=ev=>{photos.push({id:'p'+Date.now(),day:curDay,url:ev.target.result});save();renderPhotos();};reader.readAsDataURL(file);});if(files.length)showToast(`已加入 ${files.length} 張 📸`);}
-function delPhoto(id){photos=photos.filter(p=>p.id!==id);save();renderPhotos();}
+async function handleFileUpload(e){
+  const files=Array.from(e.target.files);
+  if(!files.length)return;
+  showToast('正在儲存照片...');
+  for(const file of files){
+    const id='p'+Date.now()+Math.random().toString(36).slice(2,6);
+    const idbKey='idb:'+id;
+    try{
+      await idbSet(idbKey,file); // 直接存 File（Blob），不轉 base64，省空間
+      photos.push({id,day:curDay,url:idbKey});
+    }catch(err){
+      console.error('照片儲存失敗',err);
+      showToast('照片儲存失敗：'+file.name);
+    }
+  }
+  save();
+  renderPhotos();
+  showToast(`已加入 ${files.length} 張 📸`);
+}
+async function delPhoto(id){
+  const p=photos.find(x=>x.id===id);
+  if(p&&p.url&&p.url.startsWith('idb:')){
+    try{await idbDelete(p.url);}catch(e){}
+    if(imgCache[p.url]){URL.revokeObjectURL(imgCache[p.url]);delete imgCache[p.url];}
+  }
+  photos=photos.filter(p=>p.id!==id);save();renderPhotos();
+}
 function openLightbox(url){document.getElementById('lightboxImg').src=url;document.getElementById('lightbox').style.display='flex';}
 
 /* ── Split ── */

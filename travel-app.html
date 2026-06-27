@@ -608,6 +608,11 @@ window.connectFirebase=async function(){
     document.getElementById('setupCard').style.display='none';
     document.getElementById('joinCard').style.display='none';
     localStorage.setItem('fb_config',JSON.stringify({apiKey,projectId,appId,tripCode}));
+    // 如果有待同步的本機資料（離線時新增的），補傳上去
+    if(localStorage.getItem('pendingSync')==='1'){
+      await window.syncToFirebase();
+      if(localStorage.getItem('pendingSync')!=='1') showToast('✅ 離線資料已同步！');
+    }
   }catch(e){showToast('連線失敗，請確認設定');document.getElementById('connectBtn').textContent='🔗 建立並連接';}
 };
 
@@ -651,14 +656,14 @@ function startListen(){
   unsubs.forEach(u=>u());unsubs=[];
   const unsub=onSnapshot(doc(db,'trips',tripCode),snap=>{
     if(snap.exists()){const d=snap.data();
+      // 如果本機有待同步資料，跳過這次 Firebase 更新（避免被舊資料蓋掉）
+      if(localStorage.getItem('pendingSync')==='1') return;
       if(d.schedules){schedules=d.schedules;localStorage.setItem('schedules',JSON.stringify(schedules));}
       if(d.members){members=d.members;localStorage.setItem('members',JSON.stringify(members));renderPersonChips();}
       if(d.expenses){expenses=d.expenses;localStorage.setItem('expenses',JSON.stringify(expenses));}
       if(d.photos){
-        // 保留本機 idb: 圖片，合併雲端網址圖片
         const localPhotos=photos.filter(p=>p.url&&p.url.startsWith('idb:'));
         const cloudPhotos=d.photos.filter(p=>p.url&&!p.url.startsWith('idb:'));
-        // 去重複（以 id 為準）
         const merged=[...cloudPhotos];
         localPhotos.forEach(lp=>{if(!merged.find(cp=>cp.id===lp.id))merged.push(lp);});
         photos=merged;
@@ -695,10 +700,13 @@ window.forcePullFromFirebase=async function(){
 };
 
 window.syncToFirebase=async function(){
-  if(!db)return;
+  if(!db){
+    // 尚未連線，標記有待同步資料
+    localStorage.setItem('pendingSync','1');
+    return;
+  }
   try{
     const photosForSync=photos.filter(p=>p.url&&!p.url.startsWith('idb:'));
-    // personLists 的 img 也過濾掉 idb: 圖片（購買清單商品圖）
     const plForSync={};
     Object.keys(personLists).forEach(mid=>{
       plForSync[mid]={
@@ -710,7 +718,11 @@ window.syncToFirebase=async function(){
       };
     });
     await setDoc(doc(db,'trips',tripCode),{schedules,members,expenses,photos:photosForSync,personLists:plForSync,updatedAt:Date.now()},{merge:true});
-  }catch(e){console.error('sync error',e);}
+    localStorage.removeItem('pendingSync'); // 同步成功，清除標記
+  }catch(e){
+    console.error('sync error',e);
+    localStorage.setItem('pendingSync','1'); // 失敗也標記
+  }
 };
 window.copyShareCode=function(){navigator.clipboard?.writeText(tripCode);showToast('代碼已複製！傳給朋友');};
 window.addEventListener('load',()=>{

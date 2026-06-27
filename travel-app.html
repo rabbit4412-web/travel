@@ -332,8 +332,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
       <div style="font-size:11px;color:var(--stone);margin-bottom:10px;font-family:'Noto Serif JP',serif;line-height:1.6">照片會自動上傳至 imgBB 雲端，所有旅伴都能看到</div>
 
       <!-- 直接上傳按鈕 -->
-      <div class="ibb-drop" onclick="document.getElementById('ibbFileInput').click()" id="ibb-upload-area">
-        <input type="file" id="ibbFileInput" accept="image/*" multiple onchange="handleFileUpload(event)" style="display:none">
+      <div class="ibb-drop" onclick="triggerPhotoPicker()" id="ibb-upload-area">
         <div style="font-size:28px;margin-bottom:6px">📷</div>
         <div style="font-size:13px;color:var(--stone);font-family:'Noto Serif JP',serif">點此選擇照片上傳</div>
         <div style="font-size:10px;color:var(--green-light);margin-top:3px">自動上傳至 imgBB 雲端，旅伴可見</div>
@@ -458,8 +457,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
           <input class="form-input" id="sf-img-url" placeholder="貼上圖片網址後按＋" style="flex:1;font-size:13px">
           <button onclick="addSchedImgByUrl()" style="background:var(--green);color:var(--cream);border:none;border-radius:5px;padding:0 14px;font-size:16px;cursor:pointer;font-weight:700">＋</button>
         </div>
-        <div onclick="document.getElementById('sf-img-file').click()" style="border:2px dashed var(--green-light);border-radius:6px;padding:10px;text-align:center;cursor:pointer;background:var(--green-mist)">
-          <input type="file" id="sf-img-file" accept="image/*" multiple style="display:none" onchange="handleSchedImgFile(event)">
+        <div onclick="triggerSchedImgPicker()" style="border:2px dashed var(--green-light);border-radius:6px;padding:10px;text-align:center;cursor:pointer;background:var(--green-mist)">
           <div style="font-size:11px;color:var(--stone);font-family:'Noto Serif JP',serif">📷 點此選擇多張照片上傳</div>
         </div>
         <div id="sf-img-upload-status" style="display:none;font-size:11px;color:var(--green-dark);font-family:'Noto Serif JP',serif;margin-top:6px;padding:6px 10px;background:var(--green-pale);border-radius:5px;border:var(--border)"></div>
@@ -483,8 +481,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
           <button onclick="previewCkImg()" style="background:var(--green);color:var(--cream);border:none;border-radius:5px;padding:0 12px;font-size:12px;cursor:pointer;white-space:nowrap;font-family:'Noto Serif JP',serif">預覽</button>
         </div>
         <div style="text-align:center;font-size:11px;color:var(--stone);font-family:'Noto Serif JP',serif;margin-bottom:8px">── 或直接上傳 ──</div>
-        <div onclick="document.getElementById('ck-img-file').click()" style="border:2px dashed var(--green-light);border-radius:6px;padding:14px;text-align:center;cursor:pointer;background:var(--green-mist)">
-          <input type="file" id="ck-img-file" accept="image/*" style="display:none" onchange="handleCkImgFile(event)">
+        <div onclick="triggerCkImgPicker()" style="border:2px dashed var(--green-light);border-radius:6px;padding:14px;text-align:center;cursor:pointer;background:var(--green-mist)">
           <div style="font-size:11px;color:var(--stone);font-family:'Noto Serif JP',serif">📷 點此選擇商品圖片</div>
         </div>
         <div id="ck-img-preview" style="margin-top:8px;display:none">
@@ -1060,6 +1057,13 @@ function addSchedImgByUrl(){
   renderSchedImgsList();
   showToast('已加入圖片 🌿');
 }
+function triggerSchedImgPicker(){
+  const input=document.createElement('input');
+  input.type='file';input.accept='image/*';input.multiple=true;
+  document.body.appendChild(input);
+  input.onchange=function(e){handleSchedImgFile(e);document.body.removeChild(input);};
+  input.click();
+}
 function handleSchedImgFile(e){
   const files=Array.from(e.target.files);
   if(!files.length)return;
@@ -1067,8 +1071,6 @@ function handleSchedImgFile(e){
     const previewUrl=URL.createObjectURL(file);
     newSchedImgFiles.push({file,previewUrl});
   });
-  // 清空 input，讓同一張照片可以重複選
-  e.target.value='';
   renderSchedImgsList();
   const s=document.getElementById('sf-img-upload-status');
   if(s){s.style.display='block';s.textContent='📷 已選 '+files.length+' 張，儲存時自動上傳 imgBB';}
@@ -1126,16 +1128,7 @@ async function saveSched(){
 function delSched(id){if(!confirm('確定刪除？'))return;schedules=schedules.filter(s=>s.id!==id);save();renderSchedule();renderMap();}
 
 
-function handleSchedImgFile(e){
-  const file=e.target.files[0];if(!file)return;
-  pendingSchedImgFile=file;
-  const url=URL.createObjectURL(file);
-  document.getElementById('sf-img-preview-img').src=url;
-  document.getElementById('sf-img-preview').style.display='block';
-  document.getElementById('sf-img-url').value='';
-  document.getElementById('sf-img-upload-status').style.display='block';
-  document.getElementById('sf-img-upload-status').textContent='📷 已選擇照片，儲存時自動上傳 imgBB';
-}
+
 function clearSchedImg(){
   pendingSchedImgFile=null;
   const preview=document.getElementById('sf-img-preview');
@@ -1297,6 +1290,13 @@ function previewCkImg(){
   document.getElementById('ck-img-preview').style.display='block';
 }
 let pendingCkImgFile=null; // 暫存選擇的檔案，按儲存時才寫入 IndexedDB
+function triggerCkImgPicker(){
+  const input=document.createElement('input');
+  input.type='file';input.accept='image/*';
+  document.body.appendChild(input);
+  input.onchange=function(e){handleCkImgFile(e);document.body.removeChild(input);};
+  input.click();
+}
 function handleCkImgFile(e){
   const file=e.target.files[0];if(!file)return;
   pendingCkImgFile=file;
@@ -1453,10 +1453,16 @@ async function uploadToIBB(file){
   return data.data.url; // 永久公開圖片 URL
 }
 
+function triggerPhotoPicker(){
+  const input=document.createElement('input');
+  input.type='file';input.accept='image/*';input.multiple=true;
+  document.body.appendChild(input);
+  input.onchange=function(e){handleFileUpload(e);document.body.removeChild(input);};
+  input.click();
+}
 async function handleFileUpload(e){
   const files=Array.from(e.target.files);
   if(!files.length)return;
-  e.target.value=''; // 清空讓同一張可重選
   const key=getIbbKey();
   const prog=document.getElementById('upload-progress');
   const statusEl=document.getElementById('upload-status');

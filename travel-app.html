@@ -390,6 +390,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
     <div id="connectedBanner" style="display:none" class="connected-banner">
       <div style="font-size:14px;font-weight:600;color:var(--green-dark);margin-bottom:4px;font-family:'Zen Kurenaido',serif">✅ 已連線！即時同步中</div>
       <div style="font-size:12px;color:var(--stone);font-family:'Noto Serif JP',serif;line-height:1.6;margin-bottom:10px">朋友只要輸入行程代碼就能加入</div>
+      <button onclick="forcePullFromFirebase()" style="width:100%;background:var(--green-dark);color:var(--cream);border:none;border-radius:6px;padding:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Noto Serif JP',serif;margin-bottom:10px">⬇️ 從 Firebase 重新載入所有資料</button>
       <div style="display:flex;gap:8px;align-items:center">
         <div style="flex:1;background:var(--white);border-radius:5px;padding:8px 12px;font-family:monospace;font-size:14px;border:var(--border);color:var(--ink)" id="shareCodeDisplay"></div>
         <button onclick="copyShareCode()" style="background:var(--green);color:var(--cream);border:none;border-radius:5px;padding:8px 12px;font-size:12px;cursor:pointer;font-family:'Noto Serif JP',serif">複製</button>
@@ -559,7 +560,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
 <!-- Firebase SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
-import { getFirestore, doc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 let db=null,fbApp=null,tripCode='',unsubs=[];
 
 // 主人連接
@@ -647,6 +648,30 @@ function startListen(){
   });
   unsubs.push(unsub);
 }
+window.forcePullFromFirebase=async function(){
+  if(!db){showToast('尚未連線 Firebase');return;}
+  showToast('🔄 正在從 Firebase 載入資料...');
+  try{
+    const snap=await getDoc(doc(db,'trips',tripCode));
+    if(!snap.exists()){showToast('❌ Firebase 找不到此行程');return;}
+    const d=snap.data();
+    if(d.schedules){schedules=d.schedules;localStorage.setItem('schedules',JSON.stringify(schedules));}
+    if(d.members){members=d.members;localStorage.setItem('members',JSON.stringify(members));}
+    if(d.expenses){expenses=d.expenses;localStorage.setItem('expenses',JSON.stringify(expenses));}
+    if(d.photos){
+      const cloudPhotos=d.photos.filter(p=>p.url&&!p.url.startsWith('idb:'));
+      photos=cloudPhotos;
+      localStorage.setItem('photos',JSON.stringify(photos));
+    }
+    if(d.personLists){personLists=d.personLists;localStorage.setItem('personLists',JSON.stringify(personLists));}
+    renderAll();renderChecklist();
+    showToast('✅ 資料已還原！共 '+schedules.length+' 筆行程');
+  }catch(e){
+    showToast('❌ 載入失敗：'+e.message);
+    console.error(e);
+  }
+};
+
 window.syncToFirebase=async function(){
   if(!db)return;
   try{

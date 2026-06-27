@@ -984,9 +984,15 @@ function openSchedModal(){
   document.getElementById('sf-time').value='10:00';
   document.getElementById('sf-type').value='sight';
   ['sf-name','sf-place','sf-note','sf-img-url'].forEach(id=>document.getElementById(id).value='');
-  clearSchedImg();
+  newSchedImgFiles.forEach(f=>{if(f.previewUrl)URL.revokeObjectURL(f.previewUrl);});
+  newSchedImgFiles=[];
+  existingSchedImgs=[];
   document.getElementById('schedModal').style.display='flex';
-  setTimeout(renderSchedImgsList,50);
+  setTimeout(()=>{
+    renderSchedImgsList();
+    const status=document.getElementById('sf-img-upload-status');
+    if(status)status.style.display='none';
+  },50);
 }
 function editSched(id){
   const s=schedules.find(x=>x.id===id);if(!s)return;
@@ -998,12 +1004,19 @@ function editSched(id){
   document.getElementById('sf-place').value=s.place||'';
   document.getElementById('sf-note').value=s.note||'';
   document.getElementById('sf-img-url').value='';
-  clearSchedImg();
-  // 載入既有圖片到 existingSchedImgs（不是 pendingSchedImgs）
+  // 先清空舊的、再設新資料
+  newSchedImgFiles.forEach(f=>{if(f.previewUrl)URL.revokeObjectURL(f.previewUrl);});
+  newSchedImgFiles=[];
   const refs=s.imgs&&s.imgs.length?s.imgs:(s.img?[s.img]:[]);
-  existingSchedImgs=[...refs]; // 直接複製，不混入新增清單
+  existingSchedImgs=[...refs];
+  // 開啟 modal
   document.getElementById('schedModal').style.display='flex';
-  setTimeout(renderSchedImgsList,50);
+  // modal 出現後再 render（確保元素存在）
+  setTimeout(()=>{
+    renderSchedImgsList();
+    const status=document.getElementById('sf-img-upload-status');
+    if(status)status.style.display='none';
+  },50);
 }
 // 行程圖片：分兩個清單
 let existingSchedImgs=[]; // 已有的圖片網址（編輯時帶入）
@@ -1049,13 +1062,16 @@ function addSchedImgByUrl(){
 }
 function handleSchedImgFile(e){
   const files=Array.from(e.target.files);
+  if(!files.length)return;
   files.forEach(file=>{
     const previewUrl=URL.createObjectURL(file);
     newSchedImgFiles.push({file,previewUrl});
   });
+  // 清空 input，讓同一張照片可以重複選
+  e.target.value='';
   renderSchedImgsList();
   const s=document.getElementById('sf-img-upload-status');
-  if(s){s.style.display='block';s.textContent=`📷 已選 ${files.length} 張，儲存時自動上傳 imgBB`;}
+  if(s){s.style.display='block';s.textContent='📷 已選 '+files.length+' 張，儲存時自動上傳 imgBB';}
 }
 function clearSchedImg(){
   newSchedImgFiles.forEach(f=>{if(f.previewUrl)URL.revokeObjectURL(f.previewUrl);});
@@ -1440,6 +1456,7 @@ async function uploadToIBB(file){
 async function handleFileUpload(e){
   const files=Array.from(e.target.files);
   if(!files.length)return;
+  e.target.value=''; // 清空讓同一張可重選
   const key=getIbbKey();
   const prog=document.getElementById('upload-progress');
   const statusEl=document.getElementById('upload-status');

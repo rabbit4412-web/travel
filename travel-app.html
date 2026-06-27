@@ -322,19 +322,9 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
   <div class="content" id="pane-photos" style="display:none">
     <div class="section-header"><div><span class="section-jp">旅行回憶</span><div class="section-title">旅遊相簿</div></div></div>
 
-    <!-- imgBB API Key 設定 -->
-    <div id="ibb-key-banner" style="background:rgba(233,196,106,.15);border:1.5px solid var(--gold);border-radius:10px;padding:14px;margin-bottom:14px">
-      <div style="font-size:13px;font-weight:600;color:#7A5C00;margin-bottom:6px;font-family:'Zen Kurenaido',serif">🔑 imgBB API 設定</div>
-      <div style="font-size:11px;color:#7A5C00;line-height:1.8;margin-bottom:8px;font-family:'Noto Serif JP',serif">
-        設定後，照片自動上傳至 imgBB 雲端，旅伴和電腦都能看到<br>
-        ① 前往 <a href="https://api.imgbb.com" target="_blank" style="color:var(--green-dark);font-weight:600">api.imgbb.com</a> 免費取得 API Key<br>
-        ② 貼上後按儲存，之後自動上傳
-      </div>
-      <div style="display:flex;gap:8px">
-        <input class="form-input" id="ibb-api-key-input" placeholder="貼上 imgBB API Key..." style="flex:1;padding:9px 12px;font-size:13px">
-        <button onclick="saveIbbKey()" style="background:var(--green-dark);color:var(--cream);border:none;border-radius:6px;padding:9px 14px;font-size:12px;cursor:pointer;white-space:nowrap;font-family:'Noto Serif JP',serif">儲存</button>
-      </div>
-      <div id="ibb-key-status" style="font-size:11px;margin-top:6px;font-family:'Noto Serif JP',serif"></div>
+    <!-- imgBB 狀態 -->
+    <div id="ibb-key-banner" style="border-radius:10px;padding:12px 14px;margin-bottom:14px;border:1.5px solid var(--green-light);background:var(--green-pale)">
+      <div id="ibb-key-status" style="font-size:12px;font-family:'Noto Serif JP',serif;color:var(--green-dark)">✅ imgBB 已設定，照片自動上傳至雲端，旅伴都能看到</div>
     </div>
 
     <div class="ibb-section">
@@ -1269,7 +1259,7 @@ function addPhotoByUrl(){const url=document.getElementById('ibbUrlInput').value.
 //  ★ imgBB API Key（直接填在這裡）
 //  取得方式：登入 imgbb.com → API → 複製 key
 // ══════════════════════════════════════════
-const IMGBB_API_KEY = 'YOUR_IMGBB_API_KEY_HERE'; // ← 把這裡換成你的 Key
+const IMGBB_API_KEY = '37aa0f571e7acc757470fe991d8179af';
 
 function getIbbKey(){
   // 優先用寫死的 Key，其次用 localStorage（給朋友版用）
@@ -1311,7 +1301,6 @@ async function uploadToIBB(file){
   const form=new FormData();
   form.append('image',file);
   form.append('key',key);
-  form.append('album','C1hvkS'); // 旅行相簿
   const res=await fetch('https://api.imgbb.com/1/upload',{method:'POST',body:form});
   if(!res.ok) throw new Error('imgBB 回應錯誤：'+res.status);
   const data=await res.json();

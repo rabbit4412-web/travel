@@ -316,6 +316,11 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
       <div><span class="section-jp">觀光導覽</span><div class="section-title">景點介紹</div></div>
       <button class="btn-add" onclick="openSpotModal()">＋ 新增景點</button>
     </div>
+    <!-- 一鍵 AI 生成 -->
+    <div id="ai-gen-bar" style="display:none;background:var(--green-pale);border-radius:8px;padding:10px 14px;margin-bottom:14px;border:var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:12px;color:var(--green-dark);font-family:'Noto Serif JP',serif">有景點尚未有介紹資訊</div>
+      <button id="ai-gen-all-btn" onclick="aiGenerateAllSpots()" style="background:var(--green-dark);color:var(--cream);border:none;border-radius:6px;padding:7px 12px;font-size:12px;cursor:pointer;font-family:'Noto Serif JP',serif;white-space:nowrap">🤖 一鍵生成所有景點介紹</button>
+    </div>
     <div id="spotList"></div>
   </div>
 
@@ -971,7 +976,6 @@ function save(){
 
 // 隨時可呼叫，確認 personLists 有正確讀取
 function syncSpotsFromSchedules(){
-  // 掃描所有類型為景點的行程，若景點頁沒有對應卡片就自動建立
   let changed=false;
   schedules.forEach(s=>{
     if(s.type!=='sight') return;
@@ -995,8 +999,80 @@ function syncSpotsFromSchedules(){
   });
   if(changed){
     save();
-    showToast('已同步 '+schedules.filter(s=>s.type==='sight').length+' 個景點到景點介紹頁 🌸');
+    showToast('已同步景點到景點介紹頁 🌸');
   }
+}
+
+// AI 自動生成景點介紹
+async function aiGenerateSpotInfo(spotId){
+  const spot=spots.find(s=>s.id===spotId);
+  if(!spot){showToast('找不到景點');return;}
+  const btn=document.getElementById('ai-gen-btn-'+spotId);
+  if(btn){btn.textContent='🤖 生成中...';btn.disabled=true;}
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages:[{role:'user',content:`請幫我生成「${spot.name}」這個日本景點（位於${spot.area||'日本'}）的旅遊資訊。
+請只用 JSON 格式回答，不要有其他文字：
+{
+  "camera": "一個最適合的 emoji 圖示",
+  "tag": "景點分類（如：神社/城堡/自然/美食/購物/海景等）",
+  "desc": "2-3句景點介紹（繁體中文）",
+  "info": [
+    {"icon": "🕐", "text": "開放時間"},
+    {"icon": "💴", "text": "門票費用"},
+    {"icon": "🚃", "text": "交通方式"},
+    {"icon": "⏱", "text": "建議停留時間"}
+  ],
+  "tips": [
+    "拍攝建議第1條",
+    "拍攝建議第2條",
+    "拍攝建議第3條"
+  ]
+}`}]
+      })
+    });
+    const data=await res.json();
+    const text=data.content?.[0]?.text||'';
+    const match=text.match(/\{[\s\S]*\}/);
+    if(!match) throw new Error('解析失敗');
+    const result=JSON.parse(match[0]);
+    const idx=spots.findIndex(s=>s.id===spotId);
+    if(idx>=0){
+      spots[idx]={
+        ...spots[idx],
+        camera:result.camera||spots[idx].camera,
+        tag:result.tag||spots[idx].tag,
+        desc:result.desc||spots[idx].desc,
+        info:result.info||spots[idx].info,
+        tips:result.tips||spots[idx].tips
+      };
+      save();renderSpots();
+      showToast('✅「'+spot.name+'」資訊已生成！');
+    }
+  }catch(e){
+    showToast('❌ 生成失敗：'+e.message);
+    if(btn){btn.textContent='🤖 AI 生成介紹';btn.disabled=false;}
+  }
+}
+
+// 一鍵生成所有空白景點
+async function aiGenerateAllSpots(){
+  const emptySpots=spots.filter(s=>!s.desc&&!s.info?.length);
+  if(!emptySpots.length){showToast('所有景點都有資料了！');return;}
+  const btn=document.getElementById('ai-gen-all-btn');
+  if(btn){btn.textContent='🤖 生成中 (0/'+emptySpots.length+')';btn.disabled=true;}
+  for(let i=0;i<emptySpots.length;i++){
+    if(btn) btn.textContent='🤖 生成中 ('+(i+1)+'/'+emptySpots.length+')';
+    await aiGenerateSpotInfo(emptySpots[i].id);
+    await new Promise(r=>setTimeout(r,800)); // 避免太快
+  }
+  if(btn){btn.textContent='🤖 一鍵生成所有景點介紹';btn.disabled=false;}
+  showToast('✅ 全部景點資訊已生成！');
 }
 
 function loadPersonLists(){
@@ -1582,8 +1658,13 @@ function renderSpots(){
         <div class="spot-desc">${s.desc||''}</div>
         ${(s.info&&s.info.length)?`<div class="spot-divider"></div><div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px">${s.info.map(i=>`<div class="spot-info-item"><span>${i.icon}</span><span>${i.text}</span></div>`).join('')}</div>`:''}
         ${(s.tips&&s.tips.length)?`<div class="spot-divider"></div><div class="spot-tips-title">📷 拍攝建議</div>${s.tips.map(t=>`<div class="spot-tip">${t}</div>`).join('')}`:''}
+        ${(!s.desc&&!s.info?.length)?`<div style="padding:8px 0"><button id="ai-gen-btn-${s.id}" onclick="event.stopPropagation();aiGenerateSpotInfo('${s.id}')" style="width:100%;background:var(--green-pale);color:var(--green-dark);border:1px dashed var(--green-light);border-radius:6px;padding:8px;font-size:12px;cursor:pointer;font-family:'Noto Serif JP',serif">🤖 AI 自動生成景點介紹</button></div>`:''}
       </div>
     </div>`).join('');
+  // 顯示/隱藏一鍵生成欄
+  const emptyCount=spots.filter(s=>!s.desc&&!s.info?.length).length;
+  const bar=document.getElementById('ai-gen-bar');
+  if(bar) bar.style.display=emptyCount>0?'flex':'none';
 }
 
 let editSpotId=null;

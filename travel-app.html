@@ -607,7 +607,7 @@ const AUTO_CONFIG = {
   apiKey: 'AIzaSyDlNDBg0wXAwVy4hha2qcQpRyGeVNUE78c',
   projectId: 'travel-1009',
   appId: '1:931635663706:web:6852f080738b54110d1963',
-  tripCode: 'kumamoto-mo'   // ← 朋友版只改這行
+  tripCode: 'kumamoto-2025'   // ← 朋友版只改這行
 };
 
 window.connectFirebase=async function(){
@@ -1021,56 +1021,65 @@ function save(){
 // 隨時可呼叫，確認 personLists 有正確讀取
 function syncSpotsFromSchedules(){
   let changed=false;
-  schedules.forEach(s=>{
-    if(s.type!=='sight') return;
-    const existing=spots.find(sp=>sp.schedId===s.id||sp.name===s.name);
-    if(!existing){
-      // 先從 DEFAULT_SPOTS 找有沒有對應的完整資料
-      const defaultData=DEFAULT_SPOTS.find(ds=>ds.name===s.name||ds.name.includes(s.name)||s.name.includes(ds.name));
-      if(defaultData){
-        // 有預設資料，直接用完整資料
-        spots.push({...defaultData,
-          id:'sp'+Date.now()+Math.random().toString(36).slice(2,4),
-          schedId:s.id,
-          imgs:s.imgs||[]
-        });
-      } else {
-        // 沒有預設資料，建立空白卡片待補充
-        spots.push({
-          id:'sp'+Date.now()+Math.random().toString(36).slice(2,4),
-          schedId:s.id,
-          name:s.name,
-          area:s.place||'',
-          camera:'🌸',
-          tag:'景點',
-          tagColor:'var(--green-dark)',
-          desc:s.note||'',
-          info:[],
-          tips:[],
-          imgs:s.imgs||[]
-        });
+
+  // 步驟1：先清除重複（同名景點只保留一個，優先保留有 schedId 的）
+  const seen={};
+  const deduped=[];
+  spots.forEach(sp=>{
+    const key=sp.name.trim();
+    if(!seen[key]){
+      seen[key]=true;
+      deduped.push(sp);
+    } else {
+      // 已有同名，如果這個有 schedId 而先前的沒有，替換
+      const prev=deduped.find(x=>x.name.trim()===key);
+      if(sp.schedId&&prev&&!prev.schedId){
+        Object.assign(prev,{schedId:sp.schedId});
       }
       changed=true;
-    } else if(existing&&(!existing.desc||!existing.info?.length)){
-      // 已有卡片但資料空白，嘗試從 DEFAULT_SPOTS 補資料
-      const defaultData=DEFAULT_SPOTS.find(ds=>ds.name===existing.name||ds.name.includes(existing.name)||existing.name.includes(ds.name));
-      if(defaultData){
-        const idx=spots.indexOf(existing);
-        spots[idx]={...spots[idx],
-          camera:defaultData.camera||spots[idx].camera,
-          tag:defaultData.tag||spots[idx].tag,
-          desc:defaultData.desc||spots[idx].desc,
-          info:defaultData.info.length?defaultData.info:spots[idx].info,
-          tips:defaultData.tips.length?defaultData.tips:spots[idx].tips
-        };
-        changed=true;
+    }
+  });
+  if(deduped.length!==spots.length){ spots=deduped; changed=true; }
+
+  // 步驟2：掃描行程景點，建立缺少的卡片
+  schedules.forEach(s=>{
+    if(s.type!=='sight') return;
+    // 用 schedId 或名稱比對（精確比對）
+    const existing=spots.find(sp=>sp.schedId===s.id||(sp.name.trim()===s.name.trim()&&!sp.schedId));
+    if(!existing){
+      const defaultData=DEFAULT_SPOTS.find(ds=>ds.name===s.name||s.name.includes(ds.name)||ds.name.includes(s.name));
+      spots.push(defaultData?{...defaultData,
+        id:'sp'+Date.now()+Math.random().toString(36).slice(2,5),
+        schedId:s.id,imgs:s.imgs||[]
+      }:{
+        id:'sp'+Date.now()+Math.random().toString(36).slice(2,5),
+        schedId:s.id,name:s.name,area:s.place||'',
+        camera:'🌸',tag:'景點',tagColor:'var(--green-dark)',
+        desc:s.note||'',info:[],tips:[],imgs:s.imgs||[]
+      });
+      changed=true;
+    } else {
+      // 補上 schedId（如果還沒有）
+      if(!existing.schedId){ existing.schedId=s.id; changed=true; }
+      // 補充空白卡片的資料
+      if(!existing.desc||!existing.info?.length){
+        const dd=DEFAULT_SPOTS.find(ds=>ds.name===existing.name||existing.name.includes(ds.name)||ds.name.includes(existing.name));
+        if(dd){
+          const idx=spots.indexOf(existing);
+          spots[idx]={...spots[idx],
+            camera:dd.camera||spots[idx].camera,
+            tag:dd.tag||spots[idx].tag,
+            desc:dd.desc||spots[idx].desc,
+            info:dd.info?.length?dd.info:spots[idx].info,
+            tips:dd.tips?.length?dd.tips:spots[idx].tips
+          };
+          changed=true;
+        }
       }
     }
   });
-  if(changed){
-    save();renderSpots();
-    showToast('✅ 景點資料已同步更新！');
-  }
+
+  if(changed){ save(); }
 }
 
 // AI 自動生成景點介紹
@@ -1729,7 +1738,10 @@ function renderSpots(){
       ondragstart="spotDragStart(event,'${s.id}')"
       ondragover="spotDragOver(event)"
       ondrop="spotDrop(event,'${s.id}')"
-      ondragend="spotDragEnd(event)">
+      ondragend="spotDragEnd(event)"
+      ontouchstart="spotTouchStart(event,'${s.id}')"
+      ontouchmove="spotTouchMove(event)"
+      ontouchend="spotTouchEnd(event)">
       <div class="spot-header" onclick="toggleSpot('${s.id}')">
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:6px">
@@ -1762,11 +1774,21 @@ function renderSpots(){
   }).join('');
 }
 
-let dragSpotId=null;
-function spotDragStart(e,id){dragSpotId=id;e.currentTarget.style.opacity='0.4';e.dataTransfer.effectAllowed='move';}
-function spotDragOver(e){e.preventDefault();e.currentTarget.style.outline='2px solid var(--green)';}
+// 拖曳排序（同時支援滑鼠和觸控）
+let dragSpotId=null,touchDragEl=null,touchStartY=0;
+
+function spotDragStart(e,id){
+  dragSpotId=id;
+  e.currentTarget.style.opacity='0.4';
+  if(e.dataTransfer) e.dataTransfer.effectAllowed='move';
+}
+function spotDragOver(e){
+  e.preventDefault();
+  e.currentTarget.style.outline='2px solid var(--green)';
+}
 function spotDrop(e,targetId){
-  e.preventDefault();e.currentTarget.style.outline='';
+  e.preventDefault();
+  document.querySelectorAll('.spot-card').forEach(c=>c.style.outline='');
   if(!dragSpotId||dragSpotId===targetId)return;
   const fi=spots.findIndex(s=>s.id===dragSpotId);
   const ti=spots.findIndex(s=>s.id===targetId);
@@ -1775,7 +1797,56 @@ function spotDrop(e,targetId){
   spots.splice(ti,0,moved);
   save();renderSpots();
 }
-function spotDragEnd(e){e.currentTarget.style.opacity='1';e.currentTarget.style.outline='';dragSpotId=null;}
+function spotDragEnd(e){
+  document.querySelectorAll('.spot-card').forEach(c=>{c.style.opacity='1';c.style.outline='';});
+  dragSpotId=null;
+}
+
+// Touch 支援（手機/平板）
+function spotTouchStart(e,id){
+  dragSpotId=id;
+  touchStartY=e.touches[0].clientY;
+  touchDragEl=e.currentTarget;
+  touchDragEl.style.opacity='0.5';
+  touchDragEl.style.boxShadow='0 8px 24px rgba(0,0,0,.18)';
+}
+function spotTouchMove(e){
+  e.preventDefault();
+  if(!touchDragEl)return;
+  const y=e.touches[0].clientY;
+  touchDragEl.style.transform=`translateY(${y-touchStartY}px)`;
+  // 找目標
+  document.querySelectorAll('.spot-card').forEach(c=>{
+    if(c===touchDragEl)return;
+    const rect=c.getBoundingClientRect();
+    if(y>rect.top&&y<rect.bottom) c.style.outline='2px solid var(--green)';
+    else c.style.outline='';
+  });
+}
+function spotTouchEnd(e){
+  if(!touchDragEl||!dragSpotId)return;
+  const y=e.changedTouches[0].clientY;
+  let targetId=null;
+  document.querySelectorAll('.spot-card').forEach(c=>{
+    if(c===touchDragEl)return;
+    const rect=c.getBoundingClientRect();
+    if(y>rect.top&&y<rect.bottom) targetId=c.id.replace('spot-','');
+    c.style.outline='';
+  });
+  touchDragEl.style.opacity='1';
+  touchDragEl.style.boxShadow='';
+  touchDragEl.style.transform='';
+  if(targetId&&targetId!==dragSpotId){
+    const fi=spots.findIndex(s=>s.id===dragSpotId);
+    const ti=spots.findIndex(s=>s.id===targetId);
+    if(fi>=0&&ti>=0){
+      const moved=spots.splice(fi,1)[0];
+      spots.splice(ti,0,moved);
+      save();renderSpots();showToast('順序已調整 🌿');
+    }
+  }
+  touchDragEl=null;dragSpotId=null;
+}
 
 let editSpotId=null;
 

@@ -316,11 +316,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
       <div><span class="section-jp">觀光導覽</span><div class="section-title">景點介紹</div></div>
       <button class="btn-add" onclick="openSpotModal()">＋ 新增景點</button>
     </div>
-    <!-- 一鍵 AI 生成 -->
-    <div id="ai-gen-bar" style="display:none;background:var(--green-pale);border-radius:8px;padding:10px 14px;margin-bottom:14px;border:var(--border);display:flex;align-items:center;justify-content:space-between">
-      <div style="font-size:12px;color:var(--green-dark);font-family:'Noto Serif JP',serif">有景點尚未有介紹資訊</div>
-      <button id="ai-gen-all-btn" onclick="aiGenerateAllSpots()" style="background:var(--green-dark);color:var(--cream);border:none;border-radius:6px;padding:7px 12px;font-size:12px;cursor:pointer;font-family:'Noto Serif JP',serif;white-space:nowrap">🤖 一鍵生成所有景點介紹</button>
-    </div>
+
     <div id="spotList"></div>
   </div>
 
@@ -907,39 +903,87 @@ const DEFAULT_SCHEDULES=[
 const DEFAULT_SPOTS=[
   {
     id:'sp1',name:'熊本城',area:'熊本市中央區',tag:'城堡',tagColor:'var(--green-dark)',camera:'🏯',
-    desc:'日本三大名城之一，黑色外牆莊嚴壯觀。2016年熊本地震後大規模修復，現在已部分重新開放，見證了歷史的韌性。城內可見熊本熊的各種身影。',
-    info:[{icon:'🕐',text:'9:00-17:00'},{icon:'💴',text:'800日幣'},{icon:'🚃',text:'市電「熊本城・市役所前」5分'},{icon:'⏱',text:'建議1.5-2小時'}],
-    tips:['加藤神社前廣場是拍攝熊本城全景的最佳位置','城牆石積的特寫搭配遠景很有質感','黃昏時分城牆的影子延伸效果極佳','和服租借後在城下拍攝更有氛圍']
+    desc:'日本三大名城之一，黑色外牆莊嚴壯觀。2016年熊本地震後大規模修復，現已重新開放。城內可見熊本熊的各種身影，感受歷史的韌性與力量。',
+    info:[{icon:'🕐',text:'9:00-17:00（最後入場16:30）'},{icon:'💴',text:'大人800日幣'},{icon:'🚃',text:'市電「熊本城・市役所前」步行5分'},{icon:'⏱',text:'建議1.5-2小時'}],
+    tips:['加藤神社前廣場是拍攝熊本城全景最佳位置，早上光線最好','城牆石積特寫搭配遠景天守閣，層次感十足','黃昏時分城牆影子延伸，戲劇感極強','二之丸公園的銀杏大道秋季金黃，絕美']
   },
   {
-    id:'sp2',name:'阿蘇火山',area:'熊本縣阿蘇市',tag:'自然',tagColor:'#8B4A2A',camera:'🌋',
-    desc:'世界最大規模的火山口，周長約120公里。活火山的噴煙、湛藍的火口湖、無邊際的草千里，是九州最震撼的自然奇景，也是絕佳的攝影聖地。',
-    info:[{icon:'🕐',text:'8:30-17:00（視火山活動）'},{icon:'💴',text:'入場免費，纜車另計'},{icon:'🚃',text:'JR阿蘇站→巴士30分'},{icon:'⏱',text:'建議3-4小時'}],
-    tips:['早晨雲海出現機率高，建議8點前抵達','火口展望台的噴煙逆光拍攝效果震撼','草千里的馬匹前景構圖很有日系感','360度環形拍攝，每個角度都不同']
+    id:'sp2',name:'櫻之馬場 城彩苑',area:'熊本市中央區二之丸',tag:'文化',tagColor:'var(--green-dark)',camera:'🌸',
+    desc:'緊鄰熊本城的傳統街道風格商業設施，集合了熊本特產、餐廳與歷史體驗館。可以購買辛子蓮根、馬肉等熊本名物，也能在此體驗和服變身。',
+    info:[{icon:'🕐',text:'9:00-17:30'},{icon:'💴',text:'免費入場（各店消費另計）'},{icon:'🚃',text:'市電「熊本城・市役所前」步行7分'},{icon:'⏱',text:'建議1-1.5小時'}],
+    tips:['江戶時代風格街道是拍攝和服的絕佳背景','各店舖門口的招牌和燈籠很有日系風情','熊本熊官方周邊店必訪，限定商品只有這裡有','黃昏時分街道燈籠點亮，氛圍最濃厚']
   },
   {
-    id:'sp3',name:'太宰府天滿宮',area:'福岡縣太宰府市',tag:'神社',tagColor:'var(--red)',camera:'⛩',
-    desc:'日本全國約12000座天滿宮的總本社，供奉學問之神菅原道真。參道上的梅ヶ枝餅是必吃名物，境內的飛梅傳說更是千年浪漫。',
-    info:[{icon:'🕐',text:'6:00-19:00'},{icon:'💴',text:'免費參觀'},{icon:'🚃',text:'西鐵太宰府站徒步5分'},{icon:'⏱',text:'建議1.5-2小時'}],
-    tips:['本殿前的大楠樹（樹齡千年）是最美的自然背景','連廊的長走廊構圖感很強，利用透視感','參道上邊走邊吃梅ヶ枝餅的街拍很自然','紅色太鼓橋倒影在水面的效果完美']
+    id:'sp3',name:'上下通商店街',area:'熊本市中央區',tag:'購物',tagColor:'var(--red)',camera:'🛍',
+    desc:'熊本市最繁華的商店街，上通和下通合稱為熊本的購物天堂。從藥妝店、服飾到在地美食應有盡有，是體驗熊本市民日常生活的最佳場所。',
+    info:[{icon:'🕐',text:'各店約10:00-20:00'},{icon:'💴',text:'免費逛街'},{icon:'🚃',text:'市電「通町筋」即到'},{icon:'⏱',text:'建議1.5-2小時'}],
+    tips:['拱廊屋頂讓雨天也能舒適逛街','街道盡頭的熊本城遠景是意外的好構圖','藥妝店裡的熊本熊聯名商品值得特寫','傍晚人潮最多，街拍生動感最強']
   },
   {
-    id:'sp4',name:'糸島・夫婦岩',area:'福岡縣糸島市',tag:'海景',tagColor:'#2A6B8A',camera:'🌊',
-    desc:'糸島最具代表性的地標，兩塊海中巨岩以注連繩相連，象徵夫妻緣分。海邊的咖啡廳和彩虹鞦韆更是IG打卡熱點，堪稱九州最美海岸線。',
-    info:[{icon:'🕐',text:'全天開放'},{icon:'💴',text:'免費'},{icon:'🚃',text:'JR筑前前原站→巴士/計程車'},{icon:'⏱',text:'建議3-4小時'}],
-    tips:['夕陽時分拍夫婦岩是最美的時刻','海邊咖啡廳的彩虹鞦韆需排隊，建議平日前往','海浪慢快門拍出絲滑感（1/4秒以上）','淺藍色海水和白色細沙搭配人物構圖很清新']
+    id:'sp4',name:'阿蘇火山口',area:'熊本縣阿蘇市阿蘇山上',tag:'自然',tagColor:'#8B4A2A',camera:'🌋',
+    desc:'世界最大規模的破火山口，周長約120公里。活火山的噴煙、湛藍火口湖與無邊際草千里，是九州最震撼的自然奇景。需注意火山活動警戒等級。',
+    info:[{icon:'🕐',text:'8:30-17:00（視火山活動調整）'},{icon:'💴',text:'入場免費，纜車約1,200日幣'},{icon:'🚃',text:'JR阿蘇站→産交巴士30分'},{icon:'⏱',text:'建議3-4小時'}],
+    tips:['早晨雲海出現機率高，建議8點前抵達火口','噴煙逆光拍攝戲劇性十足，注意風向','草千里廣角橫拍，前景放馬匹或人物','360度環形構圖，每個角度都有不同風情']
   },
   {
-    id:'sp5',name:'中洲屋台',area:'福岡市博多區',tag:'美食',tagColor:'var(--gold)',camera:'🍜',
-    desc:'那珂川沿岸的屋台文化是博多最獨特的飲食體驗。豚骨拉麵、明太子、烤串在小小的屋台內飄香，坐在吧台與老闆天南地北聊天，才是真正的博多夜晚。',
-    info:[{icon:'🕐',text:'18:00-深夜'},{icon:'💴',text:'拉麵約900-1200日幣'},{icon:'🚃',text:'地鐵中洲川端站徒步5分'},{icon:'⏱',text:'建議1.5-2小時'}],
-    tips:['屋台外觀的暖黃燈光和夜景構成絕美夜拍','人物坐在屋台前的背影+霓虹倒影是定番','熱騰騰拉麵的蒸氣逆光拍攝最有食欲','廣角鏡頭拍整排屋台的全景最壯觀']
+    id:'sp5',name:'草千里ヶ浜',area:'熊本縣阿蘇市黑川',tag:'自然',tagColor:'var(--green)',camera:'🌿',
+    desc:'阿蘇中岳旁廣達78公頃的翠綠草原，中央有兩個火山湖。晴天時一望無際的綠色草原搭配藍天，加上悠閒吃草的馬匹，是九州最夢幻的自然風景之一。',
+    info:[{icon:'🕐',text:'全天開放'},{icon:'💴',text:'免費'},{icon:'🚃',text:'阿蘇火口展望台附近，步行可達'},{icon:'⏱',text:'建議1-1.5小時'}],
+    tips:['廣角鏡頭橫拍草原全景，前景放馬匹效果最好','湖面倒影拍攝時選擇無風時刻','人物站在草原中央仰拍天空，強調遼闊感','黃金時刻草原變為金黃色，光線最夢幻']
   },
   {
-    id:'sp6',name:'熊本屋台村',area:'熊本市中央區',tag:'美食',tagColor:'var(--gold)',camera:'🏮',
-    desc:'熊本版的屋台美食聚落，集合了馬刺、辛子蓮根、太平燕等熊本特色料理。比博多更輕鬆的氛圍，是旅程最後一晚最理想的慶祝場所。',
-    info:[{icon:'🕐',text:'17:00-深夜'},{icon:'💴',text:'視消費'},{icon:'🚃',text:'熊本站電車10分，花畑町'},{icon:'⏱',text:'建議2小時'}],
-    tips:['木造街區的暖光燈籠是最有日本氛圍的背景','和旅伴乾杯的瞬間捕捉笑容最自然','馬刺（馬肉刺身）盛盤精緻，值得特寫','夜晚燈光不足，可提高ISO或開啟夜拍模式']
+    id:'sp6',name:'阿蘇男孩號',area:'阿蘇站→熊本站',tag:'交通',tagColor:'var(--stone)',camera:'🚂',
+    desc:'JR九州的觀光列車，以可愛的黑色拉布拉多犬「阿蘇男孩」為主題。車廂內設有圖書角和觀景區，沿途欣賞阿蘇山麓到熊本的美麗風景。',
+    info:[{icon:'🕐',text:'特定日期行駛，需事先確認'},{icon:'💴',text:'JR Pass 可乘坐（需指定席預約）'},{icon:'🚃',text:'阿蘇站出發，終點熊本站'},{icon:'⏱',text:'約1小時15分'}],
+    tips:['車廂內的木質裝潢和書架很有質感，適合拍旅行感','窗外阿蘇山麓風景從車窗拍出流動感','列車進站瞬間廣角拍攝最有氣勢','與吉祥物阿蘇男孩合影是必做的事']
+  },
+  {
+    id:'sp7',name:'櫛田神社',area:'福岡市博多區上川端町',tag:'神社',tagColor:'var(--red)',camera:'⛩',
+    desc:'博多的總鎮守神社，供奉博多祇園山笠的發源地。境內的飛梅和大楠樹令人印象深刻，也是博多最重要的信仰中心。',
+    info:[{icon:'🕐',text:'全天開放'},{icon:'💴',text:'免費參觀'},{icon:'🚃',text:'地鐵中洲川端站步行5分'},{icon:'⏱',text:'建議30-60分鐘'}],
+    tips:['本殿前的大楠樹（樹齡千年以上）是最佳拍攝主角','山笠展示場的巨大飾山笠值得特寫','鳥居框景構圖，搭配神社燈籠排列感','清晨人少，光線柔和，最適合安靜拍攝']
+  },
+  {
+    id:'sp8',name:'夫婦岩（二見浦）',area:'福岡縣糸島市志摩桜井',tag:'海景',tagColor:'#2A6B8A',camera:'🌊',
+    desc:'糸島最具代表性的地標，兩塊海中巨岩以注連繩相連，象徵夫妻緣分。海邊的咖啡廳和彩虹鞦韆是IG打卡熱點，堪稱九州最美海岸線。',
+    info:[{icon:'🕐',text:'全天開放'},{icon:'💴',text:'免費'},{icon:'🚃',text:'JR筑前前原站→巴士或計程車約20分'},{icon:'⏱',text:'建議2-3小時'}],
+    tips:['夕陽沉入兩岩之間，是全年最美的拍攝時刻（約6-7月）','海邊咖啡廳的彩虹鞦韆需排隊，建議平日前往','海浪用慢快門（1/4秒）拍出絲滑感','淺藍色海水和白色細沙搭配人物，清新感十足']
+  },
+  {
+    id:'sp9',name:'海邊咖啡廳',area:'福岡縣糸島市',tag:'美食',tagColor:'var(--gold)',camera:'☕',
+    desc:'糸島海岸沿線分布著許多風格獨特的咖啡廳，以絕美海景和精緻甜點著稱。彩虹鞦韆、巨型貝殼裝置藝術是最受歡迎的打卡景點。',
+    info:[{icon:'🕐',text:'約11:00-18:00（各店不同）'},{icon:'💴',text:'飲料約600-1,000日幣'},{icon:'🚃',text:'開車最方便，部分有巴士可達'},{icon:'⏱',text:'建議1.5-2小時'}],
+    tips:['彩虹鞦韆要早去排隊，人少才拍得到好照片','靠窗座位海景最好，自然光打在臉上最美','甜點和飲料的俯拍構圖，搭配海景背景','黃昏前1小時光線最溫暖，人也較少']
+  },
+  {
+    id:'sp10',name:'太宰府天滿宮',area:'福岡縣太宰府市宰府4-7-1',tag:'神社',tagColor:'var(--red)',camera:'⛩',
+    desc:'日本全國約12,000座天滿宮的總本社，供奉學問之神菅原道真。參道上的梅ヶ枝餅是必吃名物，千年飛梅傳說更添神秘色彩。',
+    info:[{icon:'🕐',text:'6:00-19:00'},{icon:'💴',text:'免費參觀'},{icon:'🚃',text:'西鐵太宰府站步行5分'},{icon:'⏱',text:'建議1.5-2小時'}],
+    tips:['本殿前大楠樹（千年樹齡）是最美的自然背景','太鼓橋倒影在水面，構圖對稱完美','參道邊走邊吃梅ヶ枝餅的自然街拍很生動','星巴克隈研吾設計店外觀獨特，值得拍攝']
+  },
+  {
+    id:'sp11',name:'中洲屋台',area:'福岡市博多區中洲',tag:'美食',tagColor:'var(--gold)',camera:'🍜',
+    desc:'那珂川沿岸的屋台文化是博多最獨特的飲食體驗。豚骨拉麵、明太子、烤串飄香，坐在吧台與老闆聊天，才是真正的博多夜晚。',
+    info:[{icon:'🕐',text:'18:00-深夜（各攤不同）'},{icon:'💴',text:'拉麵約900-1,200日幣'},{icon:'🚃',text:'地鐵中洲川端站步行5分'},{icon:'⏱',text:'建議1.5-2小時'}],
+    tips:['屋台暖黃燈光和夜景構成絕美夜拍場景','人物坐在屋台前背影加霓虹倒影是定番構圖','熱騰騰拉麵的蒸氣逆光拍攝最有食欲','廣角鏡頭拍整排屋台全景最有規模感']
+  },
+  {
+    id:'sp12',name:'熊本熊廣場',area:'熊本市中央區手取本町8',tag:'景點',tagColor:'var(--green-dark)',camera:'🐻',
+    desc:'熊本熊的官方據點，不定期舉辦熊本熊出沒活動。廣場上有熊本熊的各式裝置和紀念品店，是熊本最具代表性的打卡地點。',
+    info:[{icon:'🕐',text:'熊本熊出沒時間不定，需查官網'},{icon:'💴',text:'免費'},{icon:'🚃',text:'市電「花畑町」步行2分'},{icon:'⏱',text:'建議30-60分鐘'}],
+    tips:['幸運的話可以和真實熊本熊合照','廣場周邊的熊本熊彩繪牆都是拍照好地方','官方紀念品店限定商品值得特寫','熊本熊出沒時間在官網和SNS公布，建議提前確認']
+  },
+  {
+    id:'sp13',name:'水前寺成趣園',area:'熊本市中央區水前寺公園8-1',tag:'庭園',tagColor:'var(--green)',camera:'🌿',
+    desc:'江戶時代初期建造的迴遊式庭園，以阿蘇伏流水形成的清澈池塘為中心。東海道五十三次的縮景設計讓人彷彿漫步在古代日本風景中。',
+    info:[{icon:'🕐',text:'8:30-17:00'},{icon:'💴',text:'大人400日幣'},{icon:'🚃',text:'市電「水前寺公園」步行5分'},{icon:'⏱',text:'建議1-1.5小時'}],
+    tips:['石橋和松樹的倒影在晴天池水中最清晰','茶室附近的苔蘚和石燈籠是最日系的場景','清晨霧氣繚繞，光線透過松樹非常夢幻','穿和服漫步庭園是最完美的旅行記憶']
+  },
+  {
+    id:'sp14',name:'熊本屋台村',area:'熊本市中央區花畑町11-10',tag:'美食',tagColor:'var(--gold)',camera:'🏮',
+    desc:'熊本版屋台美食聚落，集合馬刺、辛子蓮根、太平燕等熊本特色料理。比博多更輕鬆的氛圍，是旅程最後一晚最理想的慶祝場所。',
+    info:[{icon:'🕐',text:'17:00-深夜'},{icon:'💴',text:'馬刺約1,500日幣起'},{icon:'🚃',text:'市電「花畑町」步行1分'},{icon:'⏱',text:'建議1.5-2小時'}],
+    tips:['木造街區暖光燈籠是最有日本氛圍的背景','和旅伴乾杯的瞬間捕捉笑容最自然','馬刺盛盤精緻，值得俯拍特寫','夜晚燈光不足，建議提高ISO或開啟夜拍模式']
   },
 ];
 
@@ -979,27 +1023,53 @@ function syncSpotsFromSchedules(){
   let changed=false;
   schedules.forEach(s=>{
     if(s.type!=='sight') return;
-    const exists=spots.find(sp=>sp.schedId===s.id||sp.name===s.name);
-    if(!exists){
-      spots.push({
-        id:'sp'+Date.now()+Math.random().toString(36).slice(2,4),
-        schedId:s.id,
-        name:s.name,
-        area:s.place||'',
-        camera:'🌸',
-        tag:'景點',
-        tagColor:'var(--green-dark)',
-        desc:s.note||'',
-        info:[],
-        tips:[],
-        imgs:s.imgs||[]
-      });
+    const existing=spots.find(sp=>sp.schedId===s.id||sp.name===s.name);
+    if(!existing){
+      // 先從 DEFAULT_SPOTS 找有沒有對應的完整資料
+      const defaultData=DEFAULT_SPOTS.find(ds=>ds.name===s.name||ds.name.includes(s.name)||s.name.includes(ds.name));
+      if(defaultData){
+        // 有預設資料，直接用完整資料
+        spots.push({...defaultData,
+          id:'sp'+Date.now()+Math.random().toString(36).slice(2,4),
+          schedId:s.id,
+          imgs:s.imgs||[]
+        });
+      } else {
+        // 沒有預設資料，建立空白卡片待補充
+        spots.push({
+          id:'sp'+Date.now()+Math.random().toString(36).slice(2,4),
+          schedId:s.id,
+          name:s.name,
+          area:s.place||'',
+          camera:'🌸',
+          tag:'景點',
+          tagColor:'var(--green-dark)',
+          desc:s.note||'',
+          info:[],
+          tips:[],
+          imgs:s.imgs||[]
+        });
+      }
       changed=true;
+    } else if(existing&&(!existing.desc||!existing.info?.length)){
+      // 已有卡片但資料空白，嘗試從 DEFAULT_SPOTS 補資料
+      const defaultData=DEFAULT_SPOTS.find(ds=>ds.name===existing.name||ds.name.includes(existing.name)||existing.name.includes(ds.name));
+      if(defaultData){
+        const idx=spots.indexOf(existing);
+        spots[idx]={...spots[idx],
+          camera:defaultData.camera||spots[idx].camera,
+          tag:defaultData.tag||spots[idx].tag,
+          desc:defaultData.desc||spots[idx].desc,
+          info:defaultData.info.length?defaultData.info:spots[idx].info,
+          tips:defaultData.tips.length?defaultData.tips:spots[idx].tips
+        };
+        changed=true;
+      }
     }
   });
   if(changed){
-    save();
-    showToast('已同步景點到景點介紹頁 🌸');
+    save();renderSpots();
+    showToast('✅ 景點資料已同步更新！');
   }
 }
 
@@ -1658,13 +1728,10 @@ function renderSpots(){
         <div class="spot-desc">${s.desc||''}</div>
         ${(s.info&&s.info.length)?`<div class="spot-divider"></div><div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px">${s.info.map(i=>`<div class="spot-info-item"><span>${i.icon}</span><span>${i.text}</span></div>`).join('')}</div>`:''}
         ${(s.tips&&s.tips.length)?`<div class="spot-divider"></div><div class="spot-tips-title">📷 拍攝建議</div>${s.tips.map(t=>`<div class="spot-tip">${t}</div>`).join('')}`:''}
-        ${(!s.desc&&!s.info?.length)?`<div style="padding:8px 0"><button id="ai-gen-btn-${s.id}" onclick="event.stopPropagation();aiGenerateSpotInfo('${s.id}')" style="width:100%;background:var(--green-pale);color:var(--green-dark);border:1px dashed var(--green-light);border-radius:6px;padding:8px;font-size:12px;cursor:pointer;font-family:'Noto Serif JP',serif">🤖 AI 自動生成景點介紹</button></div>`:''}
+
       </div>
     </div>`).join('');
-  // 顯示/隱藏一鍵生成欄
-  const emptyCount=spots.filter(s=>!s.desc&&!s.info?.length).length;
-  const bar=document.getElementById('ai-gen-bar');
-  if(bar) bar.style.display=emptyCount>0?'flex':'none';
+
 }
 
 let editSpotId=null;

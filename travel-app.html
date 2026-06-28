@@ -970,6 +970,35 @@ function save(){
 }
 
 // 隨時可呼叫，確認 personLists 有正確讀取
+function syncSpotsFromSchedules(){
+  // 掃描所有類型為景點的行程，若景點頁沒有對應卡片就自動建立
+  let changed=false;
+  schedules.forEach(s=>{
+    if(s.type!=='sight') return;
+    const exists=spots.find(sp=>sp.schedId===s.id||sp.name===s.name);
+    if(!exists){
+      spots.push({
+        id:'sp'+Date.now()+Math.random().toString(36).slice(2,4),
+        schedId:s.id,
+        name:s.name,
+        area:s.place||'',
+        camera:'🌸',
+        tag:'景點',
+        tagColor:'var(--green-dark)',
+        desc:s.note||'',
+        info:[],
+        tips:[],
+        imgs:s.imgs||[]
+      });
+      changed=true;
+    }
+  });
+  if(changed){
+    save();
+    showToast('已同步 '+schedules.filter(s=>s.type==='sight').length+' 個景點到景點介紹頁 🌸');
+  }
+}
+
 function loadPersonLists(){
   try{
     const raw=localStorage.getItem('personLists');
@@ -1067,22 +1096,9 @@ function openSchedModal(){
   document.getElementById('schedModalTitle').textContent='新增行程 📝';
   document.getElementById('sf-time').value='10:00';
   document.getElementById('sf-type').value='sight';
-  ['sf-name','sf-place','sf-note','sf-img-url'].forEach(id=>document.getElementById(id).value='');
-  // 初始化景點下拉選單
-  const spotSel=document.getElementById('sf-spot');
-  if(spotSel){
-    spotSel.innerHTML='<option value="">── 選擇景點 ──</option>';
-    spots.forEach(s=>{
-      const opt=document.createElement('option');
-      opt.value=s.id;
-      opt.textContent=s.camera+' '+s.name+' ／ '+s.area;
-      spotSel.appendChild(opt);
-    });
-    spotSel.value='';
-  }
-  document.getElementById('sf-spot-preview').style.display='none';
-  // 預設類型是景點，顯示選擇器
-  document.getElementById('sf-spot-group').style.display='block';
+  ['sf-name','sf-place','sf-note','sf-img-url'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
   newSchedImgFiles.forEach(f=>{if(f.previewUrl)URL.revokeObjectURL(f.previewUrl);});
   newSchedImgFiles=[];
   existingSchedImgs=[];
@@ -1090,7 +1106,7 @@ function openSchedModal(){
   setTimeout(()=>{
     renderSchedImgsList();
     const status=document.getElementById('sf-img-upload-status');
-    if(status)status.style.display='none';
+    if(status) status.style.display='none';
   },50);
 }
 function editSched(id){
@@ -1913,7 +1929,7 @@ function openAllOnMap(){const places=schedules.filter(s=>s.day===curDay&&s.place
 
 /* ── UI ── */
 const ALL_TABS=['schedule','checklist','spots','photos','split','map','firebase'];
-function switchTab(t){ALL_TABS.forEach(id=>{document.getElementById('tab-'+id).classList.toggle('active',id===t);document.getElementById('pane-'+id).style.display=id===t?'block':'none';});if(t==='checklist'){renderChecklist();}if(t==='spots'){renderSpots();}if(t==='photos'){renderPhotos();}}
+function switchTab(t){ALL_TABS.forEach(id=>{document.getElementById('tab-'+id).classList.toggle('active',id===t);document.getElementById('pane-'+id).style.display=id===t?'block':'none';});if(t==='checklist'){renderChecklist();}if(t==='spots'){syncSpotsFromSchedules();renderSpots();}if(t==='photos'){renderPhotos();}}
 function closeModal(id){document.getElementById(id).style.display='none';}
 
 let toastTimer;
@@ -1927,6 +1943,8 @@ window.addEventListener('load',async()=>{
   loadPersonLists(); // 先確保 personLists 從 localStorage 完整讀回
   updateIbbKeyUI();
   renderAll();
+  // 同步行程景點到景點介紹頁
+  setTimeout(syncSpotsFromSchedules, 1000);
   if(members.length){curClPerson=members[0].id;}
   renderChecklist();
   setTimeout(()=>{document.getElementById('loadingScreen').style.display='none';document.getElementById('app').style.display='block';},900);

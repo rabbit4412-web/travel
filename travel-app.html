@@ -312,8 +312,42 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
 
   <!-- 景點 -->
   <div class="content" id="pane-spots" style="display:none">
-    <div class="section-header"><div><span class="section-jp">觀光導覽</span><div class="section-title">景點介紹</div></div></div>
+    <div class="section-header">
+      <div><span class="section-jp">觀光導覽</span><div class="section-title">景點介紹</div></div>
+      <button class="btn-add" onclick="openSpotModal()">＋ 新增景點</button>
+    </div>
     <div id="spotList"></div>
+  </div>
+
+  <!-- 景點編輯 Modal -->
+  <div class="modal-overlay" id="spotModal" style="display:none" onclick="if(event.target===this)closeModal('spotModal')">
+    <div class="modal" style="max-height:90vh;overflow-y:auto">
+      <div class="modal-handle"></div>
+      <div class="modal-title" id="spotModalTitle">新增景點 🌸</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">圖示</label>
+          <input class="form-input" id="sp-camera" placeholder="🌸" style="font-size:20px;text-align:center">
+        </div>
+        <div class="form-group">
+          <label class="form-label">標籤</label>
+          <input class="form-input" id="sp-tag" placeholder="景點／美食／神社...">
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">景點名稱</label><input class="form-input" id="sp-name" placeholder="熊本城"></div>
+      <div class="form-group"><label class="form-label">地區</label><input class="form-input" id="sp-area" placeholder="熊本市中央區"></div>
+      <div class="form-group"><label class="form-label">景點介紹</label><textarea class="form-input" id="sp-desc" rows="3" placeholder="景點描述..." style="resize:vertical;line-height:1.6"></textarea></div>
+      <div class="form-group">
+        <label class="form-label">資訊（每行一項，格式：圖示 內容）</label>
+        <textarea class="form-input" id="sp-info" rows="4" placeholder="🕐 9:00-17:00&#10;💴 800日幣&#10;🚃 市電5分&#10;⏱ 建議1.5小時" style="resize:vertical;line-height:1.8"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">📷 拍攝建議（每行一條）</label>
+        <textarea class="form-input" id="sp-tips" rows="4" placeholder="加藤神社前廣場是最佳拍攝位置&#10;黃昏時分城牆影子延伸效果極佳" style="resize:vertical;line-height:1.8"></textarea>
+      </div>
+      <button class="btn-primary" onclick="saveSpot()">儲存景點</button>
+      <button class="btn-primary btn-cancel" onclick="closeModal('spotModal')" style="margin-top:9px">取消</button>
+    </div>
   </div>
 
 
@@ -433,16 +467,19 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
     <div class="modal">
       <div class="modal-handle"></div>
       <div class="modal-title" id="schedModalTitle">新增行程 📝</div>
+
       <div class="form-row">
         <div class="form-group"><label class="form-label">時間</label><input class="form-input" type="time" id="sf-time" value="10:00"></div>
         <div class="form-group"><label class="form-label">類型</label>
-          <select class="form-select" id="sf-type">
+          <select class="form-select" id="sf-type" onchange="onTypeChange()">
             <option value="sight">🌸 景點</option><option value="food">🍜 餐廳</option>
             <option value="shop">🛍 購物</option><option value="hotel">🏨 住宿</option>
             <option value="transport">🚃 交通</option>
           </select>
         </div>
       </div>
+
+
       <div class="form-group"><label class="form-label">名稱</label><input class="form-input" id="sf-name" placeholder="熊本城"></div>
       <div class="form-group"><label class="form-label">地點</label><input class="form-input" id="sf-place" placeholder="熊本市中央區本丸1-1"></div>
       <div class="form-group"><label class="form-label">備註</label><input class="form-input" id="sf-note" placeholder="備註..."></div>
@@ -592,6 +629,7 @@ window.connectFirebase=async function(){
       if(d.expenses&&d.expenses.length){expenses=d.expenses;localStorage.setItem('expenses',JSON.stringify(expenses));}
       if(d.photos&&d.photos.length){photos=d.photos.filter(p=>p.url&&!p.url.startsWith('idb:'));localStorage.setItem('photos',JSON.stringify(photos));}
       if(d.personLists&&Object.keys(d.personLists).length){personLists=d.personLists;localStorage.setItem('personLists',JSON.stringify(personLists));}
+    if(d.spots&&d.spots.length){spots=d.spots;localStorage.setItem('spots',JSON.stringify(spots));}
       renderAll();renderChecklist();
       showToast('✅ 已從 Firebase 載入資料！');
     } else {
@@ -640,6 +678,7 @@ window.joinTrip=async function(){
       if(d.expenses&&d.expenses.length){expenses=d.expenses;localStorage.setItem('expenses',JSON.stringify(expenses));}
       if(d.photos&&d.photos.length){photos=d.photos.filter(p=>!p.url?.startsWith('idb:'));localStorage.setItem('photos',JSON.stringify(photos));}
       if(d.personLists&&Object.keys(d.personLists).length){personLists=d.personLists;localStorage.setItem('personLists',JSON.stringify(personLists));}
+    if(d.spots&&d.spots.length){spots=d.spots;localStorage.setItem('spots',JSON.stringify(spots));}
       renderAll();renderChecklist();
     }
     startListen();
@@ -670,6 +709,8 @@ function startListen(){
         localStorage.setItem('photos',JSON.stringify(photos.filter(p=>!p.url.startsWith('idb:'))));
       }
       if(d.personLists){personLists=d.personLists;localStorage.setItem('personLists',JSON.stringify(personLists));}
+    if(d.spots&&d.spots.length){spots=d.spots;localStorage.setItem('spots',JSON.stringify(spots));}
+      if(d.spots&&d.spots.length){spots=d.spots;localStorage.setItem('spots',JSON.stringify(spots));}
       renderAll();renderChecklist();
     }
   });
@@ -717,7 +758,7 @@ window.syncToFirebase=async function(){
         }))
       };
     });
-    await setDoc(doc(db,'trips',tripCode),{schedules,members,expenses,photos:photosForSync,personLists:plForSync,updatedAt:Date.now()},{merge:true});
+    await setDoc(doc(db,'trips',tripCode),{schedules,members,expenses,photos:photosForSync,personLists:plForSync,spots,updatedAt:Date.now()},{merge:true});
     localStorage.removeItem('pendingSync'); // 同步成功，清除標記
   }catch(e){
     console.error('sync error',e);
@@ -858,7 +899,7 @@ const DEFAULT_SCHEDULES=[
 ];
 
 // ═══ 景點資料（熊本・博多版）═══
-const SPOTS=[
+const DEFAULT_SPOTS=[
   {
     id:'sp1',name:'熊本城',area:'熊本市中央區',tag:'城堡',tagColor:'var(--green-dark)',camera:'🏯',
     desc:'日本三大名城之一，黑色外牆莊嚴壯觀。2016年熊本地震後大規模修復，現在已部分重新開放，見證了歷史的韌性。城內可見熊本熊的各種身影。',
@@ -899,6 +940,8 @@ const SPOTS=[
 
 
 let curDay=0,rate=4.65,editSchedId=null,curCheckType='luggage';
+// 景點資料（可自訂，預設帶入熊本博多景點）
+let spots=JSON.parse(localStorage.getItem('spots')||'null')||DEFAULT_SPOTS.map(s=>({...s}));
 
 let schedules=JSON.parse(localStorage.getItem('schedules')||'null')||DEFAULT_SCHEDULES;
 let personLists=JSON.parse(localStorage.getItem('personLists')||'null')||{};
@@ -922,6 +965,7 @@ function save(){
     const plCopy=JSON.parse(JSON.stringify(personLists)); // 深複製確保完整
     localStorage.setItem('personLists',JSON.stringify(plCopy));
   }catch(e){console.error('personLists save error',e);}
+  try{localStorage.setItem('spots',JSON.stringify(spots));}catch(e){}
   if(window.syncToFirebase)window.syncToFirebase();
 }
 
@@ -972,6 +1016,12 @@ function updateDates(){
 }
 
 /* ── Schedule ── */
+function onTypeChange(){
+  // sf-spot-group 已移除，此函式保留為空避免錯誤
+}
+
+
+
 async function renderSchedule(){
   const list=schedules.filter(s=>s.day===curDay).sort((a,b)=>a.time.localeCompare(b.time));
   const el=document.getElementById('schedList');
@@ -1018,6 +1068,21 @@ function openSchedModal(){
   document.getElementById('sf-time').value='10:00';
   document.getElementById('sf-type').value='sight';
   ['sf-name','sf-place','sf-note','sf-img-url'].forEach(id=>document.getElementById(id).value='');
+  // 初始化景點下拉選單
+  const spotSel=document.getElementById('sf-spot');
+  if(spotSel){
+    spotSel.innerHTML='<option value="">── 選擇景點 ──</option>';
+    spots.forEach(s=>{
+      const opt=document.createElement('option');
+      opt.value=s.id;
+      opt.textContent=s.camera+' '+s.name+' ／ '+s.area;
+      spotSel.appendChild(opt);
+    });
+    spotSel.value='';
+  }
+  document.getElementById('sf-spot-preview').style.display='none';
+  // 預設類型是景點，顯示選擇器
+  document.getElementById('sf-spot-group').style.display='block';
   newSchedImgFiles.forEach(f=>{if(f.previewUrl)URL.revokeObjectURL(f.previewUrl);});
   newSchedImgFiles=[];
   existingSchedImgs=[];
@@ -1032,6 +1097,7 @@ function editSched(id){
   const s=schedules.find(x=>x.id===id);if(!s)return;
   editSchedId=id;
   document.getElementById('schedModalTitle').textContent='編輯行程 ✏️';
+
   document.getElementById('sf-time').value=s.time;
   document.getElementById('sf-type').value=s.type;
   document.getElementById('sf-name').value=s.name;
@@ -1156,13 +1222,58 @@ async function saveSched(){
     imgs:finalImgs,
     img:finalImgs[0]||'' // 相容舊版
   };
-  if(editSchedId){const i=schedules.findIndex(s=>s.id===editSchedId);schedules[i]=obj;}
-  else schedules.push(obj);
+  if(editSchedId){
+    const i=schedules.findIndex(s=>s.id===editSchedId);
+    schedules[i]=obj;
+    // 同步更新景點介紹頁的名稱（如果有對應的景點卡片）
+    const linkedSpot=spots.find(sp=>sp.schedId===editSchedId);
+    if(linkedSpot){
+      linkedSpot.name=obj.name;
+      linkedSpot.area=obj.place||linkedSpot.area;
+      linkedSpot.imgs=obj.imgs;
+    }
+  } else {
+    schedules.push(obj);
+    // 類型是景點 → 自動在「景點介紹」建立一張對應卡片（如果還沒有）
+    if(obj.type==='sight'){
+      const exists=spots.find(sp=>sp.schedId===obj.id);
+      if(!exists){
+        spots.push({
+          id:'sp'+Date.now(),
+          schedId:obj.id, // 關聯到行程
+          name:obj.name,
+          area:obj.place||'',
+          camera:'🌸',
+          tag:'景點',
+          tagColor:'var(--green-dark)',
+          desc:obj.note||'',
+          info:[],
+          tips:[],
+          imgs:obj.imgs||[]
+        });
+        showToast('行程已新增，景點卡片也建立了！去「🌸景點」頁補充介紹 🌿');
+      } else {
+        showToast('行程已新增 🌿');
+      }
+    } else {
+      showToast('行程已新增 🌿');
+    }
+  }
   clearSchedImg();
   save();closeModal('schedModal');renderSchedule();renderMap();
-  showToast(editSchedId?'行程已更新！':'行程已新增 🌿');
 }
-function delSched(id){if(!confirm('確定刪除？'))return;schedules=schedules.filter(s=>s.id!==id);save();renderSchedule();renderMap();}
+function delSched(id){
+  if(!confirm('確定刪除此行程？'))return;
+  schedules=schedules.filter(s=>s.id!==id);
+  // 同時移除關聯的景點卡片
+  const linkedIdx=spots.findIndex(sp=>sp.schedId===id);
+  if(linkedIdx>=0){
+    if(confirm('同時刪除「景點介紹」頁的對應景點卡片？')){
+      spots.splice(linkedIdx,1);
+    }
+  }
+  save();renderSchedule();renderMap();renderSpots();
+}
 
 
 
@@ -1422,23 +1533,99 @@ async function saveCheckItem(){
 }
 
 /* ── Spots ── */
+
 function renderSpots(){
-  document.getElementById('spotList').innerHTML=SPOTS.map(s=>`
+  const el=document.getElementById('spotList');
+  if(!spots.length){
+    el.innerHTML=`<div class="empty-state"><div class="empty-icon">🌸</div><div class="empty-text">還沒有景點<br>點右上角「＋ 新增景點」加入</div></div>`;
+    return;
+  }
+  el.innerHTML=spots.map(s=>`
     <div class="spot-card" id="spot-${s.id}">
       <div class="spot-header" onclick="toggleSpot('${s.id}')">
-        <div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:20px">${s.camera}</span><div class="spot-name">${s.name}</div></div><div class="spot-area">📍 ${s.area}</div></div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span class="spot-tag" style="color:${s.tagColor}">${s.tag}</span><span class="spot-arrow" id="sarrow-${s.id}">▼</span></div>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:20px">${s.camera||'🌸'}</span>
+            <div>
+              <div class="spot-name">${s.name}</div>
+              ${s.schedId?'<div style="font-size:9px;color:var(--green-dark);font-family:\'Noto Serif JP\',serif;letter-spacing:1px">📅 來自行程</div>':''}
+            </div>
+          </div>
+          <div class="spot-area">📍 ${s.area}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <span class="spot-tag" style="color:${s.tagColor||'var(--green-dark)'}">${s.tag||'景點'}</span>
+          <div style="display:flex;gap:4px;align-items:center">
+            <button class="card-btn" onclick="event.stopPropagation();editSpot('${s.id}')" style="opacity:.5;font-size:13px">✏️</button>
+            <button class="card-btn" onclick="event.stopPropagation();delSpot('${s.id}')" style="opacity:.5;font-size:13px">🗑</button>
+            <span class="spot-arrow" id="sarrow-${s.id}">▼</span>
+          </div>
+        </div>
       </div>
       <div class="spot-body" id="spotbody-${s.id}">
-        <div class="spot-desc">${s.desc}</div>
-        <div class="spot-divider"></div>
-        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px">${s.info.map(i=>`<div class="spot-info-item"><span>${i.icon}</span><span>${i.text}</span></div>`).join('')}</div>
-        <div class="spot-divider"></div>
-        <div class="spot-tips-title">📷 拍攝建議</div>
-        ${s.tips.map(t=>`<div class="spot-tip">${t}</div>`).join('')}
+        <div class="spot-desc">${s.desc||''}</div>
+        ${(s.info&&s.info.length)?`<div class="spot-divider"></div><div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px">${s.info.map(i=>`<div class="spot-info-item"><span>${i.icon}</span><span>${i.text}</span></div>`).join('')}</div>`:''}
+        ${(s.tips&&s.tips.length)?`<div class="spot-divider"></div><div class="spot-tips-title">📷 拍攝建議</div>${s.tips.map(t=>`<div class="spot-tip">${t}</div>`).join('')}`:''}
       </div>
     </div>`).join('');
 }
+
+let editSpotId=null;
+
+function openSpotModal(){
+  editSpotId=null;
+  document.getElementById('spotModalTitle').textContent='新增景點 🌸';
+  ['sp-name','sp-area','sp-desc','sp-info','sp-tips','sp-tag'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('sp-camera').value='🌸';
+  document.getElementById('spotModal').style.display='flex';
+}
+function editSpot(id){
+  const s=spots.find(x=>x.id===id); if(!s)return;
+  editSpotId=id;
+  document.getElementById('spotModalTitle').textContent='編輯景點 ✏️';
+  document.getElementById('sp-camera').value=s.camera||'🌸';
+  document.getElementById('sp-tag').value=s.tag||'';
+  document.getElementById('sp-name').value=s.name||'';
+  document.getElementById('sp-area').value=s.area||'';
+  document.getElementById('sp-desc').value=s.desc||'';
+  // info: 轉成每行 "圖示 內容"
+  document.getElementById('sp-info').value=(s.info||[]).map(i=>i.icon+' '+i.text).join(String.fromCharCode(10));
+  document.getElementById('sp-tips').value=(s.tips||[]).join(String.fromCharCode(10));
+  document.getElementById('spotModal').style.display='flex';
+}
+function saveSpot(){
+  const name=document.getElementById('sp-name').value.trim();
+  if(!name){showToast('請輸入景點名稱');return;}
+  // 解析 info：每行 "圖示 內容"
+  const infoLines=document.getElementById('sp-info').value.split(String.fromCharCode(10)).filter(l=>l.trim());
+  const info=infoLines.map(l=>{
+    const parts=l.trim().split(/\s+/);const icon=parts[0];const text=parts.slice(1).join(' ');
+    return text?{icon,text}:{icon:'📌',text:l.trim()};
+  });
+  const tips=document.getElementById('sp-tips').value.split(String.fromCharCode(10)).filter(l=>l.trim());
+  const obj={
+    id:editSpotId||('sp'+Date.now()),
+    name,
+    area:document.getElementById('sp-area').value.trim(),
+    camera:document.getElementById('sp-camera').value.trim()||'🌸',
+    tag:document.getElementById('sp-tag').value.trim()||'景點',
+    tagColor:'var(--green-dark)',
+    desc:document.getElementById('sp-desc').value.trim(),
+    info, tips
+  };
+  if(editSpotId){ const i=spots.findIndex(s=>s.id===editSpotId); spots[i]=obj; }
+  else spots.push(obj);
+  save(); closeModal('spotModal'); renderSpots();
+  showToast(editSpotId?'景點已更新！':'景點已新增 🌸');
+}
+function delSpot(id){
+  if(!confirm('確定刪除此景點？'))return;
+  spots=spots.filter(s=>s.id!==id);
+  save(); renderSpots(); showToast('已刪除景點');
+}
+
 function toggleSpot(id){const body=document.getElementById('spotbody-'+id);const arrow=document.getElementById('sarrow-'+id);const isOpen=body.classList.contains('open');body.classList.toggle('open',!isOpen);arrow.style.transform=isOpen?'rotate(0)':'rotate(180deg)';}
 
 /* ── Tips ── */
@@ -1726,7 +1913,7 @@ function openAllOnMap(){const places=schedules.filter(s=>s.day===curDay&&s.place
 
 /* ── UI ── */
 const ALL_TABS=['schedule','checklist','spots','photos','split','map','firebase'];
-function switchTab(t){ALL_TABS.forEach(id=>{document.getElementById('tab-'+id).classList.toggle('active',id===t);document.getElementById('pane-'+id).style.display=id===t?'block':'none';});if(t==='checklist')renderChecklist();if(t==='spots')renderSpots();if(t==='photos')renderPhotos();}
+function switchTab(t){ALL_TABS.forEach(id=>{document.getElementById('tab-'+id).classList.toggle('active',id===t);document.getElementById('pane-'+id).style.display=id===t?'block':'none';});if(t==='checklist'){renderChecklist();}if(t==='spots'){renderSpots();}if(t==='photos'){renderPhotos();}}
 function closeModal(id){document.getElementById(id).style.display='none';}
 
 let toastTimer;

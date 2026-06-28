@@ -194,6 +194,22 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
 </style>
 </head>
 <body>
+
+<!-- 密碼鎖定畫面 -->
+<div id="lockScreen" style="display:none;position:fixed;inset:0;background:var(--green-dark);z-index:9999;flex-direction:column;align-items:center;justify-content:center;padding:32px">
+  <div style="font-size:48px;margin-bottom:16px">🌸</div>
+  <div style="font-family:'Zen Kurenaido',serif;font-size:24px;color:var(--cream);margin-bottom:6px;letter-spacing:2px">熊本・博多</div>
+  <div style="font-family:'Noto Serif JP',serif;font-size:12px;color:rgba(255,255,255,.6);letter-spacing:3px;margin-bottom:40px">KUMAMOTO · HAKATA JOURNEY</div>
+  <div style="width:100%;max-width:320px">
+    <div style="font-family:'Noto Serif JP',serif;font-size:12px;color:rgba(255,255,255,.7);margin-bottom:10px;text-align:center">請輸入旅行密碼</div>
+    <input id="lockInput" type="password" placeholder="••••••"
+      style="width:100%;padding:14px 16px;border-radius:10px;border:none;font-size:18px;text-align:center;letter-spacing:6px;background:rgba(255,255,255,.15);color:var(--cream);outline:none;margin-bottom:12px;font-family:'Zen Kurenaido',serif"
+      onkeydown="if(event.key==='Enter')checkPassword()">
+    <button onclick="checkPassword()" style="width:100%;padding:14px;border-radius:10px;border:none;background:var(--cream);color:var(--green-dark);font-size:15px;font-weight:600;cursor:pointer;font-family:'Noto Serif JP',serif;letter-spacing:1px">進入旅行手帳 →</button>
+    <div id="lockError" style="color:rgba(255,120,120,.9);font-size:12px;text-align:center;margin-top:10px;font-family:'Noto Serif JP',serif;display:none">密碼不正確，請再試一次</div>
+  </div>
+</div>
+
 <div class="loading-overlay" id="loadingScreen">
   <div class="loading-leaves">🌿</div>
   <div style="font-family:'Zen Kurenaido',serif;font-size:26px;color:var(--cream);letter-spacing:4px">熊本・博多</div>
@@ -423,7 +439,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
     <!-- 已連線顯示 -->
     <div id="connectedBanner" style="display:none" class="connected-banner">
       <div style="font-size:14px;font-weight:600;color:var(--green-dark);margin-bottom:4px;font-family:'Zen Kurenaido',serif">✅ 已連線！即時同步中</div>
-      <div style="font-size:12px;color:var(--stone);font-family:'Noto Serif JP',serif;line-height:1.6;margin-bottom:10px">朋友只要輸入行程代碼就能加入</div>
+      <div style="font-size:12px;color:var(--stone);font-family:'Noto Serif JP',serif;line-height:1.6;margin-bottom:10px">所有人開啟網址輸入密碼後自動同步</div>
       <button onclick="forcePullFromFirebase()" style="width:100%;background:var(--green-dark);color:var(--cream);border:none;border-radius:6px;padding:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Noto Serif JP',serif;margin-bottom:10px">⬇️ 從 Firebase 重新載入所有資料</button>
       <div style="display:flex;gap:8px;align-items:center">
         <div style="flex:1;background:var(--white);border-radius:5px;padding:8px 12px;font-family:monospace;font-size:14px;border:var(--border);color:var(--ink)" id="shareCodeDisplay"></div>
@@ -432,34 +448,24 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
     </div>
 
     <!-- 主人：填完整設定 -->
-    <div class="setup-card" id="setupCard">
-      <div style="font-family:'Zen Kurenaido',serif;font-size:18px;color:var(--ink);margin-bottom:4px">🔥 Firebase 連線設定</div>
-      <div style="background:var(--green-pale);border-radius:6px;padding:10px 12px;margin-bottom:14px;border:var(--border)">
-        <div style="font-size:12px;color:var(--green-dark);font-family:'Noto Serif JP',serif;line-height:1.8">
-          ✅ 設定已內建，開啟 App 會<strong>自動連線</strong><br>
-          不需要每次重新輸入！
-        </div>
-      </div>
-      <div class="form-group"><label class="form-label">API Key</label><input class="form-input" id="fb-apiKey" placeholder="AIzaSyXXXX"></div>
-      <div class="form-group"><label class="form-label">Project ID</label><input class="form-input" id="fb-projectId" placeholder="travel-1009"></div>
-      <div class="form-group"><label class="form-label">App ID</label><input class="form-input" id="fb-appId" placeholder="1:XXXXXX:web:XXXXXX"></div>
-      <div class="form-group"><label class="form-label">行程代碼</label><input class="form-input" id="fb-tripCode" placeholder="kumamoto-2025"></div>
-      <button class="btn-primary" onclick="connectFirebase()" id="connectBtn">🔗 手動重新連接</button>
-    </div>
-
-    <!-- 朋友：只填代碼 -->
-    <div class="join-card" id="joinCard">
-      <div style="font-family:'Zen Kurenaido',serif;font-size:17px;color:var(--ink);margin-bottom:6px">👥 朋友加入行程</div>
-      <div style="font-size:12px;color:var(--stone);line-height:1.7;margin-bottom:14px;font-family:'Noto Serif JP',serif">只需要輸入行程代碼就能加入，不用設定 Firebase！</div>
-      <input class="form-input" id="join-code" placeholder="輸入行程代碼，例如：kumamoto-2025" style="margin-bottom:10px">
-      <button class="btn-primary" onclick="joinTrip()" style="margin-top:0">🌿 加入行程</button>
+    <div id="setupCard" style="display:none">
+      <input id="fb-apiKey" style="display:none">
+      <input id="fb-projectId" style="display:none">
+      <input id="fb-appId" style="display:none">
+      <input id="fb-tripCode" style="display:none">
+      <button id="connectBtn" style="display:none">連接</button>
     </div>
 
     <!-- 行程設定 -->
     <div class="setup-card" style="margin-top:4px">
       <div style="font-family:'Zen Kurenaido',serif;font-size:16px;color:var(--ink);margin-bottom:12px">⚙️ 行程設定</div>
-      <div class="form-group"><label class="form-label">出發日期</label><input class="form-input" type="date" id="tripStartDate" value="2025-10-01" onchange="updateDates()"></div>
-      <button class="btn-primary" onclick="updateDates();showToast('設定已儲存！')">儲存</button>
+      <div class="form-group"><label class="form-label">出發日期</label><input class="form-input" type="date" id="tripStartDate" value="2025-10-01" onchange="saveTripDate()"></div>
+      <button class="btn-primary" onclick="saveTripDate();showToast('出發日期已儲存！🌿')">儲存</button>
+    </div>
+
+    <!-- 隱藏欄位（程式需要，不顯示）-->
+    <div style="display:none">
+      <div id="joinCard"><input id="join-code"><button onclick="joinTrip()">加入</button></div>
     </div>
   </div>
 
@@ -712,6 +718,7 @@ function startListen(){
       if(d.personLists){personLists=d.personLists;localStorage.setItem('personLists',JSON.stringify(personLists));}
     if(d.spots&&d.spots.length){spots=d.spots;localStorage.setItem('spots',JSON.stringify(spots));}
       if(d.spots&&d.spots.length){spots=d.spots;localStorage.setItem('spots',JSON.stringify(spots));}
+      if(d.tripStartDate){localStorage.setItem('tripStartDate',d.tripStartDate);document.getElementById('tripStartDate').value=d.tripStartDate;updateDates();}
       renderAll();renderChecklist();
     }
   });
@@ -759,7 +766,8 @@ window.syncToFirebase=async function(){
         }))
       };
     });
-    await setDoc(doc(db,'trips',tripCode),{schedules,members,expenses,photos:photosForSync,personLists:plForSync,spots,updatedAt:Date.now()},{merge:true});
+    const tripDate=localStorage.getItem('tripStartDate')||'2025-10-01';
+    await setDoc(doc(db,'trips',tripCode),{schedules,members,expenses,photos:photosForSync,personLists:plForSync,spots,tripStartDate:tripDate,updatedAt:Date.now()},{merge:true});
     localStorage.removeItem('pendingSync'); // 同步成功，清除標記
   }catch(e){
     console.error('sync error',e);
@@ -767,6 +775,10 @@ window.syncToFirebase=async function(){
   }
 };
 window.copyShareCode=function(){navigator.clipboard?.writeText(tripCode);showToast('代碼已複製！傳給朋友');};
+window.addEventListener('DOMContentLoaded',()=>{
+  initLockScreen();
+});
+
 window.addEventListener('load',()=>{
   // 填入欄位顯示
   document.getElementById('fb-apiKey').value=AUTO_CONFIG.apiKey;
@@ -779,6 +791,44 @@ window.addEventListener('load',()=>{
 </script>
 
 <script>
+// ══════════════════════════════════════════
+//  ★ 旅行密碼設定（修改這裡）
+// ══════════════════════════════════════════
+const TRAVEL_PASSWORD = 'kumamoto2026'; // ← 改成你想要的密碼
+
+function checkPassword(){
+  const input=document.getElementById('lockInput').value.trim();
+  if(input===TRAVEL_PASSWORD){
+    localStorage.setItem('travel_unlocked','1');
+    document.getElementById('lockScreen').style.display='none';
+    document.getElementById('app').style.display='block';
+    document.getElementById('lockError').style.display='none';
+    // 密碼正確後自動連線 Firebase（不需要另外輸入代碼）
+    setTimeout(()=>{window.connectFirebase&&window.connectFirebase();},500);
+  }else{
+    document.getElementById('lockError').style.display='block';
+    document.getElementById('lockInput').value='';
+    document.getElementById('lockInput').focus();
+    if(navigator.vibrate) navigator.vibrate([100,50,100]);
+  }
+}
+
+function initLockScreen(){
+  const unlocked=localStorage.getItem('travel_unlocked');
+  const app=document.getElementById('app');
+  const lock=document.getElementById('lockScreen');
+  if(unlocked==='1'){
+    // 已解鎖，直接進入
+    lock.style.display='none';
+    app.style.display='block';
+  }else{
+    // 需要輸入密碼
+    lock.style.display='flex';
+    app.style.display='none';
+    setTimeout(()=>document.getElementById('lockInput').focus(),300);
+  }
+}
+
 // ══════════════════════════════════════════
 //  IndexedDB：用於儲存大型圖片資料（base64）
 //  localStorage 只存「參照 key」，圖片實體放 IndexedDB
@@ -1172,6 +1222,17 @@ function loadPersonLists(){
 }
 
 /* ── Dates ── */
+function saveTripDate(){
+  const val=document.getElementById('tripStartDate').value;
+  localStorage.setItem('tripStartDate',val);
+  updateDates();
+}
+function loadTripDate(){
+  const saved=localStorage.getItem('tripStartDate');
+  if(saved){
+    document.getElementById('tripStartDate').value=saved;
+  }
+}
 function getDates(){
   const arr=[];const start=new Date(document.getElementById('tripStartDate').value+'T00:00:00');
   for(let i=0;i<8;i++){const d=new Date(start);d.setDate(start.getDate()+i);arr.push({num:String(d.getDate()).padStart(2,'0'),lbl:'週'+DOW[d.getDay()]});}
@@ -2217,6 +2278,7 @@ window.addEventListener('load',async()=>{
   document.getElementById('loadingMsg').textContent='載入行程資料...';
   try{const r=await fetch('https://api.exchangerate-api.com/v4/latest/JPY');if(r.ok){const d=await r.json();if(d.rates?.TWD)rate=parseFloat((1/d.rates.TWD).toFixed(4));}}catch(e){}
   loadPersonLists(); // 先確保 personLists 從 localStorage 完整讀回
+  loadTripDate();    // 讀取儲存的出發日期
   updateIbbKeyUI();
   renderAll();
   // 同步行程景點到景點介紹頁

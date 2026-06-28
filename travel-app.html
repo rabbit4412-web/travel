@@ -607,7 +607,7 @@ const AUTO_CONFIG = {
   apiKey: 'AIzaSyDlNDBg0wXAwVy4hha2qcQpRyGeVNUE78c',
   projectId: 'travel-1009',
   appId: '1:931635663706:web:6852f080738b54110d1963',
-  tripCode: 'kumamoto-2025'   // ← 朋友版只改這行
+  tripCode: 'kumamoto-mo'   // ← 朋友版只改這行
 };
 
 window.connectFirebase=async function(){
@@ -1423,6 +1423,8 @@ async function saveSched(){
   }
   clearSchedImg();
   save();closeModal('schedModal');renderSchedule();renderMap();
+  // 行程更新後重新排序景點（如果景點頁在前景）
+  if(document.getElementById('pane-spots').style.display!=='none') renderSpots();
 }
 function delSched(id){
   if(!confirm('確定刪除此行程？'))return;
@@ -1696,26 +1698,53 @@ async function saveCheckItem(){
 
 /* ── Spots ── */
 
+function getSpotDay(s){
+  if(!s.schedId) return 999;
+  const sc=schedules.find(x=>x.id===s.schedId);
+  return sc?sc.day:999;
+}
+function getSpotTime(s){
+  if(!s.schedId) return '99:99';
+  const sc=schedules.find(x=>x.id===s.schedId);
+  return sc?sc.time:'99:99';
+}
+
 function renderSpots(){
   const el=document.getElementById('spotList');
   if(!spots.length){
     el.innerHTML=`<div class="empty-state"><div class="empty-icon">🌸</div><div class="empty-text">還沒有景點<br>點右上角「＋ 新增景點」加入</div></div>`;
     return;
   }
-  el.innerHTML=spots.map(s=>`
-    <div class="spot-card" id="spot-${s.id}">
+  // 按行程日期+時間自動排序
+  spots.sort((a,b)=>{
+    const da=getSpotDay(a),db=getSpotDay(b);
+    if(da!==db) return da-db;
+    return getSpotTime(a).localeCompare(getSpotTime(b));
+  });
+  el.innerHTML=spots.map(s=>{
+    const day=getSpotDay(s);
+    const dayBadge=day<999?`<span style="background:var(--green-dark);color:var(--cream);font-size:9px;padding:1px 6px;border-radius:10px;font-family:'Noto Serif JP',serif;margin-left:4px">D${day+1}</span>`:'';
+    const timeStr=day<999?`<div style="font-size:9px;color:var(--stone);font-family:'Noto Serif JP',serif">${getSpotTime(s)}</div>`:'';
+    return `<div class="spot-card" id="spot-${s.id}" draggable="true"
+      ondragstart="spotDragStart(event,'${s.id}')"
+      ondragover="spotDragOver(event)"
+      ondrop="spotDrop(event,'${s.id}')"
+      ondragend="spotDragEnd(event)">
       <div class="spot-header" onclick="toggleSpot('${s.id}')">
-        <div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:20px">${s.camera||'🌸'}</span>
-            <div>
-              <div class="spot-name">${s.name}</div>
-              ${s.schedId?'<div style="font-size:9px;color:var(--green-dark);font-family:\'Noto Serif JP\',serif;letter-spacing:1px">📅 來自行程</div>':''}
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:16px;cursor:grab;color:var(--stone);flex-shrink:0">⠿</span>
+            <span style="font-size:20px;flex-shrink:0">${s.camera||'🌸'}</span>
+            <div style="min-width:0">
+              <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">
+                <div class="spot-name">${s.name}</div>${dayBadge}
+              </div>
+              ${timeStr}
             </div>
           </div>
           <div class="spot-area">📍 ${s.area}</div>
         </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
           <span class="spot-tag" style="color:${s.tagColor||'var(--green-dark)'}">${s.tag||'景點'}</span>
           <div style="display:flex;gap:4px;align-items:center">
             <button class="card-btn" onclick="event.stopPropagation();editSpot('${s.id}')" style="opacity:.5;font-size:13px">✏️</button>
@@ -1728,11 +1757,25 @@ function renderSpots(){
         <div class="spot-desc">${s.desc||''}</div>
         ${(s.info&&s.info.length)?`<div class="spot-divider"></div><div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px">${s.info.map(i=>`<div class="spot-info-item"><span>${i.icon}</span><span>${i.text}</span></div>`).join('')}</div>`:''}
         ${(s.tips&&s.tips.length)?`<div class="spot-divider"></div><div class="spot-tips-title">📷 拍攝建議</div>${s.tips.map(t=>`<div class="spot-tip">${t}</div>`).join('')}`:''}
-
       </div>
-    </div>`).join('');
-
+    </div>`;
+  }).join('');
 }
+
+let dragSpotId=null;
+function spotDragStart(e,id){dragSpotId=id;e.currentTarget.style.opacity='0.4';e.dataTransfer.effectAllowed='move';}
+function spotDragOver(e){e.preventDefault();e.currentTarget.style.outline='2px solid var(--green)';}
+function spotDrop(e,targetId){
+  e.preventDefault();e.currentTarget.style.outline='';
+  if(!dragSpotId||dragSpotId===targetId)return;
+  const fi=spots.findIndex(s=>s.id===dragSpotId);
+  const ti=spots.findIndex(s=>s.id===targetId);
+  if(fi<0||ti<0)return;
+  const moved=spots.splice(fi,1)[0];
+  spots.splice(ti,0,moved);
+  save();renderSpots();
+}
+function spotDragEnd(e){e.currentTarget.style.opacity='1';e.currentTarget.style.outline='';dragSpotId=null;}
 
 let editSpotId=null;
 

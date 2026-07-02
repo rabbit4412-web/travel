@@ -1132,78 +1132,6 @@ function syncSpotsFromSchedules(){
   if(changed){ save(); }
 }
 
-// AI 自動生成景點介紹
-async function aiGenerateSpotInfo(spotId){
-  const spot=spots.find(s=>s.id===spotId);
-  if(!spot){showToast('找不到景點');return;}
-  const btn=document.getElementById('ai-gen-btn-'+spotId);
-  if(btn){btn.textContent='🤖 生成中...';btn.disabled=true;}
-  try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        messages:[{role:'user',content:`請幫我生成「${spot.name}」這個日本景點（位於${spot.area||'日本'}）的旅遊資訊。
-請只用 JSON 格式回答，不要有其他文字：
-{
-  "camera": "一個最適合的 emoji 圖示",
-  "tag": "景點分類（如：神社/城堡/自然/美食/購物/海景等）",
-  "desc": "2-3句景點介紹（繁體中文）",
-  "info": [
-    {"icon": "🕐", "text": "開放時間"},
-    {"icon": "💴", "text": "門票費用"},
-    {"icon": "🚃", "text": "交通方式"},
-    {"icon": "⏱", "text": "建議停留時間"}
-  ],
-  "tips": [
-    "拍攝建議第1條",
-    "拍攝建議第2條",
-    "拍攝建議第3條"
-  ]
-}`}]
-      })
-    });
-    const data=await res.json();
-    const text=data.content?.[0]?.text||'';
-    const match=text.match(/\{[\s\S]*\}/);
-    if(!match) throw new Error('解析失敗');
-    const result=JSON.parse(match[0]);
-    const idx=spots.findIndex(s=>s.id===spotId);
-    if(idx>=0){
-      spots[idx]={
-        ...spots[idx],
-        camera:result.camera||spots[idx].camera,
-        tag:result.tag||spots[idx].tag,
-        desc:result.desc||spots[idx].desc,
-        info:result.info||spots[idx].info,
-        tips:result.tips||spots[idx].tips
-      };
-      save();renderSpots();
-      showToast('✅「'+spot.name+'」資訊已生成！');
-    }
-  }catch(e){
-    showToast('❌ 生成失敗：'+e.message);
-    if(btn){btn.textContent='🤖 AI 生成介紹';btn.disabled=false;}
-  }
-}
-
-// 一鍵生成所有空白景點
-async function aiGenerateAllSpots(){
-  const emptySpots=spots.filter(s=>!s.desc&&!s.info?.length);
-  if(!emptySpots.length){showToast('所有景點都有資料了！');return;}
-  const btn=document.getElementById('ai-gen-all-btn');
-  if(btn){btn.textContent='🤖 生成中 (0/'+emptySpots.length+')';btn.disabled=true;}
-  for(let i=0;i<emptySpots.length;i++){
-    if(btn) btn.textContent='🤖 生成中 ('+(i+1)+'/'+emptySpots.length+')';
-    await aiGenerateSpotInfo(emptySpots[i].id);
-    await new Promise(r=>setTimeout(r,800)); // 避免太快
-  }
-  if(btn){btn.textContent='🤖 一鍵生成所有景點介紹';btn.disabled=false;}
-  showToast('✅ 全部景點資訊已生成！');
-}
-
 function loadPersonLists(){
   try{
     const raw=localStorage.getItem('personLists');
@@ -1511,15 +1439,7 @@ function delSched(id){
 
 
 
-function clearSchedImg(){
-  pendingSchedImgFile=null;
-  const preview=document.getElementById('sf-img-preview');
-  const status=document.getElementById('sf-img-upload-status');
-  if(preview) preview.style.display='none';
-  if(status) status.style.display='none';
-  const img=document.getElementById('sf-img-preview-img');
-  if(img) img.src='';
-}
+
 
 /* ── Checklist（每人獨立） ── */
 const LUGGAGE_CATS=['全部','證件','衣物','電子','金融','醫藥'];
@@ -1996,25 +1916,7 @@ function getIbbKey(){
     : localStorage.getItem('ibb_api_key') || '';
 }
 
-function updateIbbKeyUI(){
-  const key=getIbbKey();
-  const banner=document.getElementById('ibb-key-banner');
-  // 如果 Key 已內建，直接隱藏設定區
-  if(IMGBB_API_KEY !== 'YOUR_IMGBB_API_KEY_HERE'){
-    if(banner) banner.style.display='none';
-    return;
-  }
-  const input=document.getElementById('ibb-api-key-input');
-  const status=document.getElementById('ibb-key-status');
-  if(input) input.value=key ? key.slice(0,6)+'****' : '';
-  if(status){
-    status.textContent=key
-      ?'✅ API Key 已設定，照片自動上傳 imgBB 雲端'
-      :'⚠️ 尚未設定，照片只存本機（旅伴看不到）';
-    status.style.color=key?'var(--green-dark)':'#B8860B';
-  }
-  if(banner) banner.style.borderColor=key?'var(--green-light)':'rgba(233,196,106,.5)';
-}
+
 
 // 上傳單張圖片到 imgBB
 async function uploadToIBB(file){

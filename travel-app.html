@@ -800,34 +800,25 @@ function checkPassword(){
   const input=document.getElementById('lockInput').value.trim();
   if(input===TRAVEL_PASSWORD){
     localStorage.setItem('travel_unlocked','1');
-    document.getElementById('lockScreen').style.display='none';
-    document.getElementById('app').style.display='block';
-    document.getElementById('lockError').style.display='none';
-    // 密碼正確後自動連線 Firebase（不需要另外輸入代碼）
+    const lock=document.getElementById('lockScreen');
+    const app=document.getElementById('app');
+    const loading=document.getElementById('loadingScreen');
+    if(lock) lock.style.display='none';
+    if(loading) loading.style.display='none';
+    if(app) app.style.display='block';
+    const err=document.getElementById('lockError');
+    if(err) err.style.display='none';
     setTimeout(()=>{window.connectFirebase&&window.connectFirebase();},500);
   }else{
-    document.getElementById('lockError').style.display='block';
+    const err=document.getElementById('lockError');
+    if(err) err.style.display='block';
     document.getElementById('lockInput').value='';
     document.getElementById('lockInput').focus();
     if(navigator.vibrate) navigator.vibrate([100,50,100]);
   }
 }
 
-function initLockScreen(){
-  const unlocked=localStorage.getItem('travel_unlocked');
-  const app=document.getElementById('app');
-  const lock=document.getElementById('lockScreen');
-  if(unlocked==='1'){
-    // 已解鎖，直接進入
-    lock.style.display='none';
-    app.style.display='block';
-  }else{
-    // 需要輸入密碼
-    lock.style.display='flex';
-    app.style.display='none';
-    setTimeout(()=>document.getElementById('lockInput').focus(),300);
-  }
-}
+
 
 // ══════════════════════════════════════════
 //  IndexedDB：用於儲存大型圖片資料（base64）
@@ -1909,6 +1900,11 @@ function addPhotoByUrl(){const url=document.getElementById('ibbUrlInput').value.
 // ══════════════════════════════════════════
 const IMGBB_API_KEY = '37aa0f571e7acc757470fe991d8179af';
 
+function updateIbbKeyUI(){
+  const banner=document.getElementById('ibb-key-banner');
+  if(banner) banner.style.display='none';
+}
+
 function getIbbKey(){
   // 優先用寫死的 Key，其次用 localStorage（給朋友版用）
   return IMGBB_API_KEY !== 'YOUR_IMGBB_API_KEY_HERE'
@@ -2177,17 +2173,45 @@ function showToast(msg){const old=document.querySelector('.toast');if(old)old.re
 function renderAll(){updateDates();renderSchedule();renderSplit();renderMap();}
 
 window.addEventListener('load',async()=>{
-  document.getElementById('loadingMsg').textContent='載入行程資料...';
-  try{const r=await fetch('https://api.exchangerate-api.com/v4/latest/JPY');if(r.ok){const d=await r.json();if(d.rates?.TWD)rate=parseFloat((1/d.rates.TWD).toFixed(4));}}catch(e){}
-  loadPersonLists(); // 先確保 personLists 從 localStorage 完整讀回
-  loadTripDate();    // 讀取儲存的出發日期
-  updateIbbKeyUI();
-  renderAll();
-  // 同步行程景點到景點介紹頁
-  setTimeout(syncSpotsFromSchedules, 1000);
-  if(members.length){curClPerson=members[0].id;}
-  renderChecklist();
-  setTimeout(()=>{document.getElementById('loadingScreen').style.display='none';document.getElementById('app').style.display='block';},900);
+  try{document.getElementById('loadingMsg').textContent='載入行程資料...';}catch(e){}
+  try{const r=await fetch('https://api.exchangerate-api.com/v4/latest/JPY');if(r.ok){const d=await r.json();if(d.rates?.TWD)rate=parseFloat((1/d.rates.TWD).toFixed(4));}}catch(e){console.error('rate fetch:',e);}
+  try{loadPersonLists();}catch(e){console.error('loadPersonLists:',e);}
+  try{loadTripDate();}catch(e){console.error('loadTripDate:',e);}
+  try{updateIbbKeyUI();}catch(e){console.error('updateIbbKeyUI:',e);}
+  try{renderAll();}catch(e){console.error('renderAll:',e);}
+  try{setTimeout(()=>{try{syncSpotsFromSchedules();}catch(e){console.error('syncSpots:',e);}}, 1000);}catch(e){}
+  try{if(members.length){curClPerson=members[0].id;}}catch(e){}
+  try{renderChecklist();}catch(e){console.error('renderChecklist:',e);}
+  // 無論如何都要關閉 loading（重要！）
+  setTimeout(()=>{
+    try{
+      const loading=document.getElementById('loadingScreen');
+      if(loading) loading.style.display='none';
+      // 檢查是否已解鎖，未解鎖則顯示鎖定畫面
+      const unlocked=localStorage.getItem('travel_unlocked')==='1';
+      if(unlocked){
+        const app=document.getElementById('app');
+        if(app) app.style.display='block';
+      }else{
+        const lock=document.getElementById('lockScreen');
+        if(lock){lock.style.display='flex';setTimeout(()=>{const inp=document.getElementById('lockInput');if(inp)inp.focus();},200);}
+      }
+    }catch(e){console.error('close loading:',e);}
+  },900);
+});
+
+// 全域錯誤處理：即使有 JS 錯誤也不會卡在 loading
+window.addEventListener('error',function(e){
+  console.error('全域錯誤:',e.message,e.filename,e.lineno);
+  setTimeout(()=>{
+    const loading=document.getElementById('loadingScreen');
+    if(loading&&loading.style.display!=='none'){
+      loading.style.display='none';
+      const unlocked=localStorage.getItem('travel_unlocked')==='1';
+      if(unlocked){const app=document.getElementById('app');if(app)app.style.display='block';}
+      else{const lock=document.getElementById('lockScreen');if(lock)lock.style.display='flex';}
+    }
+  },1500);
 });
 </script>
 </body>

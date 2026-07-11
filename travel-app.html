@@ -539,7 +539,11 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
 
       <div class="form-group"><label class="form-label">名稱</label><input class="form-input" id="sf-name" placeholder="熊本城"></div>
       <div class="form-group"><label class="form-label">地點</label><input class="form-input" id="sf-place" placeholder="熊本市中央區本丸1-1"></div>
-      <div class="form-group"><label class="form-label">備註</label><input class="form-input" id="sf-note" placeholder="備註..."></div>
+      <div class="form-group">
+        <label class="form-label">備註（支援圖示、連結、分點）</label>
+        <div style="font-size:10px;color:var(--stone);margin-bottom:6px;font-family:'Noto Serif JP',serif;line-height:1.6">連結格式：[文字](網址)　分點：開頭加 *</div>
+        <textarea class="form-input" id="sf-note" rows="6" placeholder="🕐 9:00-17:00&#10;💴 800日幣&#10;🚃 市電5分&#10;&#10;[店名](https://網址)&#10;* 亮點：...&#10;* 採買推薦：..." style="resize:vertical;line-height:1.9;font-size:13px"></textarea>
+      </div>
 
       <!-- 景點照片（多張） -->
       <div class="form-group">
@@ -830,7 +834,25 @@ window.forcePullFromFirebase=async function(){
   }
 };
 
+// 防抖同步：連續修改時只在停止 2 秒後同步一次，避免 Firebase 限流
+let _syncTimer=null;
+window.debouncedSync=function(){
+  localStorage.setItem('pendingSync','1'); // 先標記，確保資料不丟
+  if(_syncTimer) clearTimeout(_syncTimer);
+  _syncTimer=setTimeout(()=>{
+    if(window.syncToFirebase) window.syncToFirebase();
+  },2000);
+};
+
 window.syncToFirebase=async function(retry){
+  // 節流：距離上次同步不到 1.5 秒就跳過（防 Firebase 限流）
+  const nowT=Date.now();
+  if(!retry && window._lastSyncT && nowT-window._lastSyncT<1500){
+    localStorage.setItem('pendingSync','1');
+    if(window.debouncedSync) window.debouncedSync();
+    return;
+  }
+  window._lastSyncT=nowT;
   if(!db){
     // 尚未連線，標記有待同步 + 嘗試主動連線
     localStorage.setItem('pendingSync','1');
@@ -1159,7 +1181,7 @@ function save(){
     localStorage.setItem('personLists',JSON.stringify(plCopy));
   }catch(e){console.error('personLists save error',e);}
   try{localStorage.setItem('spots',JSON.stringify(spots));}catch(e){}
-  if(window.syncToFirebase)window.syncToFirebase();
+  if(window.debouncedSync)window.debouncedSync();
 }
 
 // 隨時可呼叫，確認 personLists 有正確讀取
@@ -1248,8 +1270,7 @@ function saveTripDate(){
   const val=document.getElementById('tripStartDate').value;
   localStorage.setItem('tripStartDate',val);
   updateDates();
-  // 立刻同步到 Firebase
-  if(window.syncToFirebase) window.syncToFirebase();
+  if(window.debouncedSync) window.debouncedSync();
 }
 function loadTripDate(){
   const saved=localStorage.getItem('tripStartDate');
@@ -1292,6 +1313,28 @@ function onTypeChange(){
 
 
 
+// 把備註文字轉成漂亮的 HTML（支援連結、分點、圖示行）
+function formatNote(text){
+  if(!text) return '';
+  const lines=text.split(String.fromCharCode(10));
+  let html='';
+  lines.forEach(line=>{
+    const t=line.trim();
+    if(!t){ html+='<div style="height:6px"></div>'; return; }
+    // Markdown 連結 [文字](網址)
+    let processed=t.replace(/\[([^\]]+)\]\(([^)]+)\)/g,
+      '<a href="$2" target="_blank" style="color:var(--green-dark);font-weight:600;text-decoration:underline">$1</a>');
+    // 分點（* 開頭）
+    if(t.startsWith('*')){
+      processed=processed.replace(/^\*\s*/,'');
+      html+=`<div style="display:flex;gap:6px;padding:2px 0 2px 4px"><span style="color:var(--green);flex-shrink:0">·</span><span>${processed}</span></div>`;
+    }else{
+      html+=`<div style="padding:2px 0">${processed}</div>`;
+    }
+  });
+  return html;
+}
+
 async function renderSchedule(){
   const list=schedules.filter(s=>s.day===curDay).sort((a,b)=>a.time.localeCompare(b.time));
   const el=document.getElementById('schedList');
@@ -1307,7 +1350,7 @@ async function renderSchedule(){
         <div class="schedule-name">${s.name}</div>
         ${s.place?`<div class="schedule-place">📍 ${s.place}</div>`:''}
         <span class="tag tag-${s.type}">${{sight:'🌸 景點',food:'🍜 餐廳',shop:'🛍 購物',hotel:'🏨 住宿',transport:'🚃 交通'}[s.type]}</span>
-        ${s.note?`<div class="schedule-note">${s.note}</div>`:''}
+        ${s.note?`<div class="schedule-note">${formatNote(s.note)}</div>`:''}
       </div>
     </div>`).join('');
   // 非同步載入圖片（支援多張）
@@ -1837,11 +1880,18 @@ function renderSpots(){
     if(da!==db) return da-db;
     return getSpotTime(a).localeCompare(getSpotTime(b));
   });
+  let lastDay=-1;
   el.innerHTML=spots.map(s=>{
     const day=getSpotDay(s);
-    const dayBadge=day<999?`<span style="background:var(--green-dark);color:var(--cream);font-size:9px;padding:1px 6px;border-radius:10px;font-family:'Noto Serif JP',serif;margin-left:4px">D${day+1}</span>`:'';
     const timeStr=day<999?`<div style="font-size:9px;color:var(--stone);font-family:'Noto Serif JP',serif">${getSpotTime(s)}</div>`:'';
-    return `<div class="spot-card" id="spot-${s.id}"
+    // 天數分組標題（綠底）
+    let dayHeader='';
+    if(day!==lastDay){
+      lastDay=day;
+      const label=day<999?('D'+(day+1)+' · '+TRIP_DAYS[day].city):'其他景點';
+      dayHeader=`<div style="background:var(--green-dark);color:var(--cream);font-family:'Zen Kurenaido',serif;font-size:15px;padding:6px 16px;border-radius:6px;margin:${lastDay===day&&spots.indexOf(s)===0?'0':'14px'} 0 10px;display:inline-block;letter-spacing:1px">${label}</div>`;
+    }
+    return dayHeader+`<div class="spot-card" id="spot-${s.id}"
       ondragover="spotDragOver(event)"
       ondragleave="spotDragLeave(event)"
       ondrop="spotDrop(event,'${s.id}')"
@@ -1858,7 +1908,7 @@ function renderSpots(){
             <span style="font-size:20px;flex-shrink:0">${s.camera||'🌸'}</span>
             <div style="min-width:0">
               <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">
-                <div class="spot-name">${s.name}</div>${dayBadge}
+                <div class="spot-name">${s.name}</div>
               </div>
               ${timeStr}
             </div>
@@ -2542,10 +2592,12 @@ window.addEventListener('error',function(e){
 
 // 每 30 秒自動同步一次（雙保險，確保資料不遺失）
 setInterval(()=>{
-  if(window.syncToFirebase && localStorage.getItem('travel_unlocked')==='1'){
+  // 只在有未同步資料時才同步，避免無謂寫入
+  if(window.syncToFirebase && localStorage.getItem('travel_unlocked')==='1'
+     && localStorage.getItem('pendingSync')==='1'){
     window.syncToFirebase();
   }
-},30000);
+},60000);
 </script>
 </body>
 </html>

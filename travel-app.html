@@ -452,6 +452,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
     <div id="connectedBanner" style="display:none" class="connected-banner">
       <div style="font-size:14px;font-weight:600;color:var(--green-dark);margin-bottom:4px;font-family:'Zen Kurenaido',serif">✅ 已連線！即時同步中</div>
       <div style="font-size:12px;color:var(--stone);font-family:'Noto Serif JP',serif;line-height:1.6;margin-bottom:10px">所有人開啟網址輸入密碼後自動同步</div>
+      <button onclick="forcePushToFirebase()" style="width:100%;background:var(--green);color:var(--cream);border:none;border-radius:6px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Serif JP',serif;margin-bottom:8px">⬆️ 立即上傳所有資料到 Firebase</button>
       <button onclick="forcePullFromFirebase()" style="width:100%;background:var(--green-dark);color:var(--cream);border:none;border-radius:6px;padding:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Noto Serif JP',serif;margin-bottom:10px">⬇️ 從 Firebase 重新載入所有資料</button>
       <div style="display:flex;gap:8px;align-items:center">
         <div style="flex:1;background:var(--white);border-radius:5px;padding:8px 12px;font-family:monospace;font-size:14px;border:var(--border);color:var(--ink)" id="shareCodeDisplay"></div>
@@ -518,6 +519,11 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
     <div class="modal">
       <div class="modal-handle"></div>
       <div class="modal-title" id="schedModalTitle">新增行程 📝</div>
+
+      <div class="form-group">
+        <label class="form-label">日期（第幾天）</label>
+        <select class="form-select" id="sf-day"></select>
+      </div>
 
       <div class="form-row">
         <div class="form-group"><label class="form-label">時間</label><input class="form-input" type="time" id="sf-time" value="10:00"></div>
@@ -695,6 +701,7 @@ window.connectFirebase=async function(){
       await window.syncToFirebase();
       showToast('🌿 已建立行程！');
     }
+    window._fbConnected=true;
     startListen();
     document.getElementById('syncDot').classList.add('on');
     document.getElementById('syncText').textContent='即時同步中';
@@ -774,6 +781,31 @@ function startListen(){
   });
   unsubs.push(unsub);
 }
+window.forcePushToFirebase=async function(){
+  if(!db){
+    showToast('尚未連線，正在連線...');
+    if(window.connectFirebase) await window.connectFirebase();
+    if(!db){showToast('❌ 連線失敗，請稍後再試');return;}
+  }
+  showToast('⬆️ 正在上傳所有資料...');
+  localStorage.removeItem('pendingSync');
+  try{
+    await window.syncToFirebase(true);
+    // 驗證是否真的上傳成功
+    const {getDoc,doc:fdoc}=await import('https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js');
+    const snap=await getDoc(fdoc(db,'trips',tripCode));
+    if(snap.exists()){
+      const d=snap.data();
+      showToast('✅ 上傳成功！行程'+(d.schedules?.length||0)+'筆、費用'+(d.expenses?.length||0)+'筆');
+    }else{
+      showToast('⚠️ 上傳可能失敗，請重試');
+    }
+  }catch(e){
+    showToast('❌ 上傳失敗：'+e.message);
+    console.error(e);
+  }
+};
+
 window.forcePullFromFirebase=async function(){
   if(!db){showToast('尚未連線 Firebase');return;}
   showToast('🔄 正在從 Firebase 載入資料...');
@@ -798,10 +830,17 @@ window.forcePullFromFirebase=async function(){
   }
 };
 
-window.syncToFirebase=async function(){
+window.syncToFirebase=async function(retry){
   if(!db){
-    // 尚未連線，標記有待同步資料
+    // 尚未連線，標記有待同步 + 嘗試主動連線
     localStorage.setItem('pendingSync','1');
+    if(!retry && window.connectFirebase && !window._connecting){
+      window._connecting=true;
+      try{ await window.connectFirebase(); }catch(e){}
+      window._connecting=false;
+      // 連線後重試一次
+      if(db) return window.syncToFirebase(true);
+    }
     return;
   }
   try{
@@ -1293,11 +1332,25 @@ async function renderSchedule(){
     }
   }
 }
+function fillDayOptions(selectedDay){
+  const sel=document.getElementById('sf-day');
+  if(!sel)return;
+  sel.innerHTML='';
+  for(let i=0;i<8;i++){
+    const opt=document.createElement('option');
+    opt.value=i;
+    opt.textContent='D'+(i+1)+' · '+TRIP_DAYS[i].city;
+    sel.appendChild(opt);
+  }
+  sel.value=(selectedDay!==undefined?selectedDay:curDay);
+}
+
 function openSchedModal(){
   editSchedId=null;
   document.getElementById('schedModalTitle').textContent='新增行程 📝';
   document.getElementById('sf-time').value='10:00';
   document.getElementById('sf-type').value='sight';
+  fillDayOptions(curDay);
   ['sf-name','sf-place','sf-note','sf-img-url'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value='';
   });
@@ -1316,6 +1369,7 @@ function editSched(id){
   editSchedId=id;
   document.getElementById('schedModalTitle').textContent='編輯行程 ✏️';
 
+  fillDayOptions(s.day);
   document.getElementById('sf-time').value=s.time;
   document.getElementById('sf-type').value=s.type;
   document.getElementById('sf-name').value=s.name;
@@ -1431,7 +1485,7 @@ async function saveSched(){
   }
   const obj={
     id:editSchedId||('s'+Date.now()),
-    day:curDay,
+    day:parseInt(document.getElementById('sf-day').value),
     time:document.getElementById('sf-time').value,
     name,
     place:document.getElementById('sf-place').value.trim(),
@@ -1478,7 +1532,8 @@ async function saveSched(){
     }
   }
   clearSchedImg();
-  save();closeModal('schedModal');renderSchedule();renderMap();
+  curDay=obj.day;
+  save();closeModal('schedModal');updateDates();renderSchedule();renderMap();
   // 行程更新後重新排序景點（如果景點頁在前景）
   if(document.getElementById('pane-spots').style.display!=='none') renderSpots();
 }
@@ -2466,7 +2521,7 @@ window.addEventListener('load',async()=>{
   },900);
 });
 
-// 全域錯誤處理：即使有 JS 錯誤也不會卡在 loading
+// 全域錯誤處理：即使有 JS 錯誤也不會卡在 loading，且確保 Firebase 連線
 window.addEventListener('error',function(e){
   console.error('全域錯誤:',e.message,e.filename,e.lineno);
   setTimeout(()=>{
@@ -2477,8 +2532,20 @@ window.addEventListener('error',function(e){
       if(unlocked){const app=document.getElementById('app');if(app)app.style.display='block';}
       else{const lock=document.getElementById('lockScreen');if(lock)lock.style.display='flex';}
     }
+    // 就算報錯，也確保 Firebase 有連線（保護資料同步）
+    if(localStorage.getItem('travel_unlocked')==='1' && window.connectFirebase && !window._fbConnected){
+      window._fbConnected=true;
+      window.connectFirebase().catch(err=>console.error('Firebase 連線失敗',err));
+    }
   },1500);
 });
+
+// 每 30 秒自動同步一次（雙保險，確保資料不遺失）
+setInterval(()=>{
+  if(window.syncToFirebase && localStorage.getItem('travel_unlocked')==='1'){
+    window.syncToFirebase();
+  }
+},30000);
 </script>
 </body>
 </html>

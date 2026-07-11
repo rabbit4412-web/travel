@@ -868,6 +868,20 @@ function checkPassword(){
   }
 }
 
+function initLockScreen(){
+  const unlocked=localStorage.getItem('travel_unlocked')==='1';
+  const app=document.getElementById('app');
+  const lock=document.getElementById('lockScreen');
+  if(unlocked){
+    if(lock) lock.style.display='none';
+    if(app) app.style.display='block';
+  }else{
+    if(lock) lock.style.display='flex';
+    if(app) app.style.display='none';
+    setTimeout(()=>{const inp=document.getElementById('lockInput');if(inp)inp.focus();},300);
+  }
+}
+
 
 
 // ══════════════════════════════════════════

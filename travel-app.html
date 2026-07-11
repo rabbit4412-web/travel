@@ -2063,6 +2063,40 @@ async function delPhoto(id){
   }
   photos=photos.filter(p=>p.id!==id);save();renderPhotos();
 }
+
+async function renderPhotos(){
+  updateIbbKeyUI();
+  const dp=photos.filter(p=>p.day===curDay);
+  const dayEl=document.getElementById('photoDay');
+  const cntEl=document.getElementById('photoCount');
+  if(dayEl) dayEl.textContent='D'+(curDay+1)+' · '+TRIP_DAYS[curDay].city;
+  if(cntEl) cntEl.textContent=dp.length+' 張';
+  const grid=document.getElementById('photoGrid');
+  const empty=document.getElementById('photoEmpty');
+  if(!grid) return;
+  if(!dp.length){grid.innerHTML='';if(empty)empty.style.display='block';return;}
+  if(empty) empty.style.display='none';
+  // 先畫佔位
+  grid.innerHTML=dp.map(p=>`<div class="ibb-img" id="photo-${p.id}" style="position:relative">
+    <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--stone);font-size:11px;font-family:'Noto Serif JP',serif">載入中...</div>
+    ${p.localOnly?`<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(184,134,11,.85);color:#fff;font-size:9px;text-align:center;padding:2px;font-family:'Noto Serif JP',serif">本機</div>`:''}
+  </div>`).join('');
+  // 非同步載入圖片
+  for(const p of dp){
+    const src=await resolveImgSrc(p.url);
+    const el=document.getElementById('photo-'+p.id);
+    if(!el) continue;
+    if(src){
+      el.innerHTML=`<img src="${src}" alt="" onerror="this.style.background='var(--green-pale)'" onclick="openLightbox('${src}')">
+        <button class="ibb-img-del" onclick="event.stopPropagation();delPhoto('${p.id}')">✕</button>
+        ${p.localOnly?`<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(184,134,11,.85);color:#fff;font-size:9px;text-align:center;padding:2px;font-family:'Noto Serif JP',serif">⚠️ 本機</div>`:''}`;
+    }else{
+      el.innerHTML=`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--stone);font-size:9px;flex-direction:column;gap:3px;padding:4px;text-align:center"><span>⚠️</span><span style="font-family:'Noto Serif JP',serif">讀取失敗</span></div>
+        <button class="ibb-img-del" onclick="event.stopPropagation();delPhoto('${p.id}')">✕</button>`;
+    }
+  }
+}
+
 function openLightbox(url){document.getElementById('lightboxImg').src=url;document.getElementById('lightbox').style.display='flex';}
 
 /* ── Split ── */

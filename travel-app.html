@@ -471,7 +471,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
     <!-- 行程設定 -->
     <div class="setup-card" style="margin-top:4px">
       <div style="font-family:'Zen Kurenaido',serif;font-size:16px;color:var(--ink);margin-bottom:12px">⚙️ 行程設定</div>
-      <div class="form-group"><label class="form-label">出發日期</label><input class="form-input" type="date" id="tripStartDate" value="2025-10-01" onchange="saveTripDate()"></div>
+      <div class="form-group"><label class="form-label">出發日期</label><input class="form-input" type="date" id="tripStartDate" value="2026-09-01" onchange="saveTripDate()"></div>
       <button class="btn-primary" onclick="saveTripDate();showToast('出發日期已儲存！🌿')">儲存</button>
     </div>
 
@@ -678,6 +678,7 @@ window.connectFirebase=async function(){
       if(d.schedules&&d.schedules.length){schedules=d.schedules;localStorage.setItem('schedules',JSON.stringify(schedules));}
       if(d.members&&d.members.length){members=d.members;localStorage.setItem('members',JSON.stringify(members));}
       if(d.expenses&&d.expenses.length){expenses=d.expenses;localStorage.setItem('expenses',JSON.stringify(expenses));}
+      if(d.tripStartDate){localStorage.setItem('tripStartDate',d.tripStartDate);document.getElementById('tripStartDate').value=d.tripStartDate;}
       if(d.photos&&d.photos.length){photos=d.photos.filter(p=>p.url&&!p.url.startsWith('idb:'));localStorage.setItem('photos',JSON.stringify(photos));}
       if(d.personLists&&Object.keys(d.personLists).length){personLists=d.personLists;localStorage.setItem('personLists',JSON.stringify(personLists));}
     if(d.spots&&d.spots.length){spots=d.spots;localStorage.setItem('spots',JSON.stringify(spots));}
@@ -810,7 +811,7 @@ window.syncToFirebase=async function(){
         }))
       };
     });
-    const tripDate=localStorage.getItem('tripStartDate')||'2025-10-01';
+    const tripDate=localStorage.getItem('tripStartDate')||'2026-09-01';
     await setDoc(doc(db,'trips',tripCode),{schedules,members,expenses,photos:photosForSync,personLists:plForSync,spots,tripStartDate:tripDate,updatedAt:Date.now()},{merge:true});
     localStorage.removeItem('pendingSync'); // 同步成功，清除標記
   }catch(e){
@@ -1189,11 +1190,14 @@ function saveTripDate(){
   const val=document.getElementById('tripStartDate').value;
   localStorage.setItem('tripStartDate',val);
   updateDates();
+  // 立刻同步到 Firebase
+  if(window.syncToFirebase) window.syncToFirebase();
 }
 function loadTripDate(){
   const saved=localStorage.getItem('tripStartDate');
   if(saved){
     document.getElementById('tripStartDate').value=saved;
+    updateDates();
   }
 }
 function getDates(){

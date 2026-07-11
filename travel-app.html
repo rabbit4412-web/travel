@@ -672,23 +672,28 @@ window.connectFirebase=async function(){
     db=getFirestore(fbApp);
     // ── 先從 Firebase 讀取，有資料就用 Firebase 的（不蓋掉）──
     const existingSnap=await getDoc(doc(db,'trips',tripCode));
-    if(existingSnap.exists()){
-      // Firebase 有資料 → 拉下來用，不上傳本機（避免空資料蓋掉雲端）
+    const hasPending=localStorage.getItem('pendingSync')==='1';
+    if(existingSnap.exists()&&!hasPending){
+      // Firebase 有資料 且 本機沒有待同步 → 拉下來用
       const d=existingSnap.data();
-      if(d.schedules&&d.schedules.length){schedules=d.schedules;localStorage.setItem('schedules',JSON.stringify(schedules));}
-      if(d.members&&d.members.length){members=d.members;localStorage.setItem('members',JSON.stringify(members));}
-      if(d.expenses&&d.expenses.length){expenses=d.expenses;localStorage.setItem('expenses',JSON.stringify(expenses));}
+      if(d.schedules){schedules=d.schedules;localStorage.setItem('schedules',JSON.stringify(schedules));}
+      if(d.members){members=d.members;localStorage.setItem('members',JSON.stringify(members));}
+      if(d.expenses){expenses=d.expenses;localStorage.setItem('expenses',JSON.stringify(expenses));}
       if(d.tripStartDate){localStorage.setItem('tripStartDate',d.tripStartDate);document.getElementById('tripStartDate').value=d.tripStartDate;}
-      if(d.photos&&d.photos.length){photos=d.photos.filter(p=>p.url&&!p.url.startsWith('idb:'));localStorage.setItem('photos',JSON.stringify(photos));}
-      if(d.personLists&&Object.keys(d.personLists).length){personLists=d.personLists;localStorage.setItem('personLists',JSON.stringify(personLists));}
-    if(d.spots&&d.spots.length){spots=d.spots;localStorage.setItem('spots',JSON.stringify(spots));}
+      if(d.photos){photos=d.photos.filter(p=>p.url&&!p.url.startsWith('idb:'));localStorage.setItem('photos',JSON.stringify(photos));}
+      if(d.personLists){personLists=d.personLists;localStorage.setItem('personLists',JSON.stringify(personLists));}
+      if(d.spots&&d.spots.length){spots=d.spots;localStorage.setItem('spots',JSON.stringify(spots));}
       renderAll();renderChecklist();
       showToast('✅ 已從 Firebase 載入資料！');
+    } else if(hasPending){
+      // 本機有未同步的新資料 → 優先上傳本機，不被 Firebase 蓋掉
+      await window.syncToFirebase();
+      renderAll();renderChecklist();
+      showToast('✅ 本機資料已同步至 Firebase！');
     } else {
       // Firebase 沒有資料 → 上傳本機資料建立新行程
-      const photosForSync=photos.filter(p=>p.url&&!p.url.startsWith('idb:'));
-      await setDoc(doc(db,'trips',tripCode),{schedules,members,expenses,photos:photosForSync,personLists,updatedAt:Date.now()},{merge:true});
-      showToast('🌿 已建立行程！分享代碼給朋友');
+      await window.syncToFirebase();
+      showToast('🌿 已建立行程！');
     }
     startListen();
     document.getElementById('syncDot').classList.add('on');
@@ -1677,11 +1682,15 @@ async function saveImgOnly(){
   if(!curClPerson||!editImgItemId)return;
   let imgRef=url;
   if(pendingCkImgFile){
-    const idbKey='idb:img'+Date.now()+Math.random().toString(36).slice(2,6);
+    showToast('📤 上傳商品圖片中...');
     try{
-      await idbSet(idbKey,pendingCkImgFile);
-      imgRef=idbKey;
-    }catch(err){showToast('圖片儲存失敗');return;}
+      const cloudUrl=await uploadToIBB(pendingCkImgFile);
+      imgRef=cloudUrl||url;
+    }catch(err){
+      // fallback IndexedDB
+      const idbKey='idb:img'+Date.now()+Math.random().toString(36).slice(2,6);
+      try{await idbSet(idbKey,pendingCkImgFile);imgRef=idbKey;}catch(e){showToast('圖片儲存失敗');return;}
+    }
   }
   const arr=getPersonList(curClPerson,'shopping');
   const item=arr.find(i=>i.id===editImgItemId);
@@ -1703,8 +1712,17 @@ async function saveCheckItem(){
   if(curCheckType==='shopping'){
     const urlVal=document.getElementById('ck-img-url').value.trim();
     if(pendingCkImgFile){
-      const idbKey='idb:img'+Date.now()+Math.random().toString(36).slice(2,6);
-      try{await idbSet(idbKey,pendingCkImgFile);img=idbKey;}catch(err){console.error(err);}
+      // 上傳 imgBB 雲端（旅伴可見、重整不消失）
+      showToast('📤 上傳商品圖片中...');
+      try{
+        const url=await uploadToIBB(pendingCkImgFile);
+        img=url||'';
+      }catch(err){
+        console.error('imgBB 上傳失敗',err);
+        // 失敗才 fallback 到 IndexedDB
+        const idbKey='idb:img'+Date.now()+Math.random().toString(36).slice(2,6);
+        try{await idbSet(idbKey,pendingCkImgFile);img=idbKey;}catch(e){}
+      }
     }else if(urlVal){
       img=urlVal;
     }

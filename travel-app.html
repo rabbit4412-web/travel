@@ -2151,35 +2151,57 @@ function saveBatch(){
 //  資料備份與匯出
 // ══════════════════════════════════════════
 function exportExpenses(){
-  if(!expenses.length){showToast('還沒有費用紀錄');return;}
-  let csv='日期,名稱,日幣金額,原始金額,幣別,付款人'+String.fromCharCode(10);
-  expenses.forEach(e=>{
-    const payer=members.find(m=>m.id===e.payerId);
-    csv+=`${e.date},${e.name},${e.amount},${e.origAmt||e.amount},${e.origCur||'JPY'},${payer?payer.name:'未知'}`+String.fromCharCode(10);
-  });
-  const blob=new Blob([String.fromCharCode(0xFEFF)+csv],{type:'text/csv;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;a.download='旅遊費用_'+new Date().toISOString().slice(0,10)+'.csv';
-  a.click();URL.revokeObjectURL(url);
-  showToast('📤 費用已匯出為 CSV 檔案');
+  try{
+    if(!expenses.length){showToast('還沒有費用紀錄');return;}
+    let csv='日期,名稱,日幣金額,原始金額,幣別,付款人'+String.fromCharCode(10);
+    expenses.forEach(e=>{
+      const payer=members.find(m=>m.id===e.payerId);
+      csv+=`${e.date},${e.name},${e.amount},${e.origAmt||e.amount},${e.origCur||'JPY'},${payer?payer.name:'未知'}`+String.fromCharCode(10);
+    });
+    const blob=new Blob([String.fromCharCode(0xFEFF)+csv],{type:'text/csv;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='旅遊費用_'+new Date().toISOString().slice(0,10)+'.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    showToast('📤 費用已匯出為 CSV！請查看下載資料夾');
+  }catch(e){
+    console.error('匯出失敗',e);
+    showToast('❌ 匯出失敗：'+e.message);
+  }
 }
 
 function backupAllData(){
-  const backup={
-    exportDate:new Date().toISOString(),
-    schedules,members,expenses,photos:photos.filter(p=>!p.url?.startsWith('idb:')),
-    personLists,spots,
-    tripStartDate:localStorage.getItem('tripStartDate')||'',
-    tripCode:AUTO_CONFIG.tripCode
-  };
-  const json=JSON.stringify(backup,null,2);
-  const blob=new Blob([json],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;a.download='旅遊手帳備份_'+new Date().toISOString().slice(0,10)+'.json';
-  a.click();URL.revokeObjectURL(url);
-  showToast('💾 全部資料已備份！');
+  try{
+    const backup={
+      exportDate:new Date().toISOString(),
+      schedules:schedules||[],
+      members:members||[],
+      expenses:expenses||[],
+      photos:(photos||[]).filter(p=>p.url&&!p.url.startsWith('idb:')),
+      personLists:personLists||{},
+      spots:spots||[],
+      tripStartDate:localStorage.getItem('tripStartDate')||'',
+      tripCode:(typeof tripCode!=='undefined'?tripCode:'kumamoto-2025')
+    };
+    const json=JSON.stringify(backup,null,2);
+    const blob=new Blob([json],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='旅遊手帳備份_'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    showToast('💾 全部資料已備份！請查看下載資料夾');
+  }catch(e){
+    console.error('備份失敗',e);
+    showToast('❌ 備份失敗：'+e.message);
+  }
 }
 
 function renderSplit(){

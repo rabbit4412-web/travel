@@ -421,10 +421,22 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
     </div>
     <div class="section-header"><div><span class="section-jp">旅行夥伴</span><div class="section-title">旅伴</div></div><button class="btn-add" onclick="openMemberModal()">＋ 加人</button></div>
     <div class="member-chips" id="memberList"></div>
-    <div class="section-header"><div><span class="section-jp">支出記錄</span><div class="section-title">費用紀錄</div></div><button class="btn-add" onclick="openExpenseModal()">＋ 記帳</button></div>
+    <div class="section-header"><div><span class="section-jp">支出記錄</span><div class="section-title">費用紀錄</div></div>
+      <div style="display:flex;gap:6px">
+        <button class="btn-add" onclick="openBatchExpense()" style="font-size:10px;padding:4px 8px;background:var(--green-pale);color:var(--green-dark);border:var(--border)">📋 批量匯入</button>
+        <button class="btn-add" onclick="openExpenseModal()">＋ 記帳</button>
+      </div>
+    </div>
     <div id="expenseList"></div>
     <div class="section-header" style="margin-top:20px"><div><span class="section-jp">費用結算</span><div class="section-title">結算</div></div></div>
     <div id="settlementList"></div><div id="totalSummary"></div>
+    <!-- 資料備份區 -->
+    <div style="margin-top:20px;padding-top:16px;border-top:1px dashed rgba(92,74,48,.2)">
+      <div style="display:flex;gap:8px;justify-content:center">
+        <button onclick="exportExpenses()" style="background:var(--green-pale);color:var(--green-dark);border:var(--border);border-radius:6px;padding:8px 14px;font-size:11px;cursor:pointer;font-family:'Noto Serif JP',serif">📤 匯出費用備份</button>
+        <button onclick="backupAllData()" style="background:var(--cream-dark);color:var(--ink);border:var(--border);border-radius:6px;padding:8px 14px;font-size:11px;cursor:pointer;font-family:'Noto Serif JP',serif">💾 備份全部資料</button>
+      </div>
+    </div>
   </div>
 
   <!-- 地圖 -->
@@ -466,6 +478,38 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
     <!-- 隱藏欄位（程式需要，不顯示）-->
     <div style="display:none">
       <div id="joinCard"><input id="join-code"><button onclick="joinTrip()">加入</button></div>
+    </div>
+  </div>
+
+  <!-- 批量匯入 Modal -->
+  <div class="modal-overlay" id="batchExpModal" style="display:none" onclick="if(event.target===this)closeModal('batchExpModal')">
+    <div class="modal" style="max-height:90vh;overflow-y:auto">
+      <div class="modal-handle"></div>
+      <div class="modal-title">📋 批量匯入費用</div>
+      <div style="font-size:12px;color:var(--stone);font-family:'Noto Serif JP',serif;line-height:1.8;margin-bottom:10px">
+        每行一筆費用，格式：<strong>名稱, 金額, 付款人</strong><br>
+        金額前加 NT 表示台幣，否則預設日幣<br>
+        付款人填名字（例如：我、旅伴）
+      </div>
+      <div style="background:var(--green-pale);border-radius:6px;padding:8px 10px;margin-bottom:10px;border:var(--border);font-size:11px;color:var(--green-dark);font-family:'Noto Serif JP',serif;line-height:1.8">
+        範例：<br>
+        博多拉麵, 1200, 我<br>
+        新幹線, 5000, 旅伴<br>
+        機票, NT15000, 我<br>
+        飯店, NT8000, 旅伴
+      </div>
+      <div class="form-group">
+        <label class="form-label">哪一天的費用</label>
+        <select class="form-select" id="batch-day"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">貼上費用清單</label>
+        <textarea class="form-input" id="batch-text" rows="8" placeholder="博多拉麵, 1200, 我&#10;新幹線, 5000, 旅伴&#10;機票, NT15000, 我" style="resize:vertical;line-height:1.8;font-size:13px"></textarea>
+      </div>
+      <div id="batch-preview" style="display:none;margin-bottom:10px"></div>
+      <button class="btn-primary" onclick="previewBatch()" style="background:var(--green);margin-bottom:8px">👁 預覽</button>
+      <button class="btn-primary" onclick="saveBatch()">✅ 確認匯入</button>
+      <button class="btn-primary btn-cancel" onclick="closeModal('batchExpModal')" style="margin-top:9px">取消</button>
     </div>
   </div>
 
@@ -1986,6 +2030,136 @@ async function delPhoto(id){
 function openLightbox(url){document.getElementById('lightboxImg').src=url;document.getElementById('lightbox').style.display='flex';}
 
 /* ── Split ── */
+// ══════════════════════════════════════════
+//  批量匯入費用
+// ══════════════════════════════════════════
+function openBatchExpense(){
+  if(!members.length){showToast('請先新增旅伴');return;}
+  const sel=document.getElementById('batch-day');
+  sel.innerHTML='';
+  for(let i=0;i<8;i++){
+    const opt=document.createElement('option');
+    opt.value='D'+(i+1);
+    opt.textContent='D'+(i+1)+' · '+TRIP_DAYS[i].city;
+    sel.appendChild(opt);
+  }
+  sel.value='D'+(curDay+1);
+  document.getElementById('batch-text').value='';
+  document.getElementById('batch-preview').style.display='none';
+  document.getElementById('batchExpModal').style.display='flex';
+}
+
+function parseBatchLines(){
+  const text=document.getElementById('batch-text').value;
+  const day=document.getElementById('batch-day').value;
+  const lines=text.split(String.fromCharCode(10)).filter(l=>l.trim());
+  const results=[];
+  lines.forEach(line=>{
+    const parts=line.split(',').map(s=>s.trim());
+    if(parts.length<2)return;
+    const name=parts[0];
+    let amountStr=parts[1];
+    let cur='JPY';
+    // 判斷幣別
+    if(amountStr.toUpperCase().startsWith('NT')){
+      cur='TWD';
+      amountStr=amountStr.replace(/^NT\$?/i,'');
+    }else if(amountStr.startsWith('¥')){
+      amountStr=amountStr.replace('¥','');
+    }
+    const amount=parseFloat(amountStr.replace(/,/g,''));
+    if(isNaN(amount))return;
+    // 找付款人
+    let payerName=parts[2]||members[0].name;
+    const payer=members.find(m=>m.name===payerName.trim());
+    const payerId=payer?payer.id:members[0].id;
+    const amountJPY=cur==='TWD'?Math.round(amount*rate):amount;
+    results.push({name,amount,amountJPY,cur,payerId,payerName:payer?payer.name:members[0].name,day});
+  });
+  return results;
+}
+
+function previewBatch(){
+  const items=parseBatchLines();
+  const el=document.getElementById('batch-preview');
+  if(!items.length){el.style.display='none';showToast('沒有可匯入的資料，請檢查格式');return;}
+  let total=0;
+  el.innerHTML=`<div style="font-size:12px;font-weight:600;color:var(--green-dark);margin-bottom:6px;font-family:'Noto Serif JP',serif">預覽（共 ${items.length} 筆）</div>`+
+    items.map(i=>{
+      total+=i.amountJPY;
+      const display=i.cur==='TWD'?'NT$'+i.amount.toLocaleString():'¥'+i.amount.toLocaleString();
+      return `<div style="display:flex;justify-content:space-between;padding:4px 8px;font-size:12px;font-family:'Noto Serif JP',serif;border-bottom:1px solid rgba(92,74,48,.1)">
+        <span>${i.name} <span style="color:var(--stone);font-size:10px">(${i.payerName}付)</span></span>
+        <span style="color:var(--green-dark)">${display}</span>
+      </div>`;
+    }).join('')+
+    `<div style="display:flex;justify-content:space-between;padding:6px 8px;font-size:13px;font-weight:600;font-family:'Zen Kurenaido',serif;color:var(--green-dark);border-top:2px solid var(--green-light)">
+      <span>合計</span><span>¥${total.toLocaleString()}</span>
+    </div>`;
+  el.style.display='block';
+  el.style.background='var(--cream)';
+  el.style.borderRadius='6px';
+  el.style.border='var(--border)';
+  el.style.overflow='hidden';
+}
+
+function saveBatch(){
+  const items=parseBatchLines();
+  if(!items.length){showToast('沒有可匯入的資料');return;}
+  items.forEach(i=>{
+    const displayAmt=i.cur==='TWD'?'NT$'+i.amount.toLocaleString():'¥'+i.amount.toLocaleString();
+    expenses.push({
+      id:'e'+Date.now()+Math.random().toString(36).slice(2,5),
+      name:i.name,
+      amount:i.amountJPY,
+      origAmt:i.amount,
+      origCur:i.cur,
+      displayAmt,
+      payerId:i.payerId,
+      date:i.day
+    });
+  });
+  save();
+  closeModal('batchExpModal');
+  renderSplit();
+  showToast('✅ 已匯入 '+items.length+' 筆費用！');
+}
+
+// ══════════════════════════════════════════
+//  資料備份與匯出
+// ══════════════════════════════════════════
+function exportExpenses(){
+  if(!expenses.length){showToast('還沒有費用紀錄');return;}
+  let csv='日期,名稱,日幣金額,原始金額,幣別,付款人'+String.fromCharCode(10);
+  expenses.forEach(e=>{
+    const payer=members.find(m=>m.id===e.payerId);
+    csv+=`${e.date},${e.name},${e.amount},${e.origAmt||e.amount},${e.origCur||'JPY'},${payer?payer.name:'未知'}`+String.fromCharCode(10);
+  });
+  const blob=new Blob([String.fromCharCode(0xFEFF)+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='旅遊費用_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();URL.revokeObjectURL(url);
+  showToast('📤 費用已匯出為 CSV 檔案');
+}
+
+function backupAllData(){
+  const backup={
+    exportDate:new Date().toISOString(),
+    schedules,members,expenses,photos:photos.filter(p=>!p.url?.startsWith('idb:')),
+    personLists,spots,
+    tripStartDate:localStorage.getItem('tripStartDate')||'',
+    tripCode:AUTO_CONFIG.tripCode
+  };
+  const json=JSON.stringify(backup,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='旅遊手帳備份_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();URL.revokeObjectURL(url);
+  showToast('💾 全部資料已備份！');
+}
+
 function renderSplit(){
   document.getElementById('rateDisplay').textContent=rate.toFixed(2);
   document.getElementById('memberList').innerHTML=members.map(m=>`<div class="member-chip"><div class="member-avatar">${m.name[0]}</div>${m.name}<span onclick="delMember('${m.id}')" style="margin-left:4px;opacity:.35;cursor:pointer;font-size:11px">✕</span></div>`).join('');

@@ -49,6 +49,77 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
 .nav-tab.active{color:var(--cream);border-bottom-color:var(--green-light)}
 .nav-tab .tab-icon{font-size:14px;display:block;margin-bottom:2px}
 .content{padding:18px 18px 100px;position:relative;z-index:1}
+/* ── Photo Map ── */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px}
+.stat-box{background:var(--white);border-radius:8px;border:var(--border);padding:9px 4px;text-align:center;box-shadow:var(--shadow)}
+.stat-num{font-family:'Zen Kurenaido',serif;font-size:19px;color:var(--green-dark);line-height:1.1}
+.stat-lbl{font-size:8px;color:var(--stone);margin-top:2px;font-family:'Noto Serif JP',serif;letter-spacing:.5px}
+.filter-row{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.filter-row::-webkit-scrollbar{display:none}
+.filter-chip{flex-shrink:0;padding:6px 14px;border-radius:16px;font-size:11px;cursor:pointer;
+  background:var(--white);border:var(--border);color:var(--stone);font-family:'Noto Serif JP',serif;transition:all .15s}
+.filter-chip.active{background:var(--green-dark);color:var(--cream);border-color:var(--green-dark)}
+.pm-card{background:var(--white);border-radius:10px;border:var(--border);margin-bottom:9px;
+  overflow:hidden;box-shadow:var(--shadow);cursor:pointer;transition:transform .12s}
+.pm-card:active{transform:scale(.985)}
+.pm-card.done{opacity:.62}
+.pm-body{display:flex;gap:11px;padding:11px}
+.pm-thumb{width:66px;height:66px;border-radius:7px;flex-shrink:0;background:var(--green-pale);
+  display:flex;align-items:center;justify-content:center;font-size:26px;overflow:hidden}
+.pm-thumb img{width:100%;height:100%;object-fit:cover}
+.pm-info{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.pm-name{font-family:'Zen Kurenaido',serif;font-size:15px;color:var(--ink);line-height:1.3;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pm-meta{font-size:10px;color:var(--stone);margin-top:3px;font-family:'Noto Serif JP',serif;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pm-badges{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap}
+.pm-badge{font-size:8px;padding:2px 6px;border-radius:8px;background:var(--green-pale);
+  color:var(--green-dark);font-family:'Noto Serif JP',serif}
+.pm-check{width:24px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.day-header{background:var(--green-dark);color:var(--cream);font-family:'Zen Kurenaido',serif;
+  font-size:14px;padding:5px 14px;border-radius:5px;margin:16px 0 9px;display:inline-block;letter-spacing:1px}
+.day-header:first-child{margin-top:0}
+.detail-hero{width:100%;height:190px;object-fit:cover;background:var(--green-pale)}
+.detail-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}
+.detail-btn{padding:11px;border-radius:7px;border:none;font-size:12px;cursor:pointer;
+  font-family:'Noto Serif JP',serif;display:flex;align-items:center;justify-content:center;gap:5px;
+  text-decoration:none;box-sizing:border-box}
+.btn-nav{background:var(--ink);color:var(--cream)}
+.btn-shot{background:var(--green-dark);color:var(--cream)}
+.btn-shot.on{background:var(--green-pale);color:var(--green-dark);border:1.5px solid var(--green-light)}
+.btn-ghost{background:var(--cream-dark);color:var(--ink);border:var(--border)}
+
+/* ── 首頁 ── */
+.hero-card{position:relative;height:150px;border-radius:12px;overflow:hidden;margin-bottom:14px;
+  background-image:url('https://images.unsplash.com/photo-1624253321171-1be53e12f5f4?w=800&q=80');
+  background-size:cover;background-position:center}
+.hero-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(58,107,56,.15) 0%,rgba(58,107,56,.75) 100%)}
+.hero-content{position:absolute;bottom:14px;left:16px;right:16px;color:var(--cream)}
+.hero-day{font-family:'Zen Kurenaido',serif;font-size:34px;line-height:1;text-shadow:0 2px 8px rgba(0,0,0,.3)}
+.hero-date{font-size:12px;opacity:.9;font-family:'Noto Serif JP',serif;letter-spacing:1px;margin-top:2px}
+.hero-city{font-size:13px;margin-top:4px;font-family:'Noto Serif JP',serif}
+.home-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.home-mini-card{background:var(--white);border-radius:10px;border:var(--border);padding:11px 12px;box-shadow:var(--shadow)}
+.mini-label{font-size:9px;color:var(--stone);letter-spacing:1.5px;font-family:'Noto Serif JP',serif;text-transform:uppercase}
+.mini-result{font-family:'Zen Kurenaido',serif;font-size:17px;color:var(--green-dark)}
+.rate-input{width:100%;border:none;border-bottom:1.5px solid var(--green-light);background:transparent;
+  font-size:16px;font-family:'Zen Kurenaido',serif;color:var(--ink);outline:none;padding:2px 0}
+.flight-card{background:var(--white);border-radius:10px;border:var(--border);padding:13px;margin-bottom:12px;box-shadow:var(--shadow)}
+.flight-route{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.flight-port{text-align:center;flex:1}
+.flight-code{font-family:'Zen Kurenaido',serif;font-size:19px;color:var(--ink);line-height:1.1}
+.flight-time{font-size:13px;color:var(--green-dark);font-family:'Zen Kurenaido',serif;margin-top:1px}
+.flight-arrow{flex-shrink:0;color:var(--green-light);font-size:15px}
+.flight-meta{display:flex;justify-content:center;gap:10px;margin-top:9px;padding-top:8px;
+  border-top:1px dashed rgba(92,74,48,.2);font-size:10px;color:var(--stone);font-family:'Noto Serif JP',serif}
+.home-item{background:var(--white);border-radius:8px;border:var(--border);padding:9px 12px;margin-bottom:7px;
+  display:flex;align-items:center;gap:10px;box-shadow:var(--shadow)}
+.home-item-time{font-family:'Zen Kurenaido',serif;font-size:13px;color:var(--green-dark);flex-shrink:0;min-width:38px}
+.home-item-name{font-size:13px;color:var(--ink);font-family:'Noto Serif JP',serif;flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav-mini{background:var(--green-pale);border:var(--border);border-radius:5px;padding:4px 8px;font-size:10px;
+  color:var(--green-dark);cursor:pointer;flex-shrink:0;font-family:'Noto Serif JP',serif;text-decoration:none;display:inline-block}
+.nav-mini:active{background:var(--green-light)}
 .weather-card{background:var(--green-pale);border-radius:8px;padding:14px 16px;margin-bottom:18px;border:var(--border);box-shadow:var(--shadow);position:relative;overflow:hidden}
 .weather-temp{font-family:'Zen Kurenaido',serif;font-size:34px;color:var(--green-dark);line-height:1}
 .weather-desc{font-size:12px;color:var(--ink-soft);font-family:'Noto Serif JP',serif}
@@ -234,18 +305,61 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
     </div>
     <div class="date-scroller" id="dateScroller"></div>
     <div class="nav-tabs">
-      <div class="nav-tab active" onclick="switchTab('schedule')" id="tab-schedule"><span class="tab-icon">📅</span>行程</div>
+      <div class="nav-tab active" onclick="switchTab('home')" id="tab-home"><span class="tab-icon">🏠</span>首頁</div>
+      <div class="nav-tab" onclick="switchTab('schedule')" id="tab-schedule"><span class="tab-icon">📅</span>行程</div>
       <div class="nav-tab" onclick="switchTab('checklist')" id="tab-checklist"><span class="tab-icon">🧳</span>清單</div>
-      <div class="nav-tab" onclick="switchTab('spots')" id="tab-spots"><span class="tab-icon">🌸</span>景點</div>
-      <div class="nav-tab" onclick="switchTab('photos')" id="tab-photos"><span class="tab-icon">🖼</span>相簿</div>
+      <div class="nav-tab" onclick="switchTab('spots')" id="tab-spots"><span class="tab-icon">📷</span>拍照</div>
       <div class="nav-tab" onclick="switchTab('split')" id="tab-split"><span class="tab-icon">💴</span>分帳</div>
-      <div class="nav-tab" onclick="switchTab('map')" id="tab-map"><span class="tab-icon">🗺</span>地圖</div>
       <div class="nav-tab" onclick="switchTab('firebase')" id="tab-firebase"><span class="tab-icon">☁️</span>同步</div>
     </div>
   </div>
 
+  <!-- 首頁 -->
+  <div class="content" id="pane-home">
+    <!-- 主視覺卡片 -->
+    <div class="hero-card">
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <div class="hero-day" id="home-daynum">D1</div>
+        <div class="hero-date" id="home-date">9月1日 · 週二</div>
+        <div class="hero-city" id="home-city">🏯 熊本</div>
+      </div>
+    </div>
+
+    <!-- 航班卡（僅 D1/D8 顯示） -->
+    <div id="home-flight"></div>
+
+    <!-- 天氣 + 匯率 雙欄 -->
+    <div class="home-row">
+      <div class="home-mini-card" id="home-weather"></div>
+      <div class="home-mini-card" onclick="switchTab('split')" style="cursor:pointer">
+        <div class="mini-label">匯率速算</div>
+        <div style="display:flex;align-items:center;gap:4px;margin:4px 0">
+          <input class="rate-input" id="home-jpy" type="number" placeholder="1000" oninput="calcHomeRate()" onclick="event.stopPropagation()">
+          <span style="font-size:11px;color:var(--stone)">円</span>
+        </div>
+        <div class="mini-result" id="home-twd">≈ NT$ 0</div>
+        <div style="font-size:8px;color:var(--stone);margin-top:2px" id="home-rate-note">100円 = NT$4.65</div>
+      </div>
+    </div>
+
+    <!-- 今日行程摘要 -->
+    <div class="section-header" style="margin-top:18px">
+      <div><span class="section-jp">きょうのよてい</span><div class="section-title">今日行程</div></div>
+      <button class="btn-add" onclick="switchTab('schedule')">完整行程 →</button>
+    </div>
+    <div id="home-schedule"></div>
+
+    <!-- 今日拍照重點 -->
+    <div class="section-header" style="margin-top:18px">
+      <div><span class="section-jp">しゃしん</span><div class="section-title">今日拍照重點</div></div>
+      <button class="btn-add" onclick="switchTab('spots')">拍照清單 →</button>
+    </div>
+    <div id="home-spots"></div>
+  </div>
+
   <!-- 行程 -->
-  <div class="content" id="pane-schedule">
+  <div class="content" id="pane-schedule" style="display:none">
     <div class="weather-card">
       <div style="position:absolute;right:12px;top:10px;font-size:18px;opacity:.25;transform:rotate(15deg)">🍃</div>
       <div style="display:flex;justify-content:space-between;align-items:center">
@@ -329,11 +443,30 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
   <!-- 景點 -->
   <div class="content" id="pane-spots" style="display:none">
     <div class="section-header">
-      <div><span class="section-jp">觀光導覽</span><div class="section-title">景點介紹</div></div>
-      <button class="btn-add" onclick="openSpotModal()">＋ 新增景點</button>
+      <div><span class="section-jp">Photo Map</span><div class="section-title">拍照清單</div></div>
+      <button class="btn-add" onclick="openSpotModal()">＋ 新增</button>
+    </div>
+
+    <!-- 統計 -->
+    <div class="stat-row" id="spotStats"></div>
+
+    <!-- 篩選 -->
+    <div class="filter-row">
+      <div class="filter-chip active" onclick="setSpotFilter('all')" id="fil-all">全部</div>
+      <div class="filter-chip" onclick="setSpotFilter('todo')" id="fil-todo">未拍</div>
+      <div class="filter-chip" onclick="setSpotFilter('done')" id="fil-done">已拍</div>
+      <div class="filter-chip" onclick="setSpotFilter('today')" id="fil-today">今日</div>
     </div>
 
     <div id="spotList"></div>
+  </div>
+
+  <!-- 景點詳細 Modal -->
+  <div class="modal-overlay" id="spotDetailModal" style="display:none" onclick="if(event.target===this)closeModal('spotDetailModal')">
+    <div class="modal" style="max-height:92vh;overflow-y:auto;padding-top:0">
+      <div class="modal-handle" style="margin-top:14px"></div>
+      <div id="spotDetailBody"></div>
+    </div>
   </div>
 
   <!-- 景點編輯 Modal -->
@@ -362,53 +495,24 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
         <label class="form-label">📷 拍攝建議（每行一條）</label>
         <textarea class="form-input" id="sp-tips" rows="4" placeholder="加藤神社前廣場是最佳拍攝位置&#10;黃昏時分城牆影子延伸效果極佳" style="resize:vertical;line-height:1.8"></textarea>
       </div>
+      <div class="form-group">
+        <label class="form-label">拍攝照片</label>
+        <div id="sp-imgs-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <input class="form-input" id="sp-img-url" placeholder="貼上圖片網址後按 +" style="flex:1">
+          <button onclick="addSpotImgByUrl()" style="background:var(--green-dark);color:var(--cream);border:none;border-radius:5px;padding:0 14px;font-size:17px;cursor:pointer">+</button>
+        </div>
+        <div onclick="triggerSpotImgPicker()" style="border:2px dashed var(--green-light);border-radius:6px;padding:10px;text-align:center;cursor:pointer;background:var(--green-mist)">
+          <div style="font-size:11px;color:var(--stone);font-family:'Noto Serif JP',serif">📷 選擇照片上傳（imgBB 雲端）</div>
+        </div>
+        <div id="sp-img-status" style="display:none;font-size:10px;color:var(--green-dark);margin-top:5px;font-family:'Noto Serif JP',serif"></div>
+      </div>
       <button class="btn-primary" onclick="saveSpot()">儲存景點</button>
       <button class="btn-primary btn-cancel" onclick="closeModal('spotModal')" style="margin-top:9px">取消</button>
     </div>
   </div>
 
 
-
-  <!-- 相簿 -->
-  <div class="content" id="pane-photos" style="display:none">
-    <div class="section-header"><div><span class="section-jp">旅行回憶</span><div class="section-title">旅遊相簿</div></div></div>
-
-    <!-- imgBB 狀態 -->
-    <div id="ibb-key-banner" style="border-radius:10px;padding:12px 14px;margin-bottom:14px;border:1.5px solid var(--green-light);background:var(--green-pale)">
-      <div id="ibb-key-status" style="font-size:12px;font-family:'Noto Serif JP',serif;color:var(--green-dark)">✅ imgBB 已設定，照片自動上傳至雲端，旅伴都能看到</div>
-    </div>
-
-    <div class="ibb-section">
-      <div style="font-family:'Zen Kurenaido',serif;font-size:15px;color:var(--ink);margin-bottom:4px">📸 上傳照片</div>
-      <div style="font-size:11px;color:var(--stone);margin-bottom:10px;font-family:'Noto Serif JP',serif;line-height:1.6">照片會自動上傳至 imgBB 雲端，所有旅伴都能看到</div>
-
-      <!-- 直接上傳按鈕 -->
-      <div class="ibb-drop" onclick="triggerPhotoPicker()" id="ibb-upload-area">
-        <div style="font-size:28px;margin-bottom:6px">📷</div>
-        <div style="font-size:13px;color:var(--stone);font-family:'Noto Serif JP',serif">點此選擇照片上傳</div>
-        <div style="font-size:10px;color:var(--green-light);margin-top:3px">自動上傳至 imgBB 雲端，旅伴可見</div>
-      </div>
-      <!-- 上傳進度 -->
-      <div id="upload-progress" style="display:none;margin-top:10px;padding:10px 12px;background:var(--green-pale);border-radius:8px;border:var(--border)">
-        <div style="font-size:12px;color:var(--green-dark);font-family:'Noto Serif JP',serif" id="upload-status">上傳中...</div>
-        <div style="margin-top:6px;height:4px;background:rgba(92,74,48,.12);border-radius:2px;overflow:hidden">
-          <div id="upload-bar" style="height:100%;background:var(--green);width:0%;transition:width .3s;border-radius:2px"></div>
-        </div>
-      </div>
-
-      <div style="text-align:center;color:var(--stone);font-size:11px;margin:10px 0;font-family:'Noto Serif JP',serif">── 或貼上已有的網址 ──</div>
-      <div class="ibb-url-input">
-        <input class="ibb-url-field" id="ibbUrlInput" placeholder="貼上任何圖片網址...">
-        <button class="btn-ibb" onclick="addPhotoByUrl()">加入</button>
-      </div>
-    </div>
-    <div class="section-header">
-      <div><span class="section-jp" id="photoDay">第 1 天</span><div class="section-title">今日照片</div></div>
-      <div style="font-size:11px;color:var(--stone);font-family:'Noto Serif JP',serif" id="photoCount">0 張</div>
-    </div>
-    <div class="ibb-preview" id="photoGrid"></div>
-    <div id="photoEmpty" class="empty-state"><div class="empty-icon">🌸</div><div class="empty-text">今天還沒有照片</div></div>
-  </div>
 
   <!-- 分帳 -->
   <div class="content" id="pane-split" style="display:none">
@@ -440,12 +544,6 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
   </div>
 
   <!-- 地圖 -->
-  <div class="content" id="pane-map" style="display:none">
-    <div class="section-header"><div><span class="section-jp">今日地點</span><div class="section-title">今日地點</div></div><div style="font-size:11px;background:var(--green-pale);color:var(--green-dark);padding:4px 10px;border-radius:4px;border:var(--border);font-family:'Noto Serif JP',serif" id="placeCount">0 個地點</div></div>
-    <div class="map-placeholder"><div style="font-size:32px">🗺</div><div style="font-size:12px;color:var(--stone);font-family:'Noto Serif JP',serif">點下方地點開啟 Google Maps</div><button onclick="openAllOnMap()" style="background:var(--green);color:var(--cream);border:none;border-radius:4px;padding:7px 16px;font-size:12px;cursor:pointer;font-family:'Noto Serif JP',serif">全部導航 ↗</button></div>
-    <div id="locationList"></div>
-  </div>
-
   <!-- 同步 -->
   <div class="content" id="pane-firebase" style="display:none">
     <!-- 已連線顯示 -->
@@ -474,6 +572,46 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
       <div style="font-family:'Zen Kurenaido',serif;font-size:16px;color:var(--ink);margin-bottom:12px">⚙️ 行程設定</div>
       <div class="form-group"><label class="form-label">出發日期</label><input class="form-input" type="date" id="tripStartDate" value="2026-09-01" onchange="saveTripDate()"></div>
       <button class="btn-primary" onclick="saveTripDate();showToast('出發日期已儲存！🌿')">儲存</button>
+    </div>
+
+    <!-- 航班設定 -->
+    <div class="setup-card" style="margin-top:14px">
+      <div style="font-family:'Zen Kurenaido',serif;font-size:16px;color:var(--ink);margin-bottom:4px">✈️ 航班資訊</div>
+      <div style="font-size:10px;color:var(--stone);margin-bottom:12px;font-family:'Noto Serif JP',serif">會顯示在首頁 D1（去程）和 D8（回程）</div>
+
+      <div style="font-size:11px;font-weight:600;color:var(--green-dark);margin-bottom:8px;font-family:'Noto Serif JP',serif">去程</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">航班號</label><input class="form-input" id="fl-out-no"></div>
+        <div class="form-group"><label class="form-label">日期</label><input class="form-input" id="fl-out-date"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">出發機場</label><input class="form-input" id="fl-out-from" placeholder="TNN"></div>
+        <div class="form-group"><label class="form-label">抵達機場</label><input class="form-input" id="fl-out-to" placeholder="KMJ"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">起飛</label><input class="form-input" id="fl-out-dep" placeholder="15:55"></div>
+        <div class="form-group"><label class="form-label">抵達</label><input class="form-input" id="fl-out-arr" placeholder="19:00"></div>
+      </div>
+
+      <div style="font-size:11px;font-weight:600;color:var(--green-dark);margin:14px 0 8px;font-family:'Noto Serif JP',serif">回程</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">航班號</label><input class="form-input" id="fl-back-no"></div>
+        <div class="form-group"><label class="form-label">日期</label><input class="form-input" id="fl-back-date"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">出發機場</label><input class="form-input" id="fl-back-from" placeholder="KMJ"></div>
+        <div class="form-group"><label class="form-label">抵達機場</label><input class="form-input" id="fl-back-to" placeholder="TNN"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">起飛</label><input class="form-input" id="fl-back-dep" placeholder="12:40"></div>
+        <div class="form-group"><label class="form-label">抵達</label><input class="form-input" id="fl-back-arr" placeholder="14:25"></div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">座位</label><input class="form-input" id="fl-seats" placeholder="18A · 18B"></div>
+        <div class="form-group"><label class="form-label">行李</label><input class="form-input" id="fl-bags" placeholder="20kg x2"></div>
+      </div>
+      <button class="btn-primary" onclick="saveFlights()">儲存航班資訊</button>
     </div>
 
     <!-- 隱藏欄位（程式需要，不顯示）-->
@@ -693,6 +831,8 @@ window.connectFirebase=async function(){
       if(d.photos){photos=d.photos.filter(p=>p.url&&!p.url.startsWith('idb:'));localStorage.setItem('photos',JSON.stringify(photos));}
       if(d.personLists){personLists=d.personLists;localStorage.setItem('personLists',JSON.stringify(personLists));}
       if(d.spots&&d.spots.length){spots=d.spots;localStorage.setItem('spots',JSON.stringify(spots));}
+    if(d.flights){flights=d.flights;localStorage.setItem('flights',JSON.stringify(flights));}
+      if(d.flights){flights=d.flights;localStorage.setItem('flights',JSON.stringify(flights));}
       renderAll();renderChecklist();
       showToast('✅ 已從 Firebase 載入資料！');
     } else if(hasPending){
@@ -747,6 +887,7 @@ window.joinTrip=async function(){
       if(d.photos&&d.photos.length){photos=d.photos.filter(p=>!p.url?.startsWith('idb:'));localStorage.setItem('photos',JSON.stringify(photos));}
       if(d.personLists&&Object.keys(d.personLists).length){personLists=d.personLists;localStorage.setItem('personLists',JSON.stringify(personLists));}
     if(d.spots&&d.spots.length){spots=d.spots;localStorage.setItem('spots',JSON.stringify(spots));}
+    if(d.flights){flights=d.flights;localStorage.setItem('flights',JSON.stringify(flights));}
       renderAll();renderChecklist();
     }
     startListen();
@@ -778,7 +919,10 @@ function startListen(){
       }
       if(d.personLists){personLists=d.personLists;localStorage.setItem('personLists',JSON.stringify(personLists));}
     if(d.spots&&d.spots.length){spots=d.spots;localStorage.setItem('spots',JSON.stringify(spots));}
+    if(d.flights){flights=d.flights;localStorage.setItem('flights',JSON.stringify(flights));}
       if(d.spots&&d.spots.length){spots=d.spots;localStorage.setItem('spots',JSON.stringify(spots));}
+    if(d.flights){flights=d.flights;localStorage.setItem('flights',JSON.stringify(flights));}
+      if(d.flights){flights=d.flights;localStorage.setItem('flights',JSON.stringify(flights));}
       if(d.tripStartDate){localStorage.setItem('tripStartDate',d.tripStartDate);document.getElementById('tripStartDate').value=d.tripStartDate;updateDates();}
       renderAll();renderChecklist();
     }
@@ -878,7 +1022,7 @@ window.syncToFirebase=async function(retry){
       };
     });
     const tripDate=localStorage.getItem('tripStartDate')||'2026-09-01';
-    await setDoc(doc(db,'trips',tripCode),{schedules,members,expenses,photos:photosForSync,personLists:plForSync,spots,tripStartDate:tripDate,updatedAt:Date.now()},{merge:true});
+    await setDoc(doc(db,'trips',tripCode),{schedules,members,expenses,photos:photosForSync,personLists:plForSync,spots,flights,tripStartDate:tripDate,updatedAt:Date.now()},{merge:true});
     localStorage.removeItem('pendingSync'); // 同步成功，清除標記
   }catch(e){
     console.error('sync error',e);
@@ -1017,6 +1161,13 @@ async function resolveImgSrc(refOrUrl){
 const DOW=['日','一','二','三','四','五','六'];
 
 // 8天行程資料
+// ── 航班資料（可在同步頁編輯）──
+const DEFAULT_FLIGHTS={
+  out:{no:'IT794',from:'TNN',to:'KMJ',fromName:'台南',toName:'熊本',date:'2026/09/01',dep:'15:55',arr:'19:00',seats:'18A · 18B',bags:'20kg x2'},
+  back:{no:'IT795',from:'KMJ',to:'TNN',fromName:'熊本',toName:'台南',date:'2026/09/08',dep:'12:40',arr:'14:25',seats:'18A · 18B',bags:'20kg x2'}
+};
+let flights=JSON.parse(localStorage.getItem('flights')||'null')||JSON.parse(JSON.stringify(DEFAULT_FLIGHTS));
+
 const TRIP_DAYS=[
   {city:'熊本',emoji:'🏯',jp:'いちにちめ',wx:{icon:'✈️',temp:26,desc:'抵達熊本',h:65,w:2.5,lo:20,hi:28}},
   {city:'熊本',emoji:'🏯',jp:'第二天',wx:{icon:'☀️',temp:27,desc:'晴天',h:60,w:3.0,lo:21,hi:29}},
@@ -1181,6 +1332,7 @@ function save(){
     localStorage.setItem('personLists',JSON.stringify(plCopy));
   }catch(e){console.error('personLists save error',e);}
   try{localStorage.setItem('spots',JSON.stringify(spots));}catch(e){}
+  try{localStorage.setItem('flights',JSON.stringify(flights));}catch(e){}
   if(window.debouncedSync)window.debouncedSync();
 }
 
@@ -1291,7 +1443,7 @@ function updateDates(){
     const trip=TRIP_DAYS[i];
     const el=document.createElement('div');el.className='date-chip'+(i===curDay?' active':'');
     el.innerHTML=`<span class="day-num">D${i+1}</span><span class="day-label">${d.num}/${d.lbl}</span><span class="day-city">${trip.emoji}${trip.city}</span>`;
-    el.onclick=()=>{curDay=i;updateDates();renderSchedule();renderMap();renderPhotos();};
+    el.onclick=()=>{curDay=i;updateDates();renderSchedule();renderHome();renderSpots();};
     sc.appendChild(el);
   });
   const trip=TRIP_DAYS[curDay];
@@ -1312,6 +1464,131 @@ function onTypeChange(){
 }
 
 
+
+// ── 航班 ──
+function loadFlightsUI(){
+  const f=flights;
+  const set=(id,v)=>{const el=document.getElementById(id); if(el) el.value=v||'';};
+  set('fl-out-no',f.out.no); set('fl-out-date',f.out.date);
+  set('fl-out-from',f.out.from); set('fl-out-to',f.out.to);
+  set('fl-out-dep',f.out.dep); set('fl-out-arr',f.out.arr);
+  set('fl-back-no',f.back.no); set('fl-back-date',f.back.date);
+  set('fl-back-from',f.back.from); set('fl-back-to',f.back.to);
+  set('fl-back-dep',f.back.dep); set('fl-back-arr',f.back.arr);
+  set('fl-seats',f.out.seats); set('fl-bags',f.out.bags);
+}
+
+const AIRPORT_NAMES={TNN:'台南',KMJ:'熊本',FUK:'福岡',TPE:'桃園',KHH:'高雄',RMQ:'台中',NRT:'成田',HND:'羽田',KIX:'關西'};
+
+function saveFlights(){
+  const g=id=>{const el=document.getElementById(id); return el?el.value.trim():'';};
+  const seats=g('fl-seats'), bags=g('fl-bags');
+  flights={
+    out:{no:g('fl-out-no'),from:g('fl-out-from'),to:g('fl-out-to'),
+         fromName:AIRPORT_NAMES[g('fl-out-from')]||g('fl-out-from'),
+         toName:AIRPORT_NAMES[g('fl-out-to')]||g('fl-out-to'),
+         date:g('fl-out-date'),dep:g('fl-out-dep'),arr:g('fl-out-arr'),seats,bags},
+    back:{no:g('fl-back-no'),from:g('fl-back-from'),to:g('fl-back-to'),
+          fromName:AIRPORT_NAMES[g('fl-back-from')]||g('fl-back-from'),
+          toName:AIRPORT_NAMES[g('fl-back-to')]||g('fl-back-to'),
+          date:g('fl-back-date'),dep:g('fl-back-dep'),arr:g('fl-back-arr'),seats,bags}
+  };
+  localStorage.setItem('flights',JSON.stringify(flights));
+  if(window.debouncedSync) window.debouncedSync();
+  renderHome();
+  showToast('✈️ 航班資訊已儲存！');
+}
+
+// ══════════════════════════════════════════
+//  首頁
+// ══════════════════════════════════════════
+function renderHome(){
+  const d=TRIP_DAYS[curDay];
+  const dates=getDates();
+  const dd=dates[curDay];
+
+  // 主視覺
+  document.getElementById('home-daynum').textContent='D'+(curDay+1);
+  document.getElementById('home-date').textContent=dd.m+'月'+dd.d+'日 · '+dd.wk;
+  document.getElementById('home-city').textContent=d.emoji+' '+d.city;
+
+  // 航班（D1 去程 / D8 回程）
+  const fEl=document.getElementById('home-flight');
+  let f=null,label='';
+  if(curDay===0){f=flights.out;label='去程';}
+  else if(curDay===TRIP_DAYS.length-1){f=flights.back;label='回程';}
+  fEl.innerHTML=f?`<div class="flight-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px">
+      <span style="font-size:10px;color:var(--stone);letter-spacing:1.5px;font-family:'Noto Serif JP',serif">✈️ ${label} · ${f.no}</span>
+      <span style="font-size:9px;color:var(--green-dark);cursor:pointer;font-family:'Noto Serif JP',serif" onclick="switchTab('firebase')">編輯 ›</span>
+    </div>
+    <div class="flight-route">
+      <div class="flight-port">
+        <div class="flight-code">${f.from}</div>
+        <div class="flight-time">${f.dep}</div>
+        <div style="font-size:9px;color:var(--stone);margin-top:1px">${f.fromName}</div>
+      </div>
+      <div class="flight-arrow">✈</div>
+      <div class="flight-port">
+        <div class="flight-code">${f.to}</div>
+        <div class="flight-time">${f.arr}</div>
+        <div style="font-size:9px;color:var(--stone);margin-top:1px">${f.toName}</div>
+      </div>
+    </div>
+    <div class="flight-meta"><span>💺 ${f.seats}</span><span>🧳 ${f.bags}</span></div>
+  </div>`:'';
+
+  // 天氣
+  document.getElementById('home-weather').innerHTML=`
+    <div class="mini-label">今日天氣</div>
+    <div style="display:flex;align-items:baseline;gap:5px;margin:4px 0">
+      <span style="font-size:22px">${d.wx.icon}</span>
+      <span class="mini-result">${d.wx.temp}°</span>
+    </div>
+    <div style="font-size:10px;color:var(--stone);font-family:'Noto Serif JP',serif">${d.wx.desc} · ${d.wx.lo}~${d.wx.hi}°</div>`;
+
+  // 匯率提示
+  const rn=document.getElementById('home-rate-note');
+  if(rn) rn.textContent='100円 = NT$'+rate.toFixed(2);
+  calcHomeRate();
+
+  // 今日行程
+  const list=schedules.filter(s=>s.day===curDay).sort((a,b)=>a.time.localeCompare(b.time));
+  const sEl=document.getElementById('home-schedule');
+  sEl.innerHTML=list.length?list.map(s=>{
+    const ico={sight:'🌸',food:'🍜',shop:'🛍',hotel:'🏨',transport:'🚃'}[s.type]||'📍';
+    const nav=s.place?`<a class="nav-mini" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.place)}" target="_blank" onclick="event.stopPropagation()">導航 ↗</a>`:'';
+    return `<div class="home-item" onclick="switchTab('schedule')">
+      <span class="home-item-time">${s.time}</span>
+      <span style="font-size:14px;flex-shrink:0">${ico}</span>
+      <span class="home-item-name">${s.name}</span>
+      ${nav}
+    </div>`;
+  }).join(''):`<div style="text-align:center;padding:20px;color:var(--stone);font-size:12px;font-family:'Noto Serif JP',serif">今天還沒有安排行程</div>`;
+
+  // 今日拍照重點
+  const todaySpots=spots.filter(s=>getSpotDay(s)===curDay);
+  const spEl=document.getElementById('home-spots');
+  spEl.innerHTML=todaySpots.length?todaySpots.slice(0,3).map(s=>{
+    const done=s.shot?'✓':'○';
+    const col=s.shot?'var(--green-dark)':'var(--stone)';
+    return `<div class="home-item" onclick="switchTab('spots')">
+      <span style="color:${col};font-size:14px;flex-shrink:0;min-width:14px">${done}</span>
+      <span style="font-size:15px;flex-shrink:0">${s.camera||'📷'}</span>
+      <span class="home-item-name">${s.name}</span>
+      ${s.tips&&s.tips.length?`<span style="font-size:9px;color:var(--stone);flex-shrink:0;font-family:'Noto Serif JP',serif">${s.tips.length}則建議</span>`:''}
+    </div>`;
+  }).join('')+(todaySpots.length>3?`<div style="text-align:center;font-size:10px;color:var(--stone);padding:4px;font-family:'Noto Serif JP',serif">還有 ${todaySpots.length-3} 個景點...</div>`:''):
+    `<div style="text-align:center;padding:20px;color:var(--stone);font-size:12px;font-family:'Noto Serif JP',serif">今天沒有拍照景點</div>`;
+}
+
+function calcHomeRate(){
+  const inp=document.getElementById('home-jpy');
+  const out=document.getElementById('home-twd');
+  if(!inp||!out)return;
+  const jpy=parseFloat(inp.value)||0;
+  out.textContent='≈ NT$ '+Math.round(jpy*rate/100).toLocaleString();
+}
 
 // 把備註文字轉成漂亮的 HTML（支援連結、分點、圖示行）
 function formatNote(text){
@@ -1576,7 +1853,7 @@ async function saveSched(){
   }
   clearSchedImg();
   curDay=obj.day;
-  save();closeModal('schedModal');updateDates();renderSchedule();renderMap();
+  save();closeModal('schedModal');updateDates();renderSchedule();renderHome();
   // 行程更新後重新排序景點（如果景點頁在前景）
   if(document.getElementById('pane-spots').style.display!=='none') renderSpots();
 }
@@ -1590,7 +1867,7 @@ function delSched(id){
       spots.splice(linkedIdx,1);
     }
   }
-  save();renderSchedule();renderMap();renderSpots();
+  save();renderSchedule();renderSpots();renderHome();
 }
 
 
@@ -1868,69 +2145,161 @@ function getSpotTime(s){
   return sc?sc.time:'99:99';
 }
 
+let spotFilter='all';
+
+function setSpotFilter(f){
+  spotFilter=f;
+  ['all','todo','done','today'].forEach(x=>{
+    const el=document.getElementById('fil-'+x);
+    if(el) el.classList.toggle('active',x===f);
+  });
+  renderSpots();
+}
+
 function renderSpots(){
   const el=document.getElementById('spotList');
+  if(!el) return;
+
+  // 統計
+  const total=spots.length;
+  const done=spots.filter(s=>s.shot).length;
+  const today=spots.filter(s=>getSpotDay(s)===curDay).length;
+  const pct=total?Math.round(done/total*100):0;
+  const st=document.getElementById('spotStats');
+  if(st) st.innerHTML=`
+    <div class="stat-box"><div class="stat-num">${total}</div><div class="stat-lbl">全部景點</div></div>
+    <div class="stat-box"><div class="stat-num">${today}</div><div class="stat-lbl">今日拍攝</div></div>
+    <div class="stat-box"><div class="stat-num">${done}</div><div class="stat-lbl">已完成</div></div>
+    <div class="stat-box"><div class="stat-num">${pct}%</div><div class="stat-lbl">完成度</div></div>`;
+
   if(!spots.length){
-    el.innerHTML=`<div class="empty-state"><div class="empty-icon">🌸</div><div class="empty-text">還沒有景點<br>點右上角「＋ 新增景點」加入</div></div>`;
+    el.innerHTML=`<div class="empty-state"><div class="empty-icon">📷</div><div class="empty-text">還沒有拍照景點<br>點右上角「＋ 新增」加入</div></div>`;
     return;
   }
-  // 按行程日期+時間自動排序
+
+  // 排序：按天 + 時間
   spots.sort((a,b)=>{
     const da=getSpotDay(a),db=getSpotDay(b);
     if(da!==db) return da-db;
     return getSpotTime(a).localeCompare(getSpotTime(b));
   });
-  let lastDay=-1;
-  el.innerHTML=spots.map(s=>{
+
+  // 篩選
+  let list=spots;
+  if(spotFilter==='todo') list=spots.filter(s=>!s.shot);
+  else if(spotFilter==='done') list=spots.filter(s=>s.shot);
+  else if(spotFilter==='today') list=spots.filter(s=>getSpotDay(s)===curDay);
+
+  if(!list.length){
+    const msg={todo:'全部拍完了！🎉',done:'還沒有拍過的景點',today:'今天沒有拍照景點'}[spotFilter]||'沒有景點';
+    el.innerHTML=`<div class="empty-state"><div class="empty-icon">📷</div><div class="empty-text">${msg}</div></div>`;
+    return;
+  }
+
+  let lastDay=-99;
+  el.innerHTML=list.map(s=>{
     const day=getSpotDay(s);
-    const timeStr=day<999?`<div style="font-size:9px;color:var(--stone);font-family:'Noto Serif JP',serif">${getSpotTime(s)}</div>`:'';
-    // 天數分組標題（綠底）
-    let dayHeader='';
+    let hdr='';
     if(day!==lastDay){
       lastDay=day;
-      const label=day<999?('D'+(day+1)+' · '+TRIP_DAYS[day].city):'其他景點';
-      dayHeader=`<div style="background:var(--green-dark);color:var(--cream);font-family:'Zen Kurenaido',serif;font-size:15px;padding:6px 16px;border-radius:6px;margin:${lastDay===day&&spots.indexOf(s)===0?'0':'14px'} 0 10px;display:inline-block;letter-spacing:1px">${label}</div>`;
+      const lbl=day<999?('D'+(day+1)+' · '+TRIP_DAYS[day].city):'未排入行程';
+      hdr=`<div class="day-header">${lbl}</div>`;
     }
-    return dayHeader+`<div class="spot-card" id="spot-${s.id}"
-      ondragover="spotDragOver(event)"
-      ondragleave="spotDragLeave(event)"
-      ondrop="spotDrop(event,'${s.id}')"
-      ondragend="spotDragEnd()">
-      <div class="spot-header" onclick="toggleSpot('${s.id}')">
-        <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:6px">
-            <span draggable="true"
-              ondragstart="spotDragStart(event,'${s.id}')"
-              ontouchstart="spotHandleTouchStart(event,'${s.id}')"
-              ontouchmove="spotHandleTouchMove(event)"
-              ontouchend="spotHandleTouchEnd(event)"
-              style="font-size:18px;cursor:grab;color:var(--stone);flex-shrink:0;padding:4px;touch-action:none" title="拖曳排序">⠿</span>
-            <span style="font-size:20px;flex-shrink:0">${s.camera||'🌸'}</span>
-            <div style="min-width:0">
-              <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">
-                <div class="spot-name">${s.name}</div>
-              </div>
-              ${timeStr}
-            </div>
-          </div>
-          <div class="spot-area">📍 ${s.area}</div>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
-          <span class="spot-tag" style="color:${s.tagColor||'var(--green-dark)'}">${s.tag||'景點'}</span>
-          <div style="display:flex;gap:4px;align-items:center">
-            <button class="card-btn" onclick="event.stopPropagation();editSpot('${s.id}')" style="opacity:.5;font-size:13px">✏️</button>
-            <button class="card-btn" onclick="event.stopPropagation();delSpot('${s.id}')" style="opacity:.5;font-size:13px">🗑</button>
-            <span class="spot-arrow" id="sarrow-${s.id}">▼</span>
+    const img=(s.imgs&&s.imgs.length)?s.imgs[0]:(s.img||'');
+    const thumb=img?`<img src="${img}" onerror="this.parentElement.innerHTML='${s.camera||'📷'}'">`:(s.camera||'📷');
+    const time=day<999?getSpotTime(s):'';
+    const shotCount=(s.imgs||[]).length;
+    return hdr+`<div class="pm-card ${s.shot?'done':''}" onclick="openSpotDetail('${s.id}')">
+      <div class="pm-body">
+        <div class="pm-thumb">${thumb}</div>
+        <div class="pm-info">
+          <div class="pm-name">${s.name}</div>
+          <div class="pm-meta">${time?time+' · ':''}${s.area||''}</div>
+          <div class="pm-badges">
+            ${s.tag?`<span class="pm-badge">${s.tag}</span>`:''}
+            ${s.tips&&s.tips.length?`<span class="pm-badge">📷 ${s.tips.length}則建議</span>`:''}
+            ${shotCount?`<span class="pm-badge">🖼 ${shotCount}張</span>`:''}
           </div>
         </div>
-      </div>
-      <div class="spot-body" id="spotbody-${s.id}">
-        <div class="spot-desc">${s.desc||''}</div>
-        ${(s.info&&s.info.length)?`<div class="spot-divider"></div><div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px">${s.info.map(i=>`<div class="spot-info-item"><span>${i.icon}</span><span>${i.text}</span></div>`).join('')}</div>`:''}
-        ${(s.tips&&s.tips.length)?`<div class="spot-divider"></div><div class="spot-tips-title">📷 拍攝建議</div>${s.tips.map(t=>`<div class="spot-tip">${t}</div>`).join('')}`:''}
+        <div class="pm-check" style="color:${s.shot?'var(--green-dark)':'rgba(155,142,122,.4)'}">${s.shot?'✓':'○'}</div>
       </div>
     </div>`;
   }).join('');
+}
+
+// ── 景點詳細 ──
+function openSpotDetail(id){
+  const s=spots.find(x=>x.id===id);
+  if(!s) return;
+  const day=getSpotDay(s);
+  const img=(s.imgs&&s.imgs.length)?s.imgs[0]:(s.img||'');
+  const navQ=encodeURIComponent(s.area||s.name);
+
+  document.getElementById('spotDetailBody').innerHTML=`
+    ${img?`<img class="detail-hero" src="${img}" style="border-radius:8px" onerror="this.style.display='none'">`:
+      `<div class="detail-hero" style="display:flex;align-items:center;justify-content:center;font-size:52px;border-radius:8px">${s.camera||'📷'}</div>`}
+
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-top:13px;gap:10px">
+      <div style="flex:1;min-width:0">
+        <div style="font-family:'Zen Kurenaido',serif;font-size:20px;color:var(--ink)">${s.name}</div>
+        <div style="font-size:11px;color:var(--stone);margin-top:3px;font-family:'Noto Serif JP',serif">📍 ${s.area||''}</div>
+      </div>
+      <span class="spot-tag" style="flex-shrink:0;color:${s.tagColor||'var(--green-dark)'}">${s.tag||'景點'}</span>
+    </div>
+
+    ${day<999?`<div style="display:flex;gap:8px;margin-top:10px">
+      <div style="flex:1;background:var(--green-pale);border-radius:6px;padding:8px 10px;border:var(--border)">
+        <div style="font-size:8px;color:var(--stone);letter-spacing:1px;font-family:'Noto Serif JP',serif">DAY</div>
+        <div style="font-family:'Zen Kurenaido',serif;font-size:14px;color:var(--green-dark)">D${day+1} · ${TRIP_DAYS[day].city}</div>
+      </div>
+      <div style="flex:1;background:var(--green-pale);border-radius:6px;padding:8px 10px;border:var(--border)">
+        <div style="font-size:8px;color:var(--stone);letter-spacing:1px;font-family:'Noto Serif JP',serif">TIME</div>
+        <div style="font-family:'Zen Kurenaido',serif;font-size:14px;color:var(--green-dark)">${getSpotTime(s)}</div>
+      </div>
+    </div>`:''}
+
+    <div class="detail-actions">
+      <a class="detail-btn btn-nav" href="https://www.google.com/maps/search/?api=1&query=${navQ}" target="_blank">🧭 Google 導航</a>
+      <button class="detail-btn btn-shot ${s.shot?'on':''}" onclick="toggleShot('${s.id}')">${s.shot?'✓ 已拍攝':'標記已拍'}</button>
+    </div>
+
+    ${s.desc?`<div style="font-size:12px;color:var(--ink-soft);line-height:1.75;font-family:'Noto Serif JP',serif;
+      padding:11px;background:var(--cream-dark);border-radius:7px;margin-bottom:11px">${s.desc}</div>`:''}
+
+    ${(s.info&&s.info.length)?`<div style="display:flex;flex-wrap:wrap;gap:9px;margin-bottom:12px">
+      ${s.info.map(i=>`<div class="spot-info-item"><span>${i.icon}</span><span>${i.text}</span></div>`).join('')}
+    </div>`:''}
+
+    ${(s.tips&&s.tips.length)?`<div style="background:var(--green-mist);border-radius:8px;padding:12px;margin-bottom:12px;border:var(--border)">
+      <div class="spot-tips-title" style="margin-bottom:6px">📷 拍攝建議</div>
+      ${s.tips.map(t=>`<div class="spot-tip">${t}</div>`).join('')}
+    </div>`:''}
+
+    ${(s.imgs&&s.imgs.length>1)?`<div style="margin-bottom:12px">
+      <div style="font-size:10px;color:var(--stone);letter-spacing:1px;margin-bottom:7px;font-family:'Noto Serif JP',serif">拍攝照片 · ${s.imgs.length} 張</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px">
+        ${s.imgs.map(u=>`<img src="${u}" onclick="openLightbox('${u}')"
+          style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:5px;cursor:pointer;background:var(--green-pale)">`).join('')}
+      </div>
+    </div>`:''}
+
+    <div class="detail-actions">
+      <button class="detail-btn btn-ghost" onclick="closeModal('spotDetailModal');editSpot('${s.id}')">✏️ 編輯</button>
+      <button class="detail-btn btn-ghost" onclick="closeModal('spotDetailModal');delSpot('${s.id}')" style="color:var(--red)">🗑 刪除</button>
+    </div>
+    <button class="btn-primary btn-cancel" onclick="closeModal('spotDetailModal')">關閉</button>`;
+
+  document.getElementById('spotDetailModal').style.display='flex';
+}
+
+function toggleShot(id){
+  const i=spots.findIndex(s=>s.id===id);
+  if(i<0) return;
+  spots[i].shot=!spots[i].shot;
+  save();
+  renderSpots();
+  openSpotDetail(id);
+  showToast(spots[i].shot?'✅ 已標記拍攝完成':'已取消標記');
 }
 
 // 拖曳排序 - 只有把手(⠿)觸發，避免誤觸
@@ -2019,56 +2388,153 @@ function spotHandleTouchEnd(e){
   touchDragEl=null;dragSpotId=null;touchDragging=false;
 }
 
+let spotImgs=[];       // 已有的圖片網址
+let newSpotImgFiles=[]; // 新選的檔案
+
+function renderSpotImgsList(){
+  const el=document.getElementById('sp-imgs-list');
+  if(!el) return;
+  const all=[...spotImgs.map(u=>({url:u,isNew:false})),
+             ...newSpotImgFiles.map(f=>({url:f.previewUrl,isNew:true}))];
+  if(!all.length){ el.innerHTML=''; return; }
+  el.innerHTML=all.map((it,i)=>`<div style="position:relative;width:56px;height:56px;border-radius:5px;overflow:hidden;border:var(--border)">
+    <img src="${it.url}" style="width:100%;height:100%;object-fit:cover">
+    <button onclick="removeSpotImg(${i},${it.isNew})" style="position:absolute;top:1px;right:1px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:15px;height:15px;font-size:9px;cursor:pointer;line-height:1;padding:0">✕</button>
+    ${it.isNew?'<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(184,134,11,.9);color:#fff;font-size:7px;text-align:center">新</div>':
+               '<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(58,107,56,.85);color:#fff;font-size:7px;text-align:center">已存</div>'}
+  </div>`).join('');
+}
+
+function removeSpotImg(idx,isNew){
+  if(isNew){
+    const ni=idx-spotImgs.length;
+    if(newSpotImgFiles[ni]?.previewUrl) URL.revokeObjectURL(newSpotImgFiles[ni].previewUrl);
+    newSpotImgFiles.splice(ni,1);
+  }else{
+    spotImgs.splice(idx,1);
+  }
+  renderSpotImgsList();
+}
+
+function addSpotImgByUrl(){
+  const inp=document.getElementById('sp-img-url');
+  const url=inp.value.trim();
+  if(!url){ showToast('請輸入圖片網址'); return; }
+  spotImgs.push(url);
+  inp.value='';
+  renderSpotImgsList();
+}
+
+function triggerSpotImgPicker(){
+  const input=document.createElement('input');
+  input.type='file'; input.accept='image/*'; input.multiple=true;
+  document.body.appendChild(input);
+  input.onchange=e=>{
+    const files=Array.from(e.target.files);
+    files.forEach(file=>newSpotImgFiles.push({file,previewUrl:URL.createObjectURL(file)}));
+    renderSpotImgsList();
+    const st=document.getElementById('sp-img-status');
+    if(st){ st.style.display='block'; st.textContent='📷 已選 '+files.length+' 張，儲存時上傳 imgBB'; }
+    document.body.removeChild(input);
+  };
+  input.click();
+}
+
 let editSpotId=null;
 
 function openSpotModal(){
   editSpotId=null;
-  document.getElementById('spotModalTitle').textContent='新增景點 🌸';
-  ['sp-name','sp-area','sp-desc','sp-info','sp-tips','sp-tag'].forEach(id=>{
+  document.getElementById('spotModalTitle').textContent='新增拍照景點 📷';
+  ['sp-name','sp-area','sp-desc','sp-info','sp-tips','sp-tag','sp-img-url'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value='';
   });
-  document.getElementById('sp-camera').value='🌸';
+  document.getElementById('sp-camera').value='📷';
+  newSpotImgFiles.forEach(f=>{ if(f.previewUrl) URL.revokeObjectURL(f.previewUrl); });
+  newSpotImgFiles=[]; spotImgs=[];
   document.getElementById('spotModal').style.display='flex';
+  setTimeout(()=>{
+    renderSpotImgsList();
+    const st=document.getElementById('sp-img-status'); if(st) st.style.display='none';
+  },50);
 }
+
 function editSpot(id){
-  const s=spots.find(x=>x.id===id); if(!s)return;
+  const s=spots.find(x=>x.id===id); if(!s) return;
   editSpotId=id;
   document.getElementById('spotModalTitle').textContent='編輯景點 ✏️';
-  document.getElementById('sp-camera').value=s.camera||'🌸';
+  document.getElementById('sp-camera').value=s.camera||'📷';
   document.getElementById('sp-tag').value=s.tag||'';
   document.getElementById('sp-name').value=s.name||'';
   document.getElementById('sp-area').value=s.area||'';
   document.getElementById('sp-desc').value=s.desc||'';
-  // info: 轉成每行 "圖示 內容"
   document.getElementById('sp-info').value=(s.info||[]).map(i=>i.icon+' '+i.text).join(String.fromCharCode(10));
   document.getElementById('sp-tips').value=(s.tips||[]).join(String.fromCharCode(10));
+  document.getElementById('sp-img-url').value='';
+  newSpotImgFiles.forEach(f=>{ if(f.previewUrl) URL.revokeObjectURL(f.previewUrl); });
+  newSpotImgFiles=[];
+  spotImgs=[...(s.imgs&&s.imgs.length?s.imgs:(s.img?[s.img]:[]))];
   document.getElementById('spotModal').style.display='flex';
+  setTimeout(()=>{
+    renderSpotImgsList();
+    const st=document.getElementById('sp-img-status'); if(st) st.style.display='none';
+  },50);
 }
-function saveSpot(){
+
+async function saveSpot(){
   const name=document.getElementById('sp-name').value.trim();
-  if(!name){showToast('請輸入景點名稱');return;}
-  // 解析 info：每行 "圖示 內容"
+  if(!name){ showToast('請輸入景點名稱'); return; }
+  const btn=document.querySelector('#spotModal .btn-primary');
+  const orig=btn?btn.textContent:'';
+
+  // 上傳新照片到 imgBB
+  let finalImgs=[...spotImgs];
+  if(newSpotImgFiles.length){
+    if(btn){ btn.textContent='📤 上傳照片中...'; btn.disabled=true; }
+    for(const f of newSpotImgFiles){
+      try{
+        const url=await uploadToIBB(f.file);
+        if(url) finalImgs.push(url);
+      }catch(e){ console.error('imgBB 上傳失敗',e); }
+      if(f.previewUrl) URL.revokeObjectURL(f.previewUrl);
+    }
+    if(btn){ btn.textContent=orig; btn.disabled=false; }
+  }
+
   const infoLines=document.getElementById('sp-info').value.split(String.fromCharCode(10)).filter(l=>l.trim());
   const info=infoLines.map(l=>{
-    const parts=l.trim().split(/\s+/);const icon=parts[0];const text=parts.slice(1).join(' ');
+    const parts=l.trim().split(/\s+/);
+    const icon=parts[0];
+    const text=parts.slice(1).join(' ');
     return text?{icon,text}:{icon:'📌',text:l.trim()};
   });
   const tips=document.getElementById('sp-tips').value.split(String.fromCharCode(10)).filter(l=>l.trim());
+
   const obj={
     id:editSpotId||('sp'+Date.now()),
     name,
     area:document.getElementById('sp-area').value.trim(),
-    camera:document.getElementById('sp-camera').value.trim()||'🌸',
+    camera:document.getElementById('sp-camera').value.trim()||'📷',
     tag:document.getElementById('sp-tag').value.trim()||'景點',
     tagColor:'var(--green-dark)',
     desc:document.getElementById('sp-desc').value.trim(),
-    info, tips
+    info, tips,
+    imgs:finalImgs,
+    img:finalImgs[0]||''
   };
-  if(editSpotId){ const i=spots.findIndex(s=>s.id===editSpotId); spots[i]=obj; }
-  else spots.push(obj);
-  save(); closeModal('spotModal'); renderSpots();
-  showToast(editSpotId?'景點已更新！':'景點已新增 🌸');
+
+  if(editSpotId){
+    const i=spots.findIndex(s=>s.id===editSpotId);
+    obj.schedId=spots[i].schedId;
+    obj.shot=spots[i].shot;
+    spots[i]=obj;
+  }else{
+    spots.push(obj);
+  }
+  newSpotImgFiles=[]; spotImgs=[];
+  save(); closeModal('spotModal'); renderSpots(); renderHome();
+  showToast(editSpotId?'景點已更新！':'景點已新增 📷');
 }
+
 function delSpot(id){
   if(!confirm('確定刪除此景點？'))return;
   spots=spots.filter(s=>s.id!==id);
@@ -2078,17 +2544,13 @@ function delSpot(id){
 function toggleSpot(id){const body=document.getElementById('spotbody-'+id);const arrow=document.getElementById('sarrow-'+id);const isOpen=body.classList.contains('open');body.classList.toggle('open',!isOpen);arrow.style.transform=isOpen?'rotate(0)':'rotate(180deg)';}
 
 /* ── Tips ── */
-function addPhotoByUrl(){const url=document.getElementById('ibbUrlInput').value.trim();if(!url){showToast('請輸入網址');return;}photos.push({id:'p'+Date.now(),day:curDay,url});save();renderPhotos();document.getElementById('ibbUrlInput').value='';showToast('照片已加入 🌸');}
 // ══════════════════════════════════════════
 //  ★ imgBB API Key（直接填在這裡）
 //  取得方式：登入 imgbb.com → API → 複製 key
 // ══════════════════════════════════════════
 const IMGBB_API_KEY = '37aa0f571e7acc757470fe991d8179af';
 
-function updateIbbKeyUI(){
-  const banner=document.getElementById('ibb-key-banner');
-  if(banner) banner.style.display='none';
-}
+function updateIbbKeyUI(){ /* imgBB Key 已內建，無需 UI */ }
 
 function getIbbKey(){
   // 優先用寫死的 Key，其次用 localStorage（給朋友版用）
@@ -2111,95 +2573,6 @@ async function uploadToIBB(file){
   const data=await res.json();
   if(!data.success) throw new Error(data.error?.message||'上傳失敗');
   return data.data.url; // 永久公開圖片 URL
-}
-
-function triggerPhotoPicker(){
-  const input=document.createElement('input');
-  input.type='file';input.accept='image/*';input.multiple=true;
-  document.body.appendChild(input);
-  input.onchange=function(e){handleFileUpload(e);document.body.removeChild(input);};
-  input.click();
-}
-async function handleFileUpload(e){
-  const files=Array.from(e.target.files);
-  if(!files.length)return;
-  const key=getIbbKey();
-  const prog=document.getElementById('upload-progress');
-  const statusEl=document.getElementById('upload-status');
-  const bar=document.getElementById('upload-bar');
-  prog.style.display='block';
-  let success=0,fail=0;
-  for(let i=0;i<files.length;i++){
-    const file=files[i];
-    const pct=Math.round(i/files.length*100);
-    bar.style.width=pct+'%';
-    statusEl.textContent=`上傳中 ${i+1}/${files.length}：${file.name}`;
-    if(key){
-      // 有 API Key -> 上傳到 imgBB 雲端
-      try{
-        const url=await uploadToIBB(file);
-        photos.push({id:'p'+Date.now()+i,day:curDay,url});
-        success++;
-      }catch(err){
-        console.error('imgBB 上傳失敗',err);
-        // 失敗 fallback：存 IndexedDB（本機）
-        const idbKey='idb:'+Date.now()+i;
-        try{await idbSet(idbKey,file);photos.push({id:'p'+Date.now()+i,day:curDay,url:idbKey,localOnly:true});}catch(e){}
-        fail++;
-      }
-    }else{
-      // 沒有 API Key -> 存 IndexedDB（本機，旅伴看不到）
-      const idbKey='idb:'+Date.now()+i;
-      try{await idbSet(idbKey,file);photos.push({id:'p'+Date.now()+i,day:curDay,url:idbKey,localOnly:true});success++;}catch(err){fail++;}
-    }
-  }
-  bar.style.width='100%';
-  save();
-  await renderPhotos();
-  setTimeout(()=>{prog.style.display='none';bar.style.width='0%';},1500);
-  if(key) showToast(fail?`上傳完成（${success}張成功，${fail}張失敗）`:`✅ 已上傳 ${success} 張至 imgBB 🌿`);
-  else showToast(`已儲存 ${success} 張（本機，旅伴看不到）`);
-}
-async function delPhoto(id){
-  const p=photos.find(x=>x.id===id);
-  if(p&&p.url&&p.url.startsWith('idb:')){
-    try{await idbDelete(p.url);}catch(e){}
-    if(imgCache[p.url]){URL.revokeObjectURL(imgCache[p.url]);delete imgCache[p.url];}
-  }
-  photos=photos.filter(p=>p.id!==id);save();renderPhotos();
-}
-
-async function renderPhotos(){
-  updateIbbKeyUI();
-  const dp=photos.filter(p=>p.day===curDay);
-  const dayEl=document.getElementById('photoDay');
-  const cntEl=document.getElementById('photoCount');
-  if(dayEl) dayEl.textContent='D'+(curDay+1)+' · '+TRIP_DAYS[curDay].city;
-  if(cntEl) cntEl.textContent=dp.length+' 張';
-  const grid=document.getElementById('photoGrid');
-  const empty=document.getElementById('photoEmpty');
-  if(!grid) return;
-  if(!dp.length){grid.innerHTML='';if(empty)empty.style.display='block';return;}
-  if(empty) empty.style.display='none';
-  // 先畫佔位
-  grid.innerHTML=dp.map(p=>`<div class="ibb-img" id="photo-${p.id}" style="position:relative">
-    <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--stone);font-size:11px;font-family:'Noto Serif JP',serif">載入中...</div>
-    ${p.localOnly?`<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(184,134,11,.85);color:#fff;font-size:9px;text-align:center;padding:2px;font-family:'Noto Serif JP',serif">本機</div>`:''}
-  </div>`).join('');
-  // 非同步載入圖片
-  for(const p of dp){
-    const src=await resolveImgSrc(p.url);
-    const el=document.getElementById('photo-'+p.id);
-    if(!el) continue;
-    if(src){
-      el.innerHTML=`<img src="${src}" alt="" onerror="this.style.background='var(--green-pale)'" onclick="openLightbox('${src}')">
-        <button class="ibb-img-del" onclick="event.stopPropagation();delPhoto('${p.id}')">✕</button>
-        ${p.localOnly?`<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(184,134,11,.85);color:#fff;font-size:9px;text-align:center;padding:2px;font-family:'Noto Serif JP',serif">⚠️ 本機</div>`:''}`;
-    }else{
-      el.innerHTML=`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--stone);font-size:9px;flex-direction:column;gap:3px;padding:4px;text-align:center"><span>⚠️</span><span style="font-family:'Noto Serif JP',serif">讀取失敗</span></div>
-        <button class="ibb-img-del" onclick="event.stopPropagation();delPhoto('${p.id}')">✕</button>`;
-    }
-  }
 }
 
 function openLightbox(url){document.getElementById('lightboxImg').src=url;document.getElementById('lightbox').style.display='flex';}
@@ -2337,6 +2710,7 @@ function backupAllData(){
       photos:(photos||[]).filter(p=>p.url&&!p.url.startsWith('idb:')),
       personLists:personLists||{},
       spots:spots||[],
+      flights:flights||{},
       tripStartDate:localStorage.getItem('tripStartDate')||'',
       tripCode:(typeof tripCode!=='undefined'?tripCode:'kumamoto-2025')
     };
@@ -2523,31 +2897,34 @@ function saveExpense(){
 function delExpense(id){expenses=expenses.filter(e=>e.id!==id);save();renderSplit();}
 
 /* ── Map ── */
-function renderMap(){
-  const places=schedules.filter(s=>s.day===curDay&&s.place).sort((a,b)=>a.time.localeCompare(b.time));
-  document.getElementById('placeCount').textContent=places.length+' 個地點';
-  const el=document.getElementById('locationList');
-  if(!places.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon">🌱</div><div class="empty-text">今天沒有地點</div></div>`;return;}
-  el.innerHTML=places.map((p,i)=>`<div class="location-item" onclick="openNav('${encodeURIComponent(p.place||p.name)}')"><div class="location-num">${i+1}</div><div><div style="font-weight:500;font-size:13px;font-family:'Noto Serif JP',serif">${p.name}</div><div style="font-size:11px;color:var(--stone)">📍 ${p.place} · ${p.time}</div></div><button class="nav-btn">導航 ↗</button></div>`).join('');
-}
-function openNav(q){window.open('https://www.google.com/maps/search/'+q,'_blank');}
-function openAllOnMap(){const places=schedules.filter(s=>s.day===curDay&&s.place);const q=places.length?encodeURIComponent(places.map(p=>p.place).join(' ')):'Kumamoto+Japan';window.open('https://www.google.com/maps/search/'+q,'_blank');}
 
 /* ── UI ── */
-const ALL_TABS=['schedule','checklist','spots','photos','split','map','firebase'];
-function switchTab(t){ALL_TABS.forEach(id=>{document.getElementById('tab-'+id).classList.toggle('active',id===t);document.getElementById('pane-'+id).style.display=id===t?'block':'none';});if(t==='checklist'){renderChecklist();}if(t==='spots'){syncSpotsFromSchedules();renderSpots();}if(t==='photos'){renderPhotos();}}
+const ALL_TABS=['home','schedule','checklist','spots','split','firebase'];
+function switchTab(t){
+  ALL_TABS.forEach(id=>{
+    const tab=document.getElementById('tab-'+id);
+    const pane=document.getElementById('pane-'+id);
+    if(tab) tab.classList.toggle('active',id===t);
+    if(pane) pane.style.display=id===t?'block':'none';
+  });
+  if(t==='home') renderHome();
+  if(t==='checklist') renderChecklist();
+  if(t==='spots'){ syncSpotsFromSchedules(); renderSpots(); }
+  if(t==='split') renderSplit();
+}
 function closeModal(id){document.getElementById(id).style.display='none';}
 
 let toastTimer;
 function showToast(msg){const old=document.querySelector('.toast');if(old)old.remove();const el=document.createElement('div');el.className='toast';el.textContent=msg;document.body.appendChild(el);clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.remove(),2500);}
 
-function renderAll(){updateDates();renderSchedule();renderSplit();renderMap();}
+function renderAll(){updateDates();renderSchedule();renderSplit();renderHome();if(typeof renderSpots==='function')renderSpots();}
 
 window.addEventListener('load',async()=>{
   try{document.getElementById('loadingMsg').textContent='載入行程資料...';}catch(e){}
   try{const r=await fetch('https://api.exchangerate-api.com/v4/latest/JPY');if(r.ok){const d=await r.json();if(d.rates?.TWD)rate=parseFloat((1/d.rates.TWD).toFixed(4));}}catch(e){console.error('rate fetch:',e);}
   try{loadPersonLists();}catch(e){console.error('loadPersonLists:',e);}
   try{loadTripDate();}catch(e){console.error('loadTripDate:',e);}
+  try{loadFlightsUI();}catch(e){console.error('loadFlightsUI:',e);}
   try{updateIbbKeyUI();}catch(e){console.error('updateIbbKeyUI:',e);}
   try{renderAll();}catch(e){console.error('renderAll:',e);}
   try{setTimeout(()=>{try{syncSpotsFromSchedules();}catch(e){console.error('syncSpots:',e);}}, 1000);}catch(e){}

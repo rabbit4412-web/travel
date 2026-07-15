@@ -49,6 +49,23 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
 .nav-tab.active{color:var(--cream);border-bottom-color:var(--green-light)}
 .nav-tab .tab-icon{font-size:14px;display:block;margin-bottom:2px}
 .content{padding:18px 18px 100px;position:relative;z-index:1}
+/* ── 行程照片輪播 ── */
+.carousel{position:relative;width:calc(100% + 26px);margin:-11px -13px 10px;height:130px;
+  border-radius:6px 6px 0 0;overflow:hidden;background:var(--green-pale)}
+.carousel-img{width:100%;height:100%;object-fit:cover;display:block;cursor:pointer;transition:opacity .12s}
+.carousel-btn{position:absolute;top:50%;transform:translateY(-50%);width:26px;height:26px;
+  border-radius:50%;border:none;background:rgba(0,0,0,.4);color:#fff;font-size:17px;line-height:1;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;
+  backdrop-filter:blur(2px);transition:background .15s}
+.carousel-btn:active{background:rgba(0,0,0,.65)}
+.carousel-btn.prev{left:6px}
+.carousel-btn.next{right:6px}
+.carousel-count{position:absolute;top:6px;right:8px;background:rgba(0,0,0,.45);color:#fff;
+  font-size:9px;padding:2px 7px;border-radius:9px;font-family:'Noto Serif JP',serif;backdrop-filter:blur(2px)}
+.carousel-dots{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);display:flex;gap:4px}
+.cdot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.45);transition:all .15s}
+.cdot.on{background:#fff;width:14px;border-radius:3px}
+
 /* ── Photo Map ── */
 .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px}
 .stat-box{background:var(--white);border-radius:8px;border:var(--border);padding:9px 4px;text-align:center;box-shadow:var(--shadow)}
@@ -497,6 +514,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
       </div>
       <div class="form-group">
         <label class="form-label">拍攝照片</label>
+        <div style="font-size:10px;color:var(--stone);margin-bottom:6px;font-family:'Noto Serif JP',serif">第一張是清單封面 · 點其他照片可設為封面</div>
         <div id="sp-imgs-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
         <div style="display:flex;gap:6px;margin-bottom:8px">
           <input class="form-input" id="sp-img-url" placeholder="貼上圖片網址後按 +" style="flex:1">
@@ -1612,6 +1630,23 @@ function formatNote(text){
   return html;
 }
 
+// ── 行程照片輪播 ──
+const schedCarousel={};
+
+function carGo(id,dir){
+  const c=schedCarousel[id];
+  if(!c) return;
+  c.idx=(c.idx+dir+c.srcs.length)%c.srcs.length;
+  const img=document.getElementById('carimg-'+id);
+  const cnt=document.getElementById('carcnt-'+id);
+  const dots=document.getElementById('cardots-'+id);
+  if(img){ img.style.opacity='0'; setTimeout(()=>{ img.src=c.srcs[c.idx]; img.style.opacity='1'; },120); }
+  if(cnt) cnt.textContent=(c.idx+1)+' / '+c.srcs.length;
+  if(dots) dots.querySelectorAll('.cdot').forEach((d,i)=>d.classList.toggle('on',i===c.idx));
+}
+function carPrev(id){ carGo(id,-1); }
+function carNext(id){ carGo(id,1); }
+
 async function renderSchedule(){
   const list=schedules.filter(s=>s.day===curDay).sort((a,b)=>a.time.localeCompare(b.time));
   const el=document.getElementById('schedList');
@@ -1647,8 +1682,17 @@ async function renderSchedule(){
       // 單張：橫幅顯示
       imgEl.outerHTML=`<img src="${srcs[0]}" style="width:calc(100% + 26px);margin:-11px -13px 10px;height:130px;object-fit:cover;border-radius:6px 6px 0 0;display:block;cursor:pointer" onerror="this.style.display='none'" onclick="event.stopPropagation();openLightbox('${srcs[0]}')">`;
     }else{
-      // 多張：橫向滑動
-      imgEl.outerHTML=`<div style="width:calc(100% + 26px);margin:-11px -13px 10px;height:130px;display:flex;overflow-x:auto;scrollbar-width:none;border-radius:6px 6px 0 0;gap:2px">${srcs.map(src=>`<img src="${src}" style="height:130px;min-width:130px;object-fit:cover;flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();openLightbox('${src}')" onerror="this.style.display='none'">`).join('')}</div>`;
+      // 多張：輪播（一次一張 + 左右箭頭）
+      schedCarousel[s.id]={srcs,idx:0};
+      imgEl.outerHTML=`<div class="carousel" id="car-${s.id}">
+        <img class="carousel-img" id="carimg-${s.id}" src="${srcs[0]}"
+          onclick="event.stopPropagation();openLightbox(schedCarousel['${s.id}'].srcs[schedCarousel['${s.id}'].idx])"
+          onerror="this.style.opacity='.3'">
+        <button class="carousel-btn prev" onclick="event.stopPropagation();carPrev('${s.id}')">‹</button>
+        <button class="carousel-btn next" onclick="event.stopPropagation();carNext('${s.id}')">›</button>
+        <div class="carousel-count" id="carcnt-${s.id}">1 / ${srcs.length}</div>
+        <div class="carousel-dots" id="cardots-${s.id}">${srcs.map((_,i)=>`<span class="cdot${i===0?' on':''}"></span>`).join('')}</div>
+      </div>`;
     }
   }
 }
@@ -2206,7 +2250,7 @@ function renderSpots(){
       hdr=`<div class="day-header">${lbl}</div>`;
     }
     const img=(s.imgs&&s.imgs.length)?s.imgs[0]:(s.img||'');
-    const thumb=img?`<img src="${img}" onerror="this.parentElement.innerHTML='${s.camera||'📷'}'">`:(s.camera||'📷');
+    const thumb=img?`<img src="${img}" onerror="this.parentElement.textContent='${(s.camera||'📷').replace(/'/g,'')}'">`:(s.camera||'📷');
     const time=day<999?getSpotTime(s):'';
     const shotCount=(s.imgs||[]).length;
     return hdr+`<div class="pm-card ${s.shot?'done':''}" onclick="openSpotDetail('${s.id}')">
@@ -2232,12 +2276,21 @@ function openSpotDetail(id){
   const s=spots.find(x=>x.id===id);
   if(!s) return;
   const day=getSpotDay(s);
-  const img=(s.imgs&&s.imgs.length)?s.imgs[0]:(s.img||'');
+  const allImgs=(s.imgs&&s.imgs.length)?s.imgs:(s.img?[s.img]:[]);
+  if(allImgs.length>1) schedCarousel['detail']={srcs:allImgs,idx:0};
   const navQ=encodeURIComponent(s.area||s.name);
 
   document.getElementById('spotDetailBody').innerHTML=`
-    ${img?`<img class="detail-hero" src="${img}" style="border-radius:8px" onerror="this.style.display='none'">`:
-      `<div class="detail-hero" style="display:flex;align-items:center;justify-content:center;font-size:52px;border-radius:8px">${s.camera||'📷'}</div>`}
+    ${allImgs.length>1?`<div class="carousel" style="width:100%;margin:0 0 4px;height:190px;border-radius:8px">
+      <img class="carousel-img" id="carimg-detail" src="${allImgs[0]}"
+        onclick="openLightbox(schedCarousel['detail'].srcs[schedCarousel['detail'].idx])" onerror="this.style.opacity='.3'">
+      <button class="carousel-btn prev" onclick="carPrev('detail')">‹</button>
+      <button class="carousel-btn next" onclick="carNext('detail')">›</button>
+      <div class="carousel-count" id="carcnt-detail">1 / ${allImgs.length}</div>
+      <div class="carousel-dots" id="cardots-detail">${allImgs.map((_,i)=>`<span class="cdot${i===0?' on':''}"></span>`).join('')}</div>
+    </div>`
+    :allImgs.length===1?`<img class="detail-hero" src="${allImgs[0]}" style="border-radius:8px;cursor:pointer" onclick="openLightbox('${allImgs[0]}')" onerror="this.style.display='none'">`
+    :`<div class="detail-hero" style="display:flex;align-items:center;justify-content:center;font-size:52px;border-radius:8px">${s.camera||'📷'}</div>`}
 
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-top:13px;gap:10px">
       <div style="flex:1;min-width:0">
@@ -2275,13 +2328,6 @@ function openSpotDetail(id){
       ${s.tips.map(t=>`<div class="spot-tip">${t}</div>`).join('')}
     </div>`:''}
 
-    ${(s.imgs&&s.imgs.length>1)?`<div style="margin-bottom:12px">
-      <div style="font-size:10px;color:var(--stone);letter-spacing:1px;margin-bottom:7px;font-family:'Noto Serif JP',serif">拍攝照片 · ${s.imgs.length} 張</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px">
-        ${s.imgs.map(u=>`<img src="${u}" onclick="openLightbox('${u}')"
-          style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:5px;cursor:pointer;background:var(--green-pale)">`).join('')}
-      </div>
-    </div>`:''}
 
     <div class="detail-actions">
       <button class="detail-btn btn-ghost" onclick="closeModal('spotDetailModal');editSpot('${s.id}')">✏️ 編輯</button>
@@ -2397,12 +2443,21 @@ function renderSpotImgsList(){
   const all=[...spotImgs.map(u=>({url:u,isNew:false})),
              ...newSpotImgFiles.map(f=>({url:f.previewUrl,isNew:true}))];
   if(!all.length){ el.innerHTML=''; return; }
-  el.innerHTML=all.map((it,i)=>`<div style="position:relative;width:56px;height:56px;border-radius:5px;overflow:hidden;border:var(--border)">
+  el.innerHTML=all.map((it,i)=>`<div style="position:relative;width:56px;height:56px;border-radius:5px;overflow:hidden;border:${i===0?'2px solid var(--green-dark)':'var(--border)'};cursor:${it.isNew?'default':'pointer'}"
+    ${it.isNew?'':`onclick="setSpotCover(${i})"`} title="${i===0?'目前封面':(it.isNew?'新照片':'點擊設為封面')}">
     <img src="${it.url}" style="width:100%;height:100%;object-fit:cover">
-    <button onclick="removeSpotImg(${i},${it.isNew})" style="position:absolute;top:1px;right:1px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:15px;height:15px;font-size:9px;cursor:pointer;line-height:1;padding:0">✕</button>
-    ${it.isNew?'<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(184,134,11,.9);color:#fff;font-size:7px;text-align:center">新</div>':
-               '<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(58,107,56,.85);color:#fff;font-size:7px;text-align:center">已存</div>'}
+    <button onclick="event.stopPropagation();removeSpotImg(${i},${it.isNew})" style="position:absolute;top:1px;right:1px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:15px;height:15px;font-size:9px;cursor:pointer;line-height:1;padding:0">✕</button>
+    ${i===0?'<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(58,107,56,.9);color:#fff;font-size:7px;text-align:center">封面</div>':
+      it.isNew?'<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(184,134,11,.9);color:#fff;font-size:7px;text-align:center">新</div>':''}
   </div>`).join('');
+}
+
+function setSpotCover(idx){
+  if(idx===0||idx>=spotImgs.length) return;
+  const [pick]=spotImgs.splice(idx,1);
+  spotImgs.unshift(pick);
+  renderSpotImgsList();
+  showToast('已設為封面 📷');
 }
 
 function removeSpotImg(idx,isNew){

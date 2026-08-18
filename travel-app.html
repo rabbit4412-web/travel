@@ -591,6 +591,13 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
       <div style="font-family:'Zen Kurenaido',serif;font-size:16px;color:var(--ink);margin-bottom:12px">⚙️ 行程設定</div>
       <div class="form-group"><label class="form-label">出發日期</label><input class="form-input" type="date" id="tripStartDate" value="2026-09-01" onchange="saveTripDate()"></div>
       <button class="btn-primary" onclick="saveTripDate();showToast('出發日期已儲存！🌿')">儲存</button>
+
+      <div style="margin-top:18px;padding-top:14px;border-top:1px dashed rgba(92,74,48,.2)">
+        <div style="font-family:'Zen Kurenaido',serif;font-size:14px;color:var(--ink);margin-bottom:4px">📍 每日城市</div>
+        <div style="font-size:10px;color:var(--stone);margin-bottom:10px;font-family:'Noto Serif JP',serif">改城市後，天氣會自動套用該城市</div>
+        <div id="dayCityGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+        <button class="btn-primary" onclick="saveDayCities()" style="margin-top:10px">儲存每日城市</button>
+      </div>
     </div>
 
     <!-- 航班設定 -->
@@ -851,7 +858,10 @@ window.connectFirebase=async function(){
       if(d.personLists){personLists=d.personLists;localStorage.setItem('personLists',JSON.stringify(personLists));}
       if(d.spots&&d.spots.length){spots=d.spots;localStorage.setItem('spots',JSON.stringify(spots));}
     if(d.flights){flights=d.flights;localStorage.setItem('flights',JSON.stringify(flights));}
+    if(d.dayCities){dayCities=d.dayCities;localStorage.setItem('dayCities',JSON.stringify(dayCities));}
       if(d.flights){flights=d.flights;localStorage.setItem('flights',JSON.stringify(flights));}
+    if(d.dayCities){dayCities=d.dayCities;localStorage.setItem('dayCities',JSON.stringify(dayCities));}
+      if(d.dayCities){dayCities=d.dayCities;localStorage.setItem('dayCities',JSON.stringify(dayCities));}
       renderAll();renderChecklist();
       showToast('✅ 已從 Firebase 載入資料！');
     } else if(hasPending){
@@ -907,6 +917,7 @@ window.joinTrip=async function(){
       if(d.personLists&&Object.keys(d.personLists).length){personLists=d.personLists;localStorage.setItem('personLists',JSON.stringify(personLists));}
     if(d.spots&&d.spots.length){spots=d.spots;localStorage.setItem('spots',JSON.stringify(spots));}
     if(d.flights){flights=d.flights;localStorage.setItem('flights',JSON.stringify(flights));}
+    if(d.dayCities){dayCities=d.dayCities;localStorage.setItem('dayCities',JSON.stringify(dayCities));}
       renderAll();renderChecklist();
     }
     startListen();
@@ -939,9 +950,13 @@ function startListen(){
       if(d.personLists){personLists=d.personLists;localStorage.setItem('personLists',JSON.stringify(personLists));}
     if(d.spots&&d.spots.length){spots=d.spots;localStorage.setItem('spots',JSON.stringify(spots));}
     if(d.flights){flights=d.flights;localStorage.setItem('flights',JSON.stringify(flights));}
+    if(d.dayCities){dayCities=d.dayCities;localStorage.setItem('dayCities',JSON.stringify(dayCities));}
       if(d.spots&&d.spots.length){spots=d.spots;localStorage.setItem('spots',JSON.stringify(spots));}
     if(d.flights){flights=d.flights;localStorage.setItem('flights',JSON.stringify(flights));}
+    if(d.dayCities){dayCities=d.dayCities;localStorage.setItem('dayCities',JSON.stringify(dayCities));}
       if(d.flights){flights=d.flights;localStorage.setItem('flights',JSON.stringify(flights));}
+    if(d.dayCities){dayCities=d.dayCities;localStorage.setItem('dayCities',JSON.stringify(dayCities));}
+      if(d.dayCities){dayCities=d.dayCities;localStorage.setItem('dayCities',JSON.stringify(dayCities));}
       if(d.tripStartDate){localStorage.setItem('tripStartDate',d.tripStartDate);document.getElementById('tripStartDate').value=d.tripStartDate;updateDates();}
       renderAll();renderChecklist();
     }
@@ -1041,7 +1056,7 @@ window.syncToFirebase=async function(retry){
       };
     });
     const tripDate=localStorage.getItem('tripStartDate')||'2026-09-01';
-    await setDoc(doc(db,'trips',tripCode),{schedules,members,expenses,photos:photosForSync,personLists:plForSync,spots,flights,tripStartDate:tripDate,updatedAt:Date.now()},{merge:true});
+    await setDoc(doc(db,'trips',tripCode),{schedules,members,expenses,photos:photosForSync,personLists:plForSync,spots,flights,dayCities,tripStartDate:tripDate,updatedAt:Date.now()},{merge:true});
     localStorage.removeItem('pendingSync'); // 同步成功，清除標記
   }catch(e){
     console.error('sync error',e);
@@ -1186,6 +1201,31 @@ const DEFAULT_FLIGHTS={
   back:{no:'IT795',from:'KMJ',to:'TNN',fromName:'熊本',toName:'台南',date:'2026/09/08',dep:'12:40',arr:'14:25',seats:'18A · 18B',bags:'20kg x2'}
 };
 let flights=JSON.parse(localStorage.getItem('flights')||'null')||JSON.parse(JSON.stringify(DEFAULT_FLIGHTS));
+
+// ── 城市庫（含各城市典型天氣）──
+const CITY_LIB={
+  '熊本':{emoji:'🏯',wx:{icon:'☀️',temp:26,desc:'晴天',h:62,w:2.8,lo:20,hi:28}},
+  '博多':{emoji:'🍜',wx:{icon:'☀️',temp:25,desc:'晴天',h:60,w:3.0,lo:19,hi:27}},
+  '阿蘇':{emoji:'🌋',wx:{icon:'⛅',temp:22,desc:'多雲',h:68,w:3.8,lo:16,hi:24}},
+  '福岡':{emoji:'🏙',wx:{icon:'☀️',temp:26,desc:'晴天',h:60,w:2.9,lo:20,hi:28}},
+  '由布院':{emoji:'♨️',wx:{icon:'🌤',temp:21,desc:'晴時多雲',h:70,w:2.5,lo:15,hi:23}},
+  '別府':{emoji:'♨️',wx:{icon:'🌤',temp:23,desc:'晴時多雲',h:66,w:3.0,lo:18,hi:25}},
+  '長崎':{emoji:'⛪',wx:{icon:'☀️',temp:25,desc:'晴天',h:63,w:3.2,lo:19,hi:27}},
+  '鹿兒島':{emoji:'🌋',wx:{icon:'☀️',temp:27,desc:'晴天',h:64,w:3.0,lo:21,hi:29}},
+  '糸島':{emoji:'🌊',wx:{icon:'🌤',temp:24,desc:'晴時多雲',h:70,w:4.0,lo:18,hi:26}},
+  '太宰府':{emoji:'⛩',wx:{icon:'☀️',temp:25,desc:'晴天',h:61,w:2.6,lo:19,hi:27}}
+};
+// 每日城市覆寫（index 0-7），空字串代表用 TRIP_DAYS 預設
+let dayCities=JSON.parse(localStorage.getItem('dayCities')||'null')||['','','','','','','',''];
+
+// 取得某天實際的城市資料（優先用覆寫）
+function getDayInfo(i){
+  const override=dayCities[i];
+  if(override && CITY_LIB[override]){
+    return {city:override, emoji:CITY_LIB[override].emoji, wx:CITY_LIB[override].wx, jp:TRIP_DAYS[i].jp};
+  }
+  return TRIP_DAYS[i];
+}
 
 const TRIP_DAYS=[
   {city:'熊本',emoji:'🏯',jp:'いちにちめ',wx:{icon:'✈️',temp:26,desc:'抵達熊本',h:65,w:2.5,lo:20,hi:28}},
@@ -1352,6 +1392,7 @@ function save(){
   }catch(e){console.error('personLists save error',e);}
   try{localStorage.setItem('spots',JSON.stringify(spots));}catch(e){}
   try{localStorage.setItem('flights',JSON.stringify(flights));}catch(e){}
+  try{localStorage.setItem('dayCities',JSON.stringify(dayCities));}catch(e){}
   if(window.debouncedSync)window.debouncedSync();
 }
 
@@ -1459,13 +1500,13 @@ function updateDates(){
   const dates=getDates();document.getElementById('dayBadge').textContent='8天行程';
   const sc=document.getElementById('dateScroller');sc.innerHTML='';
   dates.forEach((d,i)=>{
-    const trip=TRIP_DAYS[i];
+    const trip=getDayInfo(i);
     const el=document.createElement('div');el.className='date-chip'+(i===curDay?' active':'');
     el.innerHTML=`<span class="day-num">D${i+1}</span><span class="day-label">${d.num}/${d.lbl}</span><span class="day-city">${trip.emoji}${trip.city}</span>`;
     el.onclick=()=>{curDay=i;updateDates();renderSchedule();renderHome();renderSpots();};
     sc.appendChild(el);
   });
-  const trip=TRIP_DAYS[curDay];
+  const trip=getDayInfo(curDay);
   const wx=trip.wx;
   document.getElementById('wx-icon').textContent=wx.icon;
   document.getElementById('wx-temp').textContent=wx.temp+'°';
@@ -1499,6 +1540,36 @@ function loadFlightsUI(){
 
 const AIRPORT_NAMES={TNN:'台南',KMJ:'熊本',FUK:'福岡',TPE:'桃園',KHH:'高雄',RMQ:'台中',NRT:'成田',HND:'羽田',KIX:'關西'};
 
+function renderDayCityGrid(){
+  const grid=document.getElementById('dayCityGrid');
+  if(!grid) return;
+  const opts=Object.keys(CITY_LIB);
+  grid.innerHTML='';
+  for(let i=0;i<8;i++){
+    const cur=dayCities[i]||TRIP_DAYS[i].city;
+    const wrap=document.createElement('div');
+    wrap.innerHTML=`<label style="font-size:9px;color:var(--stone);letter-spacing:1px;font-family:'Noto Serif JP',serif">D${i+1}</label>
+      <select class="form-select" id="daycity-${i}" style="font-size:13px;padding:8px">
+        ${opts.map(city=>`<option value="${city}" ${cur===city?'selected':''}>${CITY_LIB[city].emoji} ${city}</option>`).join('')}
+      </select>`;
+    grid.appendChild(wrap);
+  }
+}
+
+function saveDayCities(){
+  for(let i=0;i<8;i++){
+    const sel=document.getElementById('daycity-'+i);
+    if(sel){
+      // 若選的跟 TRIP_DAYS 預設相同，存空字串（用預設）；否則存覆寫
+      dayCities[i]=(sel.value===TRIP_DAYS[i].city)?'':sel.value;
+    }
+  }
+  localStorage.setItem('dayCities',JSON.stringify(dayCities));
+  if(window.debouncedSync) window.debouncedSync();
+  updateDates(); renderHome(); renderSpots();
+  showToast('📍 每日城市已更新，天氣已套用！');
+}
+
 function saveFlights(){
   const g=id=>{const el=document.getElementById(id); return el?el.value.trim():'';};
   const seats=g('fl-seats'), bags=g('fl-bags');
@@ -1522,7 +1593,7 @@ function saveFlights(){
 //  首頁
 // ══════════════════════════════════════════
 function renderHome(){
-  const d=TRIP_DAYS[curDay];
+  const d=getDayInfo(curDay);
   const dates=getDates();
   const dd=dates[curDay];
 
@@ -1704,7 +1775,7 @@ function fillDayOptions(selectedDay){
   for(let i=0;i<8;i++){
     const opt=document.createElement('option');
     opt.value=i;
-    opt.textContent='D'+(i+1)+' · '+TRIP_DAYS[i].city;
+    opt.textContent='D'+(i+1)+' · '+getDayInfo(i).city;
     sel.appendChild(opt);
   }
   sel.value=(selectedDay!==undefined?selectedDay:curDay);
@@ -2247,7 +2318,7 @@ function renderSpots(){
     let hdr='';
     if(day!==lastDay){
       lastDay=day;
-      const lbl=day<999?('D'+(day+1)+' · '+TRIP_DAYS[day].city):'未排入行程';
+      const lbl=day<999?('D'+(day+1)+' · '+getDayInfo(day).city):'未排入行程';
       hdr=`<div class="day-header">${lbl}</div>`;
     }
     const img=(s.imgs&&s.imgs.length)?s.imgs[0]:(s.img||'');
@@ -2304,7 +2375,7 @@ function openSpotDetail(id){
     ${day<999?`<div style="display:flex;gap:8px;margin-top:10px">
       <div style="flex:1;background:var(--green-pale);border-radius:6px;padding:8px 10px;border:var(--border)">
         <div style="font-size:8px;color:var(--stone);letter-spacing:1px;font-family:'Noto Serif JP',serif">DAY</div>
-        <div style="font-family:'Zen Kurenaido',serif;font-size:14px;color:var(--green-dark)">D${day+1} · ${TRIP_DAYS[day].city}</div>
+        <div style="font-family:'Zen Kurenaido',serif;font-size:14px;color:var(--green-dark)">D${day+1} · ${getDayInfo(day).city}</div>
       </div>
       <div style="flex:1;background:var(--green-pale);border-radius:6px;padding:8px 10px;border:var(--border)">
         <div style="font-size:8px;color:var(--stone);letter-spacing:1px;font-family:'Noto Serif JP',serif">TIME</div>
@@ -2644,7 +2715,7 @@ function openBatchExpense(){
   for(let i=0;i<8;i++){
     const opt=document.createElement('option');
     opt.value='D'+(i+1);
-    opt.textContent='D'+(i+1)+' · '+TRIP_DAYS[i].city;
+    opt.textContent='D'+(i+1)+' · '+getDayInfo(i).city;
     sel.appendChild(opt);
   }
   sel.value='D'+(curDay+1);
@@ -2767,6 +2838,7 @@ function backupAllData(){
       personLists:personLists||{},
       spots:spots||[],
       flights:flights||{},
+      dayCities:dayCities||[],
       tripStartDate:localStorage.getItem('tripStartDate')||'',
       tripCode:(typeof tripCode!=='undefined'?tripCode:'kumamoto-2025')
     };
@@ -2981,6 +3053,7 @@ window.addEventListener('load',async()=>{
   try{loadPersonLists();}catch(e){console.error('loadPersonLists:',e);}
   try{loadTripDate();}catch(e){console.error('loadTripDate:',e);}
   try{loadFlightsUI();}catch(e){console.error('loadFlightsUI:',e);}
+  try{renderDayCityGrid();}catch(e){console.error('renderDayCityGrid:',e);}
   try{updateIbbKeyUI();}catch(e){console.error('updateIbbKeyUI:',e);}
   try{renderAll();}catch(e){console.error('renderAll:',e);}
   try{setTimeout(()=>{try{syncSpotsFromSchedules();}catch(e){console.error('syncSpots:',e);}}, 1000);}catch(e){}

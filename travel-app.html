@@ -15,6 +15,9 @@
   --white:#FDFCF8;--red:#C0522A;--gold:#B8860B;
   --border:1.5px solid rgba(92,74,48,0.22);
   --shadow:2px 3px 0px rgba(92,74,48,0.1);
+  /* ═══ 圖片尺寸設定(想改圖片大小改這裡就好)═══ */
+  --card-img-h:150px;   /* 行程卡片照片高度 */
+  --detail-img-h:200px; /* 景點詳細頁大圖高度 */
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
@@ -50,7 +53,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
 .nav-tab .tab-icon{font-size:14px;display:block;margin-bottom:2px}
 .content{padding:18px 18px 100px;position:relative;z-index:1}
 /* ── 行程照片輪播 ── */
-.carousel{position:relative;width:calc(100% + 26px);margin:-11px -13px 10px;height:130px;
+.carousel{position:relative;width:calc(100% + 26px);margin:-11px -13px 10px;height:var(--card-img-h);
   border-radius:6px 6px 0 0;overflow:hidden;background:var(--green-pale)}
 .carousel-img{width:100%;height:100%;object-fit:cover;display:block;cursor:pointer;transition:opacity .12s}
 .carousel-btn{position:absolute;top:50%;transform:translateY(-50%);width:26px;height:26px;
@@ -96,7 +99,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
 .day-header{background:var(--green-dark);color:var(--cream);font-family:'Zen Kurenaido',serif;
   font-size:14px;padding:5px 14px;border-radius:5px;margin:16px 0 9px;display:inline-block;letter-spacing:1px}
 .day-header:first-child{margin-top:0}
-.detail-hero{width:100%;height:190px;object-fit:cover;background:var(--green-pale)}
+.detail-hero{width:100%;height:var(--detail-img-h);object-fit:cover;background:var(--green-pale)}
 .detail-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}
 .detail-btn{padding:11px;border-radius:7px;border:none;font-size:12px;cursor:pointer;
   font-family:'Noto Serif JP',serif;display:flex;align-items:center;justify-content:center;gap:5px;
@@ -1770,7 +1773,7 @@ async function renderSchedule(){
       <div class="time-dot"></div>
       <div class="schedule-card">
         <div class="card-actions"><button class="card-btn" onclick="editSched('${s.id}')">✏️</button><button class="card-btn" onclick="delSched('${s.id}')">🗑</button></div>
-        ${(s.imgs&&s.imgs.length)||(s.img)?`<div id="simg-${s.id}" style="width:calc(100% + 26px);margin:-11px -13px 10px;height:130px;background:var(--green-pale);border-radius:6px 6px 0 0;display:flex;align-items:center;justify-content:center;overflow:hidden"><span style="font-size:11px;color:var(--stone);font-family:'Noto Serif JP',serif">載入中...</span></div>`:''}
+        ${(s.imgs&&s.imgs.length)||(s.img)?`<div id="simg-${s.id}" style="width:calc(100% + 26px);margin:-11px -13px 10px;height:var(--card-img-h);background:var(--green-pale);border-radius:6px 6px 0 0;display:flex;align-items:center;justify-content:center;overflow:hidden"><span style="font-size:11px;color:var(--stone);font-family:'Noto Serif JP',serif">載入中...</span></div>`:''}
         <div class="schedule-name">${s.name}</div>
         ${s.place?`<div class="schedule-place">📍 ${s.place}</div>`:''}
         <span class="tag tag-${s.type}">${{sight:'🌸 景點',food:'🍜 餐廳',shop:'🛍 購物',hotel:'🏨 住宿',transport:'🚃 交通'}[s.type]}</span>
@@ -1792,7 +1795,7 @@ async function renderSchedule(){
     if(!srcs.length){imgEl.style.display='none';continue;}
     if(srcs.length===1){
       // 單張：橫幅顯示
-      imgEl.outerHTML=`<img src="${srcs[0]}" style="width:calc(100% + 26px);margin:-11px -13px 10px;height:130px;object-fit:cover;border-radius:6px 6px 0 0;display:block;cursor:pointer" onerror="this.style.display='none'" onclick="event.stopPropagation();openLightbox('${srcs[0]}')">`;
+      imgEl.outerHTML=`<img src="${srcs[0]}" style="width:calc(100% + 26px);margin:-11px -13px 10px;height:var(--card-img-h);object-fit:cover;border-radius:6px 6px 0 0;display:block;cursor:pointer" onerror="this.style.display='none'" onclick="event.stopPropagation();openLightbox('${srcs[0]}')">`;
     }else{
       // 多張：輪播（一次一張 + 左右箭頭）
       schedCarousel[s.id]={srcs,idx:0};
@@ -2393,7 +2396,7 @@ function openSpotDetail(id){
   const navQ=encodeURIComponent(s.area||s.name);
 
   document.getElementById('spotDetailBody').innerHTML=`
-    ${allImgs.length>1?`<div class="carousel" style="width:100%;margin:0 0 4px;height:190px;border-radius:8px">
+    ${allImgs.length>1?`<div class="carousel" style="width:100%;margin:0 0 4px;height:var(--detail-img-h);border-radius:8px">
       <img class="carousel-img" id="carimg-detail" src="${allImgs[0]}"
         onclick="openLightbox(schedCarousel['detail'].srcs[schedCarousel['detail'].idx])" onerror="this.style.opacity='.3'">
       <button class="carousel-btn prev" onclick="carPrev('detail')">‹</button>

@@ -268,7 +268,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
 .connected-banner{background:var(--green-pale);border:1.5px solid var(--green-light);border-radius:8px;padding:14px;margin-bottom:16px}
 /* modal */
 .modal-overlay{position:fixed;inset:0;background:rgba(61,51,37,.55);z-index:200;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(3px)}
-.modal{background:var(--cream);border-radius:16px 16px 0 0;padding:22px 20px 38px;width:100%;max-width:430px;animation:slideUp .25s cubic-bezier(.34,1.4,.64,1);background-image:repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(92,138,90,0.05) 27px,rgba(92,138,90,0.05) 28px)}
+.modal{background:var(--cream);border-radius:16px 16px 0 0;padding:22px 20px 38px;width:100%;max-width:430px;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;animation:slideUp .25s cubic-bezier(.34,1.4,.64,1);background-image:repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(92,138,90,0.05) 27px,rgba(92,138,90,0.05) 28px)}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .modal-handle{width:36px;height:3px;background:var(--green-light);border-radius:2px;margin:0 auto 18px}
 .modal-title{font-family:'Zen Kurenaido','Noto Serif JP',serif;font-size:18px;color:var(--ink);margin-bottom:16px;padding-bottom:10px;border-bottom:1px dashed rgba(92,74,48,.2)}

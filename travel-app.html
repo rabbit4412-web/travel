@@ -844,34 +844,44 @@ window.connectFirebase=async function(){
   try{
     if(!fbApp)fbApp=initializeApp({apiKey,authDomain:projectId+'.firebaseapp.com',projectId,storageBucket:projectId+'.appspot.com',appId:appId||'1:000:web:000'});
     db=getFirestore(fbApp);
-    // ── 先從 Firebase 讀取，有資料就用 Firebase 的（不蓋掉）──
+    // ── 初次連線:用時間戳判斷該用雲端還是本機 ──
     const existingSnap=await getDoc(doc(db,'trips',tripCode));
+    const localTime=parseInt(localStorage.getItem('localUpdatedAt')||'0');
     const hasPending=localStorage.getItem('pendingSync')==='1';
-    if(existingSnap.exists()&&!hasPending){
-      // Firebase 有資料 且 本機沒有待同步 → 拉下來用
+
+    if(existingSnap.exists()){
       const d=existingSnap.data();
-      if(d.schedules){schedules=d.schedules;localStorage.setItem('schedules',JSON.stringify(schedules));}
-      if(d.members){members=d.members;localStorage.setItem('members',JSON.stringify(members));}
-      if(d.expenses){expenses=d.expenses;localStorage.setItem('expenses',JSON.stringify(expenses));}
-      if(d.tripStartDate){localStorage.setItem('tripStartDate',d.tripStartDate);document.getElementById('tripStartDate').value=d.tripStartDate;}
-      if(d.photos){photos=d.photos.filter(p=>p.url&&!p.url.startsWith('idb:'));localStorage.setItem('photos',JSON.stringify(photos));}
-      if(d.personLists){personLists=d.personLists;localStorage.setItem('personLists',JSON.stringify(personLists));}
-      if(d.spots&&d.spots.length){spots=d.spots;localStorage.setItem('spots',JSON.stringify(spots));}
-    if(d.flights){flights=d.flights;localStorage.setItem('flights',JSON.stringify(flights));}
-    if(d.dayCities){dayCities=d.dayCities;localStorage.setItem('dayCities',JSON.stringify(dayCities));}
-      if(d.flights){flights=d.flights;localStorage.setItem('flights',JSON.stringify(flights));}
-    if(d.dayCities){dayCities=d.dayCities;localStorage.setItem('dayCities',JSON.stringify(dayCities));}
-      if(d.dayCities){dayCities=d.dayCities;localStorage.setItem('dayCities',JSON.stringify(dayCities));}
-      renderAll();renderChecklist();
-      showToast('✅ 已從 Firebase 載入資料！');
-    } else if(hasPending){
-      // 本機有未同步的新資料 → 優先上傳本機，不被 Firebase 蓋掉
-      await window.syncToFirebase();
-      renderAll();renderChecklist();
-      showToast('✅ 本機資料已同步至 Firebase！');
+      const cloudTime=d.updatedAt||0;
+
+      if(cloudTime>localTime){
+        // 雲端比較新 → 拉下來覆蓋本機(即使本機有 pending,雲端更新就以雲端為準)
+        if(d.schedules){schedules=d.schedules;localStorage.setItem('schedules',JSON.stringify(schedules));}
+        if(d.members){members=d.members;localStorage.setItem('members',JSON.stringify(members));}
+        if(d.expenses){expenses=d.expenses;localStorage.setItem('expenses',JSON.stringify(expenses));}
+        if(d.tripStartDate){localStorage.setItem('tripStartDate',d.tripStartDate);const el=document.getElementById('tripStartDate');if(el)el.value=d.tripStartDate;}
+        if(d.photos){photos=d.photos.filter(p=>p.url&&!p.url.startsWith('idb:'));localStorage.setItem('photos',JSON.stringify(photos));}
+        if(d.personLists){personLists=d.personLists;localStorage.setItem('personLists',JSON.stringify(personLists));}
+        if(d.spots&&d.spots.length){spots=d.spots;localStorage.setItem('spots',JSON.stringify(spots));}
+        if(d.flights){flights=d.flights;localStorage.setItem('flights',JSON.stringify(flights));}
+        if(d.dayCities){dayCities=d.dayCities;localStorage.setItem('dayCities',JSON.stringify(dayCities));}
+        localStorage.setItem('localUpdatedAt',String(cloudTime));
+        localStorage.removeItem('pendingSync');
+        renderAll();renderChecklist();
+        if(typeof renderDayCityGrid==='function')renderDayCityGrid();
+        if(typeof loadFlightsUI==='function')loadFlightsUI();
+        showToast('✅ 已載入最新資料(來自其他裝置)');
+      } else if(hasPending || localTime>cloudTime){
+        // 本機比較新 → 把本機推上去
+        await window.syncToFirebase(true);
+        renderAll();renderChecklist();
+        showToast('✅ 本機較新,已上傳至 Firebase');
+      } else {
+        // 一樣新,不動作
+        showToast('✅ 資料已是最新');
+      }
     } else {
-      // Firebase 沒有資料 → 上傳本機資料建立新行程
-      await window.syncToFirebase();
+      // Firebase 沒資料 → 建立
+      await window.syncToFirebase(true);
       showToast('🌿 已建立行程！');
     }
     window._fbConnected=true;
@@ -933,33 +943,49 @@ window.joinTrip=async function(){
 function startListen(){
   unsubs.forEach(u=>u());unsubs=[];
   const unsub=onSnapshot(doc(db,'trips',tripCode),snap=>{
-    if(snap.exists()){const d=snap.data();
-      // 如果本機有待同步資料，跳過這次 Firebase 更新（避免被舊資料蓋掉）
-      if(localStorage.getItem('pendingSync')==='1') return;
-      if(d.schedules){schedules=d.schedules;localStorage.setItem('schedules',JSON.stringify(schedules));}
-      if(d.members){members=d.members;localStorage.setItem('members',JSON.stringify(members));renderPersonChips();}
-      if(d.expenses){expenses=d.expenses;localStorage.setItem('expenses',JSON.stringify(expenses));}
-      if(d.photos){
-        const localPhotos=photos.filter(p=>p.url&&p.url.startsWith('idb:'));
-        const cloudPhotos=d.photos.filter(p=>p.url&&!p.url.startsWith('idb:'));
-        const merged=[...cloudPhotos];
-        localPhotos.forEach(lp=>{if(!merged.find(cp=>cp.id===lp.id))merged.push(lp);});
-        photos=merged;
-        localStorage.setItem('photos',JSON.stringify(photos.filter(p=>!p.url.startsWith('idb:'))));
-      }
-      if(d.personLists){personLists=d.personLists;localStorage.setItem('personLists',JSON.stringify(personLists));}
+    if(!snap.exists()) return;
+    const d=snap.data();
+
+    // ── 時間戳比對:只接受比本機「更新」的雲端資料 ──
+    const cloudTime=d.updatedAt||0;
+    const localTime=parseInt(localStorage.getItem('localUpdatedAt')||'0');
+
+    // 若本機有未同步的變更,而且本機比雲端新 → 不接受,反而把本機推上去
+    if(localStorage.getItem('pendingSync')==='1' && localTime>=cloudTime){
+      if(window.debouncedSync) window.debouncedSync();
+      return;
+    }
+    // 若雲端不比本機新,忽略(這是自己剛剛上傳的回音,或舊裝置的過時推送)
+    if(cloudTime<=localTime && localTime>0){
+      return;
+    }
+
+    // 雲端較新 → 接受並覆蓋本機
+    if(d.schedules){schedules=d.schedules;localStorage.setItem('schedules',JSON.stringify(schedules));}
+    if(d.members){members=d.members;localStorage.setItem('members',JSON.stringify(members));renderPersonChips();}
+    if(d.expenses){expenses=d.expenses;localStorage.setItem('expenses',JSON.stringify(expenses));}
+    if(d.photos){
+      const localPhotos=photos.filter(p=>p.url&&p.url.startsWith('idb:'));
+      const cloudPhotos=d.photos.filter(p=>p.url&&!p.url.startsWith('idb:'));
+      const merged=[...cloudPhotos];
+      localPhotos.forEach(lp=>{if(!merged.find(cp=>cp.id===lp.id))merged.push(lp);});
+      photos=merged;
+      localStorage.setItem('photos',JSON.stringify(photos.filter(p=>!p.url.startsWith('idb:'))));
+    }
+    if(d.personLists){personLists=d.personLists;localStorage.setItem('personLists',JSON.stringify(personLists));}
     if(d.spots&&d.spots.length){spots=d.spots;localStorage.setItem('spots',JSON.stringify(spots));}
     if(d.flights){flights=d.flights;localStorage.setItem('flights',JSON.stringify(flights));}
     if(d.dayCities){dayCities=d.dayCities;localStorage.setItem('dayCities',JSON.stringify(dayCities));}
-      if(d.spots&&d.spots.length){spots=d.spots;localStorage.setItem('spots',JSON.stringify(spots));}
-    if(d.flights){flights=d.flights;localStorage.setItem('flights',JSON.stringify(flights));}
-    if(d.dayCities){dayCities=d.dayCities;localStorage.setItem('dayCities',JSON.stringify(dayCities));}
-      if(d.flights){flights=d.flights;localStorage.setItem('flights',JSON.stringify(flights));}
-    if(d.dayCities){dayCities=d.dayCities;localStorage.setItem('dayCities',JSON.stringify(dayCities));}
-      if(d.dayCities){dayCities=d.dayCities;localStorage.setItem('dayCities',JSON.stringify(dayCities));}
-      if(d.tripStartDate){localStorage.setItem('tripStartDate',d.tripStartDate);document.getElementById('tripStartDate').value=d.tripStartDate;updateDates();}
-      renderAll();renderChecklist();
-    }
+    if(d.tripStartDate){localStorage.setItem('tripStartDate',d.tripStartDate);const el=document.getElementById('tripStartDate');if(el)el.value=d.tripStartDate;updateDates();}
+
+    // 記錄本機已同步到的時間
+    localStorage.setItem('localUpdatedAt',String(cloudTime));
+    localStorage.removeItem('pendingSync');
+
+    renderAll();renderChecklist();
+    if(typeof renderDayCityGrid==='function')renderDayCityGrid();
+    if(typeof loadFlightsUI==='function')loadFlightsUI();
+    showToast('🔄 已同步其他裝置的更新');
   });
   unsubs.push(unsub);
 }
@@ -1004,7 +1030,16 @@ window.forcePullFromFirebase=async function(){
       localStorage.setItem('photos',JSON.stringify(photos));
     }
     if(d.personLists){personLists=d.personLists;localStorage.setItem('personLists',JSON.stringify(personLists));}
+    if(d.spots&&d.spots.length){spots=d.spots;localStorage.setItem('spots',JSON.stringify(spots));}
+    if(d.flights){flights=d.flights;localStorage.setItem('flights',JSON.stringify(flights));}
+    if(d.dayCities){dayCities=d.dayCities;localStorage.setItem('dayCities',JSON.stringify(dayCities));}
+    if(d.tripStartDate){localStorage.setItem('tripStartDate',d.tripStartDate);const el=document.getElementById('tripStartDate');if(el)el.value=d.tripStartDate;}
+    // 強制拉取:採用雲端時間戳,清除本機 pending
+    localStorage.setItem('localUpdatedAt',String(d.updatedAt||Date.now()));
+    localStorage.removeItem('pendingSync');
     renderAll();renderChecklist();
+    if(typeof renderDayCityGrid==='function')renderDayCityGrid();
+    if(typeof loadFlightsUI==='function')loadFlightsUI();
     showToast('✅ 資料已還原！共 '+schedules.length+' 筆行程');
   }catch(e){
     showToast('❌ 載入失敗：'+e.message);
@@ -1056,7 +1091,9 @@ window.syncToFirebase=async function(retry){
       };
     });
     const tripDate=localStorage.getItem('tripStartDate')||'2026-09-01';
-    await setDoc(doc(db,'trips',tripCode),{schedules,members,expenses,photos:photosForSync,personLists:plForSync,spots,flights,dayCities,tripStartDate:tripDate,updatedAt:Date.now()},{merge:true});
+    const writeTime=Date.now();
+    await setDoc(doc(db,'trips',tripCode),{schedules,members,expenses,photos:photosForSync,personLists:plForSync,spots,flights,dayCities,tripStartDate:tripDate,updatedAt:writeTime},{merge:true});
+    localStorage.setItem('localUpdatedAt',String(writeTime));
     localStorage.removeItem('pendingSync'); // 同步成功，清除標記
   }catch(e){
     console.error('sync error',e);
@@ -1083,7 +1120,7 @@ window.addEventListener('load',()=>{
 // ══════════════════════════════════════════
 //  ★ 旅行密碼設定（修改這裡）
 // ══════════════════════════════════════════
-const TRAVEL_PASSWORD = 'kumamoto2026'; // ← 改成你想要的密碼
+const TRAVEL_PASSWORD = 'fang2026'; // ← 改成你想要的密碼
 
 function checkPassword(){
   const input=document.getElementById('lockInput').value.trim();
@@ -1393,6 +1430,9 @@ function save(){
   try{localStorage.setItem('spots',JSON.stringify(spots));}catch(e){}
   try{localStorage.setItem('flights',JSON.stringify(flights));}catch(e){}
   try{localStorage.setItem('dayCities',JSON.stringify(dayCities));}catch(e){}
+  // 標記本機此刻有最新變更(給多裝置時間戳比對用)
+  localStorage.setItem('localUpdatedAt',String(Date.now()));
+  localStorage.setItem('pendingSync','1');
   if(window.debouncedSync)window.debouncedSync();
 }
 

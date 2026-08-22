@@ -52,6 +52,12 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
 .nav-tab.active{color:var(--cream);border-bottom-color:var(--green-light)}
 .nav-tab .tab-icon{font-size:14px;display:block;margin-bottom:2px}
 .content{padding:18px 18px 100px;position:relative;z-index:1}
+/* ── 交通接駁條 ── */
+.transit-row{display:flex;align-items:center;gap:8px;margin:-6px 0 8px 0;padding-left:52px;cursor:pointer}
+.transit-line{width:2px;height:20px;background:repeating-linear-gradient(to bottom,var(--green-light) 0 4px,transparent 4px 8px);flex-shrink:0;margin-left:19px}
+.transit-pill{background:var(--green-mist);border:1px dashed var(--green-light);border-radius:12px;padding:3px 10px;font-size:11px;color:var(--green-dark);font-family:'Noto Serif JP',serif;transition:all .15s}
+.transit-row:active .transit-pill{background:var(--green-pale)}
+
 /* ── 行程照片輪播 ── */
 .carousel{position:relative;width:calc(100% + 26px);margin:-11px -13px 10px;height:var(--card-img-h);
   border-radius:6px 6px 0 0;overflow:hidden;background:var(--green-pale)}
@@ -711,6 +717,12 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
         <label class="form-label">備註（支援圖示、連結、分點）</label>
         <div style="font-size:10px;color:var(--stone);margin-bottom:6px;font-family:'Noto Serif JP',serif;line-height:1.6">連結格式：[文字](網址)　分點：開頭加 *</div>
         <textarea class="form-input" id="sf-note" rows="6" placeholder="🕐 9:00-17:00&#10;💴 800日幣&#10;🚃 市電5分&#10;&#10;[店名](https://網址)&#10;* 亮點：...&#10;* 採買推薦：..." style="resize:vertical;line-height:1.9;font-size:13px"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">🚃 到下一站的交通（選填）</label>
+        <div style="font-size:10px;color:var(--stone);margin-bottom:6px;font-family:'Noto Serif JP',serif">會顯示在這站和下一站之間，點一下可開 Google Maps 查路線</div>
+        <input class="form-input" id="sf-transit" placeholder="例：阿蘇男孩號 · 約1hr15min">
       </div>
 
       <!-- 景點照片（多張） -->
@@ -1757,6 +1769,12 @@ function formatNote(text){
 // ── 行程照片輪播 ──
 const schedCarousel={};
 
+function openTransitNav(from,to){
+  // 開 Google Maps 路線規劃(從 A 到 B)
+  const url='https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(from)+'&destination='+encodeURIComponent(to)+'&travelmode=transit';
+  window.open(url,'_blank');
+}
+
 function carGo(id,dir){
   const c=schedCarousel[id];
   if(!c) return;
@@ -1776,7 +1794,15 @@ async function renderSchedule(){
   const el=document.getElementById('schedList');
   if(!list.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon">🍃</div><div class="empty-text">今天還沒有行程<br>點右上角「＋ 新增」開始規劃</div></div>`;return;}
   // 先畫框架
-  el.innerHTML=list.map(s=>`
+  el.innerHTML=list.map((s,idx)=>{
+    // 下一站(用於交通接駁的導航目的地)
+    const next=list[idx+1];
+    const transitHtml=(s.transit && next)?`
+      <div class="transit-row" onclick="openTransitNav('${(s.place||s.name).replace(/'/g,'')}','${(next.place||next.name).replace(/'/g,'')}')">
+        <span class="transit-line"></span>
+        <span class="transit-pill">🚃 ${s.transit} <span style="opacity:.6;font-size:9px">▸ 查路線</span></span>
+      </div>`:'';
+    return `
     <div class="schedule-item" id="si-${s.id}">
       <div class="time-col"><div class="time-text">${s.time}</div></div>
       <div class="time-dot"></div>
@@ -1788,7 +1814,8 @@ async function renderSchedule(){
         <span class="tag tag-${s.type}">${{sight:'🌸 景點',food:'🍜 餐廳',shop:'🛍 購物',hotel:'🏨 住宿',transport:'🚃 交通'}[s.type]}</span>
         ${s.note?`<div class="schedule-note">${formatNote(s.note)}</div>`:''}
       </div>
-    </div>`).join('');
+    </div>${transitHtml}`;
+  }).join('');
   // 非同步載入圖片（支援多張）
   for(const s of list){
     const imgRefs = s.imgs && s.imgs.length ? s.imgs : (s.img ? [s.img] : []);
@@ -1839,7 +1866,7 @@ function openSchedModal(){
   document.getElementById('sf-time').value='10:00';
   document.getElementById('sf-type').value='sight';
   fillDayOptions(curDay);
-  ['sf-name','sf-place','sf-note','sf-img-url'].forEach(id=>{
+  ['sf-name','sf-place','sf-note','sf-img-url','sf-transit'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value='';
   });
   newSchedImgFiles.forEach(f=>{if(f.previewUrl)URL.revokeObjectURL(f.previewUrl);});
@@ -1863,6 +1890,7 @@ function editSched(id){
   document.getElementById('sf-name').value=s.name;
   document.getElementById('sf-place').value=s.place||'';
   document.getElementById('sf-note').value=s.note||'';
+  document.getElementById('sf-transit').value=s.transit||'';
   document.getElementById('sf-img-url').value='';
   // 先清空舊的、再設新資料
   newSchedImgFiles.forEach(f=>{if(f.previewUrl)URL.revokeObjectURL(f.previewUrl);});
@@ -1979,6 +2007,7 @@ async function saveSched(){
     place:document.getElementById('sf-place').value.trim(),
     type:document.getElementById('sf-type').value,
     note:document.getElementById('sf-note').value.trim(),
+    transit:document.getElementById('sf-transit').value.trim(),
     imgs:finalImgs,
     img:finalImgs[0]||'' // 相容舊版
   };

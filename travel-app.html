@@ -152,15 +152,16 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
 .btn-add:hover{transform:translateY(-1px)}
 .timeline{position:relative}
 .timeline::before{content:'';position:absolute;left:42px;top:0;bottom:0;width:1px;background:repeating-linear-gradient(to bottom,var(--green-light) 0,var(--green-light) 4px,transparent 4px,transparent 8px)}
-.schedule-item{display:flex;margin-bottom:14px;position:relative}
+.schedule-item{display:flex;margin-bottom:14px;position:relative;min-width:0}
 .time-col{width:78px;flex-shrink:0;padding-top:14px}
 .time-text{font-family:'Zen Kurenaido',serif;font-size:14px;color:var(--green-dark);text-align:right;padding-right:16px}
 .time-dot{position:absolute;left:37px;top:32px;width:11px;height:11px;border-radius:50%;background:var(--cream);border:2px solid var(--green);box-shadow:0 0 0 3px var(--green-pale)}
-.schedule-card{flex:1;background:var(--cream);border-radius:6px;padding:11px 13px;border:var(--border);box-shadow:var(--shadow);position:relative;transition:all .15s}
+.schedule-card{flex:1;min-width:0;max-width:100%;background:var(--cream);border-radius:6px;padding:11px 13px;border:var(--border);box-shadow:var(--shadow);position:relative;transition:all .15s;overflow:hidden}
 .schedule-card:hover{transform:translateY(-1px);box-shadow:2px 4px 0 rgba(92,74,48,.12)}
 .schedule-name{font-weight:500;font-size:14px;color:var(--ink);font-family:'Noto Serif JP',serif}
 .schedule-place{font-size:11px;color:var(--stone);margin-top:2px}
-.schedule-note{font-size:11px;color:var(--ink-soft);margin-top:5px;padding-top:5px;border-top:1px dashed rgba(92,74,48,.2);font-family:'Noto Serif JP',serif}
+.schedule-note{font-size:11px;color:var(--ink-soft);margin-top:5px;padding-top:5px;border-top:1px dashed rgba(92,74,48,.2);font-family:'Noto Serif JP',serif;word-break:break-word;overflow-wrap:anywhere}
+.schedule-note a{word-break:break-all;overflow-wrap:anywhere}
 .card-actions{position:absolute;top:8px;right:8px;display:flex;gap:3px;z-index:20}
 .card-btn{background:rgba(253,248,245,.9);border:var(--border);border-radius:6px;font-size:13px;cursor:pointer;opacity:.9;transition:all .15s;padding:4px 6px;line-height:1;box-shadow:0 1px 3px rgba(92,74,48,.15)}
 .card-btn:active{background:var(--green-pale)}
@@ -1731,9 +1732,17 @@ function formatNote(text){
   lines.forEach(line=>{
     const t=line.trim();
     if(!t){ html+='<div style="height:6px"></div>'; return; }
-    // Markdown 連結 [文字](網址)
-    let processed=t.replace(/\[([^\]]+)\]\(([^)]+)\)/g,
-      '<a href="$2" target="_blank" style="color:var(--green-dark);font-weight:600;text-decoration:underline">$1</a>');
+    // 先處理 Markdown 連結 [文字](網址),轉成佔位符避免被下方裸網址規則重複處理
+    const mdLinks=[];
+    let processed=t.replace(/\[([^\]]+)\]\(([^)]+)\)/g,(m,txt,url)=>{
+      mdLinks.push('<a href="'+url+'" target="_blank" style="color:var(--green-dark);font-weight:600;text-decoration:underline;word-break:break-all">'+txt+'</a>');
+      return '\u0000'+(mdLinks.length-1)+'\u0000';
+    });
+    // 再把「直接貼的裸網址」轉成短文字連結(顯示「🔗 網站連結」而非整條網址)
+    processed=processed.replace(/(https?:\/\/[^\s]+)/g,
+      '<a href="$1" target="_blank" style="color:var(--green-dark);font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:2px;background:var(--green-pale);padding:1px 8px;border-radius:10px;font-size:11px">🔗 網站連結</a>');
+    // 還原 Markdown 連結佔位符
+    processed=processed.replace(/\u0000(\d+)\u0000/g,(m,i)=>mdLinks[i]);
     // 分點（* 開頭）
     if(t.startsWith('*')){
       processed=processed.replace(/^\*\s*/,'');

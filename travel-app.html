@@ -850,6 +850,25 @@ const AUTO_CONFIG = {
   tripCode: 'kumamoto-2025'   // ← 朋友版只改這行
 };
 
+
+// 把雲端資料套用到本機(共用)
+function applyCloudData(d){
+  if(d.schedules){schedules=d.schedules;localStorage.setItem('schedules',JSON.stringify(schedules));}
+  if(d.members){members=d.members;localStorage.setItem('members',JSON.stringify(members));}
+  if(d.expenses){expenses=d.expenses;localStorage.setItem('expenses',JSON.stringify(expenses));}
+  if(d.tripStartDate){localStorage.setItem('tripStartDate',d.tripStartDate);const el=document.getElementById('tripStartDate');if(el)el.value=d.tripStartDate;}
+  if(d.photos){photos=d.photos.filter(p=>p.url&&!p.url.startsWith('idb:'));localStorage.setItem('photos',JSON.stringify(photos));}
+  if(d.personLists){personLists=d.personLists;localStorage.setItem('personLists',JSON.stringify(personLists));}
+  if(d.spots&&d.spots.length){spots=d.spots;localStorage.setItem('spots',JSON.stringify(spots));}
+  if(d.flights){flights=d.flights;localStorage.setItem('flights',JSON.stringify(flights));}
+  if(d.dayCities){dayCities=d.dayCities;localStorage.setItem('dayCities',JSON.stringify(dayCities));}
+  localStorage.setItem('localUpdatedAt',String(d.updatedAt||Date.now()));
+  localStorage.removeItem('pendingSync');
+  renderAll();renderChecklist();
+  if(typeof renderDayCityGrid==='function')renderDayCityGrid();
+  if(typeof loadFlightsUI==='function')loadFlightsUI();
+}
+
 window.connectFirebase=async function(){
   const apiKey=document.getElementById('fb-apiKey').value.trim()||AUTO_CONFIG.apiKey;
   const projectId=document.getElementById('fb-projectId').value.trim()||AUTO_CONFIG.projectId;
@@ -868,35 +887,43 @@ window.connectFirebase=async function(){
     if(existingSnap.exists()){
       const d=existingSnap.data();
       const cloudTime=d.updatedAt||0;
+      const cloudCount=(d.schedules||[]).length;
+      const localCount=schedules.length;
 
-      if(cloudTime>localTime){
-        // 雲端比較新 → 拉下來覆蓋本機(即使本機有 pending,雲端更新就以雲端為準)
-        if(d.schedules){schedules=d.schedules;localStorage.setItem('schedules',JSON.stringify(schedules));}
-        if(d.members){members=d.members;localStorage.setItem('members',JSON.stringify(members));}
-        if(d.expenses){expenses=d.expenses;localStorage.setItem('expenses',JSON.stringify(expenses));}
-        if(d.tripStartDate){localStorage.setItem('tripStartDate',d.tripStartDate);const el=document.getElementById('tripStartDate');if(el)el.value=d.tripStartDate;}
-        if(d.photos){photos=d.photos.filter(p=>p.url&&!p.url.startsWith('idb:'));localStorage.setItem('photos',JSON.stringify(photos));}
-        if(d.personLists){personLists=d.personLists;localStorage.setItem('personLists',JSON.stringify(personLists));}
-        if(d.spots&&d.spots.length){spots=d.spots;localStorage.setItem('spots',JSON.stringify(spots));}
-        if(d.flights){flights=d.flights;localStorage.setItem('flights',JSON.stringify(flights));}
-        if(d.dayCities){dayCities=d.dayCities;localStorage.setItem('dayCities',JSON.stringify(dayCities));}
-        localStorage.setItem('localUpdatedAt',String(cloudTime));
+      // 判斷本機和雲端是否「實質不同」(比時間戳 + 比行程筆數)
+      const timesDiffer=(cloudTime!==localTime);
+      const countsDiffer=(cloudCount!==localCount);
+
+      if(!timesDiffer && !countsDiffer){
+        // 完全一致 → 不打擾,直接用
         localStorage.removeItem('pendingSync');
-        renderAll();renderChecklist();
-        if(typeof renderDayCityGrid==='function')renderDayCityGrid();
-        if(typeof loadFlightsUI==='function')loadFlightsUI();
-        showToast('✅ 已載入最新資料(來自其他裝置)');
-      } else if(hasPending || localTime>cloudTime){
-        // 本機比較新 → 把本機推上去
-        await window.syncToFirebase(true);
-        renderAll();renderChecklist();
-        showToast('✅ 本機較新,已上傳至 Firebase');
-      } else {
-        // 一樣新,不動作
         showToast('✅ 資料已是最新');
+      } else {
+        // 不一致 → 跳視窗讓使用者選
+        const fmtT=(t)=>{ if(!t)return '未知'; const dt=new Date(t); return (dt.getMonth()+1)+'/'+dt.getDate()+' '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0'); };
+        const msg='偵測到資料差異,請選擇要用哪一份:\n\n'
+          +'☁️ 雲端:'+cloudCount+' 筆行程\n     (更新時間 '+fmtT(cloudTime)+')\n\n'
+          +'💻 這台:'+localCount+' 筆行程\n     (更新時間 '+fmtT(localTime)+')\n\n'
+          +'━━━━━━━━━━━━━━━\n'
+          +'按「確定」= 用雲端資料(這台會變成雲端的)\n'
+          +'按「取消」= 用這台資料(會上傳覆蓋雲端)';
+        const useCloud=confirm(msg);
+
+        if(useCloud){
+          applyCloudData(d);
+          showToast('✅ 已改用雲端資料');
+        } else {
+          // 用這台覆蓋雲端;若這台筆數明顯較少,再確認一次
+          if(cloudCount>localCount+2){
+            const sure=confirm('⚠️ 再次確認\n\n這台只有 '+localCount+' 筆,雲端有 '+cloudCount+' 筆。\n用這台覆蓋會讓雲端少 '+(cloudCount-localCount)+' 筆。\n\n真的要用這台覆蓋雲端嗎?');
+            if(!sure){ applyCloudData(d); showToast('✅ 已改用雲端資料'); window._fbConnected=true;startListen();document.getElementById('syncDot').classList.add('on');document.getElementById('syncText').textContent='即時同步中';document.getElementById('connectedBanner').style.display='block';document.getElementById('shareCodeDisplay').textContent=tripCode;document.getElementById('setupCard').style.display='none';document.getElementById('joinCard').style.display='none';localStorage.setItem('fb_config',JSON.stringify({apiKey,projectId,appId,tripCode}));return; }
+          }
+          await window.syncToFirebase(true);
+          renderAll();renderChecklist();
+          showToast('✅ 已用這台資料更新雲端');
+        }
       }
     } else {
-      // Firebase 沒資料 → 建立
       await window.syncToFirebase(true);
       showToast('🌿 已建立行程！');
     }
@@ -966,13 +993,14 @@ function startListen(){
     const cloudTime=d.updatedAt||0;
     const localTime=parseInt(localStorage.getItem('localUpdatedAt')||'0');
 
-    // 若本機有未同步的變更,而且本機比雲端新 → 不接受,反而把本機推上去
-    if(localStorage.getItem('pendingSync')==='1' && localTime>=cloudTime){
+    // 只有「本機時間戳嚴格大於雲端」才推本機上去(避免相同時用 pending 誤推舊資料)
+    if(localStorage.getItem('pendingSync')==='1' && localTime>cloudTime){
       if(window.debouncedSync) window.debouncedSync();
       return;
     }
-    // 若雲端不比本機新,忽略(這是自己剛剛上傳的回音,或舊裝置的過時推送)
+    // 雲端不比本機新 → 忽略這次推送(自己的回音或過時推送),並清掉殘留 pending
     if(cloudTime<=localTime && localTime>0){
+      if(cloudTime===localTime) localStorage.removeItem('pendingSync');
       return;
     }
 

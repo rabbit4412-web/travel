@@ -291,6 +291,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
 /* join mode */
 .join-card{background:var(--cream);border-radius:8px;padding:20px;border:2px dashed var(--green-light);margin-bottom:16px;text-align:center}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -568,6 +569,9 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream-dark);
       <div style="display:flex;gap:8px;justify-content:center">
         <button onclick="exportExpenses()" style="background:var(--green-pale);color:var(--green-dark);border:var(--border);border-radius:6px;padding:8px 14px;font-size:11px;cursor:pointer;font-family:'Noto Serif JP',serif">📤 匯出費用備份</button>
         <button onclick="backupAllData()" style="background:var(--cream-dark);color:var(--ink);border:var(--border);border-radius:6px;padding:8px 14px;font-size:11px;cursor:pointer;font-family:'Noto Serif JP',serif">💾 備份全部資料</button>
+      </div>
+      <div style="display:flex;justify-content:center;margin-top:8px">
+        <button onclick="exportToExcel()" style="background:var(--green-dark);color:var(--cream);border:none;border-radius:6px;padding:9px 18px;font-size:12px;cursor:pointer;font-family:'Noto Serif JP',serif">📊 匯出成 Excel 表格</button>
       </div>
     </div>
   </div>
@@ -2933,6 +2937,111 @@ function exportExpenses(){
   }catch(e){
     console.error('匯出失敗',e);
     showToast('❌ 匯出失敗：'+e.message);
+  }
+}
+
+function exportToExcel(){
+  try{
+    if(typeof XLSX==='undefined'){ showToast('Excel 元件載入中,請稍候再試'); return; }
+    showToast('📊 正在產生 Excel...');
+
+    const wb = XLSX.utils.book_new();
+    const dates = getDates();
+    const typeMap={sight:'景點',food:'餐廳',shop:'購物',hotel:'住宿',transport:'交通'};
+
+    // ── 分頁1:行程表 ──
+    const schedRows=[['天數','城市','日期','時間','類型','名稱','地點','備註','到下一站交通']];
+    const byDay={};
+    schedules.forEach(s=>{ (byDay[s.day]=byDay[s.day]||[]).push(s); });
+    for(let day=0;day<8;day++){
+      const list=(byDay[day]||[]).sort((a,b)=>a.time.localeCompare(b.time));
+      const info=getDayInfo(day);
+      const dd=dates[day];
+      list.forEach(s=>{
+        schedRows.push([
+          'D'+(day+1), info.city, dd?(dd.m+'/'+dd.d):'',
+          s.time, typeMap[s.type]||s.type, s.name||'',
+          s.place||'', (s.note||'').replace(/\n/g,' / '), s.transit||''
+        ]);
+      });
+    }
+    const ws1=XLSX.utils.aoa_to_sheet(schedRows);
+    ws1['!cols']=[{wch:6},{wch:8},{wch:8},{wch:7},{wch:6},{wch:22},{wch:28},{wch:40},{wch:20}];
+    XLSX.utils.book_append_sheet(wb, ws1, '行程表');
+
+    // ── 分頁2:拍照景點 ──
+    const spotRows=[['天數','時間','名稱','地區','標籤','是否已拍','拍攝建議','照片數']];
+    spots.slice().sort((a,b)=>{
+      const da=getSpotDay(a),db=getSpotDay(b);
+      if(da!==db)return da-db;
+      return getSpotTime(a).localeCompare(getSpotTime(b));
+    }).forEach(s=>{
+      const day=getSpotDay(s);
+      spotRows.push([
+        day<999?('D'+(day+1)):'未排', day<999?getSpotTime(s):'',
+        s.name||'', s.area||'', s.tag||'',
+        s.shot?'✓ 已拍':'未拍',
+        (s.tips||[]).join(' / '),
+        (s.imgs||[]).length
+      ]);
+    });
+    const ws2=XLSX.utils.aoa_to_sheet(spotRows);
+    ws2['!cols']=[{wch:6},{wch:7},{wch:22},{wch:20},{wch:8},{wch:8},{wch:45},{wch:6}];
+    XLSX.utils.book_append_sheet(wb, ws2, '拍照景點');
+
+    // ── 分頁3:分帳明細 ──
+    const expRows=[['日期','項目','原始金額','幣別','日幣金額','台幣約','付款人']];
+    expenses.forEach(e=>{
+      const payer=members.find(m=>m.id===e.payerId);
+      const twd=Math.round((e.amount||0)*rate/100);
+      expRows.push([
+        e.date||'', e.name||'',
+        e.origAmt||e.amount||0, e.origCur||'JPY',
+        e.amount||0, 'NT$'+twd,
+        payer?payer.name:'?'
+      ]);
+    });
+    // 加總列
+    const totalJPY=expenses.reduce((s,e)=>s+(e.amount||0),0);
+    expRows.push([]);
+    expRows.push(['','合計','','', totalJPY, 'NT$'+Math.round(totalJPY*rate/100),'']);
+    const ws3=XLSX.utils.aoa_to_sheet(expRows);
+    ws3['!cols']=[{wch:8},{wch:22},{wch:12},{wch:8},{wch:12},{wch:12},{wch:10}];
+    XLSX.utils.book_append_sheet(wb, ws3, '分帳明細');
+
+    // ── 分頁4:購買清單 ──
+    const clRows=[['旅伴','類型','項目','已購買']];
+    members.forEach(m=>{
+      const pl=personLists[m.id];
+      if(!pl)return;
+      (pl.shopping||[]).forEach(it=>clRows.push([m.name,'購物',it.name||it.text||'',it.done?'✓':'']));
+      (pl.luggage||[]).forEach(it=>clRows.push([m.name,'行李',it.name||it.text||'',it.done?'✓':'']));
+    });
+    if(clRows.length>1){
+      const ws4=XLSX.utils.aoa_to_sheet(clRows);
+      ws4['!cols']=[{wch:10},{wch:8},{wch:30},{wch:8}];
+      XLSX.utils.book_append_sheet(wb, ws4, '購買清單');
+    }
+
+    // ── 分頁5:航班 ──
+    if(flights&&flights.out){
+      const f=flights;
+      const flRows=[
+        ['','航班號','出發','抵達','日期','起飛','降落','座位','行李'],
+        ['去程',f.out.no,f.out.from+' '+f.out.fromName,f.out.to+' '+f.out.toName,f.out.date,f.out.dep,f.out.arr,f.out.seats,f.out.bags],
+        ['回程',f.back.no,f.back.from+' '+f.back.fromName,f.back.to+' '+f.back.toName,f.back.date,f.back.dep,f.back.arr,f.back.seats,f.back.bags]
+      ];
+      const ws5=XLSX.utils.aoa_to_sheet(flRows);
+      ws5['!cols']=[{wch:6},{wch:8},{wch:12},{wch:12},{wch:12},{wch:7},{wch:7},{wch:10},{wch:10}];
+      XLSX.utils.book_append_sheet(wb, ws5, '航班');
+    }
+
+    const fname='熊本博多行程_'+new Date().toISOString().slice(0,10)+'.xlsx';
+    XLSX.writeFile(wb, fname);
+    showToast('📊 Excel 已匯出!請看下載資料夾');
+  }catch(e){
+    console.error('Excel 匯出失敗',e);
+    showToast('❌ 匯出失敗:'+e.message);
   }
 }
 
